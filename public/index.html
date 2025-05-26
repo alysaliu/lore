@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lore website</title>
-    <link rel="stylesheet" href="indexstyles.css">
+    <link rel="stylesheet" href="/public/css/index.css">
     <script src="https://kit.fontawesome.com/96509c7481.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
 <body>
     <nav class="navbar">
         <div class="navbar__container">
-            <a href="index.html" id="navbar__logo"> <img class="logo" src="images/Rabbit.svg" alt="rabbit" ></a>
+            <a href="index.html" id="navbar__logo"> <img class="logo" src="/public/images/Rabbit.svg" alt="rabbit" ></a>
             <div class="navbar__toggle" id="mobile-menu">
                 <span class="bar"></span>
                 <span class="bar"></span>
@@ -21,16 +21,13 @@
             </div>
             <ul class="navbar__menu">
                 <li class="navbar__item">
-                    <a href="" class="navbar__links"> Home </a>
+                    <a href="/public/index.html" class="navbar__links"> Home </a>
                 </li>
                 <li class="navbar__item">
                     <a href="/public/explore.html" class="navbar__links"> Search </a>
                 </li>
-                <!-- <li class="navbar__item">
-                    <a href="/tech.html" class="navbar__links"> Lists </a>
-                </li> -->
                 <li class="navbar__item">
-                    <a href="/tech.html" class="navbar__links"> Profile </a>
+                    <a href="/" class="navbar__links"> Profile </a>
                 </li>
                 <li class="navbar__btn">
                     <a href="/" class="button"> Sign up </a>
@@ -55,17 +52,14 @@
                 <div class="main__img--container">
                     <img src="images/Lore-mobile.svg" alt="pic" class="main__img">
                     <div class="blurred-circle" id="blurred-circle"></div>
-                    <!-- <div class="blur-wrapper">
-                        <div class="blurred-circle" id="blurry-circle"></div>
-                    </div> -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Services section -->
+    <!-- Features section -->
     <div class="services">
-        <h1>See what the hype is about</h1>
+        <!-- <h1>See what the hype is about</h1> -->
         <div class="services__container">
             <div class="services__card">
                 <h2>Explore content</h2>
@@ -85,6 +79,6 @@
         </div>
     </div>
 
-    <script src="indexscript.js"></script>
+    <script src="/public/js/index.js"></script>
 </body>
 </html>
