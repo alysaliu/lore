@@ -5,21 +5,8 @@ const userCardsContainer = document.querySelector(".results-container");
 
 //chips
 let selectedType = "all";
-// document.querySelectorAll('.chip').forEach(chip => {
-//   chip.addEventListener('click', () => {
-//     // Remove 'selected' from all chips
-//     document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
-
-//     // Add 'selected' to the clicked chip
-//     chip.classList.add('selected');
-    
-//   });
-// });
-
-
 
 searchInput.addEventListener("input", debounce(handleSearch, 300));
-
 
 function handleSearch() {
   const query = searchInput.value.trim();
@@ -76,6 +63,7 @@ function displayResults(results) {
     userCardsContainer.appendChild(card);
   });
 }
+
 
 // debounce helper
 function debounce(func, delay) {
