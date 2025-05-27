@@ -2,6 +2,7 @@
     --color-surface-default: #141218;
     --color-surface-contrast: #323335;
     --color-surface-selected: #595b60;
+    --color-surface-hovered: #3a3b3e;
     --color-surface-inverse: #fefefe;
 
     --color-text-default: #fefefe;
@@ -247,7 +248,7 @@
     border: 1px solid var(--color-border-default);
     border-radius: 32px 32px 0 0;
     background-color: var(--color-surface-contrast);
-    height: 100vh;
+    height: 85vh;
     width: 100%;
     max-width: 624px;
     box-shadow: 0 8px 24px rgb(0, 0, 0);
@@ -335,9 +336,9 @@
 
 .results-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
+    /* grid-template-columns: auto; */
     gap: 0px;
-    height: 80vh;
+    /* height: 80vh; */
     overflow-y: auto;
     padding-right: 8px;    
 }
@@ -402,7 +403,7 @@
 }
 
 .card:hover {
-    background-color: var(--color-surface-selected);
+    background-color: var(--color-surface-hovered);
     cursor: pointer;
     transition: background-color 0.5s;
     border-radius: 16px;
