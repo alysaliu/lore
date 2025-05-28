@@ -1,8 +1,8 @@
 :root {
     --color-surface-default: #141218;
-    --color-surface-contrast: #323335;
+    --color-surface-contrast: #1c1b21;
     --color-surface-selected: #595b60;
-    --color-surface-hovered: #3a3b3e;
+    --color-surface-hovered: #2b2a33;
     --color-surface-inverse: #fefefe;
 
     --color-text-default: #fefefe;
@@ -19,7 +19,7 @@
     --color-link-default: #fefefe;
     --color-link-alt: #6589ff;
     
-    --color-border-default: #3b3b3b;
+    --color-border-default: #2a2930;
     --color-border-selected: #58585F;
 
   }
@@ -341,22 +341,41 @@
     /* height: 80vh; */
     overflow-y: auto;
     padding-right: 8px;    
+    padding-bottom: 16px;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    font-weight: 300;
+    padding: 40px 20px;
+}
+
+.results-container > p {
+    color: var(--color-text-secondary);
+    font-weight: 300;
+    margin-top: 0.25rem;
 }
 
 .card {
     background-color: var(--color-surface-contrast);
     padding: 12px 0;
-    height: 120px;
+    height: 140px;
     display: flex;
     flex-direction: row;
     gap: 12px; 
+    cursor: pointer;
 }
 
 .card > .poster-image {
     width: 80px;
-    height: 100px;
+    height: 120px;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 4px;
 }
 
 .card > .text-container {
@@ -406,5 +425,5 @@
     background-color: var(--color-surface-hovered);
     cursor: pointer;
     transition: background-color 0.5s;
-    border-radius: 16px;
+    border-radius: 8px;
 }

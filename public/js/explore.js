@@ -3,6 +3,19 @@ const API_KEY = "909b5462da779f4d639070d34f685811";
 const searchInput = document.getElementById("search-input");
 const userCardsContainer = document.querySelector(".results-container");
 
+function showEmptyState() {
+  userCardsContainer.innerHTML = `
+    <div class="empty-state">
+      <img class="logo" src="images/Rabbit.svg" alt="rabbit" >
+      Start typing to enter a rabbithole!
+    </div>
+  `;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  showEmptyState();
+});
+
 //chips
 let selectedType = "all";
 
@@ -11,7 +24,7 @@ searchInput.addEventListener("input", debounce(handleSearch, 300));
 function handleSearch() {
   const query = searchInput.value.trim();
   if (!query) {
-    userCardsContainer.innerHTML = ""; // Clear if empty
+    showEmptyState();
     return;
   }
 
@@ -46,9 +59,10 @@ function displayResults(results) {
     const overview = item.overview || "No description available.";
     const posterPath = item.poster_path
       ? `https://image.tmdb.org/t/p/w185${item.poster_path}`
-      : "/public/images/placeholder.png";
+      : "images/placeholder.png";
 
     const card = document.createElement("div");
+
     card.className = "card";
     card.innerHTML = `
       <img src="${posterPath}" alt="${title}" class="poster-image" />
@@ -61,6 +75,10 @@ function displayResults(results) {
       </div>
     `;
     userCardsContainer.appendChild(card);
+
+    card.addEventListener('click', () => {
+      window.location.href = `details.html?id=${item.id}&media_type=${item.media_type}`;
+    });
   });
 }
 
