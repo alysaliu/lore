@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lore website</title>
-    <link rel="stylesheet" href="css/explore.css">
+    <link rel="stylesheet" href="css/details.css">
     <script src="https://kit.fontawesome.com/96509c7481.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,8 +36,50 @@
         </div>
     </nav>
 
-</body>
+    <div id= "loading-indicator" class="loading">
+        <img src="images/jumpingin.gif" alt="gif">
+            Hold tight, we're sniffing around for the right content...
+    </div>
 
-    <script src="js/explore.js"></script>
+    <div id="main-content" class="hidden">
+        <div class="poster-header" id="poster-header">
+            <div class="overlay-gradient"></div>
+        </div>
+
+        <div class="content">
+            <div class="header-container">
+                <img id="poster" class="poster" src="" alt="Poster" />
+                <div class="info">
+                    <div class="title-year-container">
+                        <div class="title" id="title"></div>
+                        <div class="year" id="year"></div>
+                    </div>
+                  
+                  <div class="genres" id="genres"></div>
+                  <div class="description" id="description"></div>
+                </div>
+            </div>
+            
+            <div class="rating-box">
+                <h3 id="rating-box-text">How would you describe this show?</h3>
+                <div class="rating-options">
+                  <button class="rating-button">
+                    <span>Not good</span>
+                    <span>😒</span>
+                </button>
+                  <button class="rating-button">😐 Okay</button>
+                  <button class="rating-button">😊 Good</button>
+                  <button class="rating-button">😍 Amazing</button>
+                </div>
+                <input type="text" class="note-input" placeholder="Leave an optional note for your review" />
+                <div class="button-row">
+                  <button class="cancel-btn">I haven't watched it yet</button>
+                  <button class="next-btn">Next</button>
+                </div>
+            </div>  
+        </div>
+    </div>    
+
+    <script src="js/details.js"></script>
 </body>
 </html>
