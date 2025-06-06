@@ -48,6 +48,16 @@ fetch(`https://api.themoviedb.org/3/${mediaType}/${id}?api_key=${API_KEY}&langua
     console.error("Failed to load details:", err);
   });
 
+//select button
+document.querySelectorAll('.rating-button').forEach(ratingbtn => {
+  ratingbtn.addEventListener('click', () => {
+    document.querySelectorAll('.rating-button').forEach(r => r.classList.remove('selected'));
+    ratingbtn.classList.add('selected');
+
+    //selectedType = ratingbtn.getAttribute("data-type");
+  });
+});
+
 // navbar
 const menu = document.querySelector('#mobile-menu')
 const menuLinks = document.querySelector('.navbar__menu')
