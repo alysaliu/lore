@@ -1,7 +1,8 @@
 :root {
     --color-surface-default: #141218;
-    --color-surface-contrast: #323335;
-    --color-surface-selected: #595b60;
+    --color-surface-contrast: #1c1b21;
+    --color-surface-selected: #303039;
+    --color-surface-hovered: #2b2a33;
     --color-surface-inverse: #fefefe;
 
     --color-text-default: #fefefe;
@@ -18,8 +19,8 @@
     --color-link-default: #fefefe;
     --color-link-alt: #6589ff;
     
-    --color-border-default: #2c2c2c;
-
+    --color-border-default: #2a2930;
+    --color-border-selected: #58585F;
 
   }
 
@@ -30,6 +31,7 @@
     font-family: 'Inter', sans-serif;
 }
 
+/* Navbar CSS*/
 .navbar {
     background: var(--color-surface-default);
     backdrop-filter: blur(10px); /* this does the blurring */
@@ -46,6 +48,8 @@
 
 .navbar__container {
     display: flex;
+    flex-direction: row;
+    gap: 1rem;
     justify-content: space-between;
     height: 80px;
     z-index: 1;
@@ -69,6 +73,8 @@
 
 .navbar__menu {
     display: flex;
+    flex-direction: row;
+    gap: 3rem;
     align-items: center;
     list-style: none;
     text-align: center;
@@ -76,6 +82,7 @@
 
 .navbar__item {
     height: 80px;
+    width: fit-content;
 }
 
 .navbar__links {
@@ -84,17 +91,32 @@
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    padding: 0 1rem;
     height: 100%;
     font-weight: 500;
+    width: fit-content;
 }
 
-.navbar__btn {
+.signup-nav-btn {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: var(--color-surface-inverse);
+    color: var(--color-text-inverse);
+    font-weight: 500;
+    width: fit-content;
+    text-decoration: none;
+}
+
+.nav-right {
     display: flex;
-    justify-content: center;
+    flex-direction: row;
+    gap: 2.5rem;
     align-items: center;
-    padding: 0 1rem;
-    width: 100%;
+    list-style: none;
+    text-align: center;
 }
 
 .button {
@@ -127,6 +149,20 @@
 .logo {
     max-width: 80%;
     max-height: 80%;
+}
+
+.profile-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--color-surface-hovered);
+    color: var(--color-text-default);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    text-decoration: none;
+    font-size: 0.9rem;
 }
 
 @media screen and (max-width: 960px) {
@@ -199,31 +235,6 @@
         right: 5%;
         transform: translate(5%, 20%);
     }
-
-    /* Sign up button */
-    .navbar__btn {
-        padding-bottom: 2rem;
-    }
-
-    .button {
-        align-items: center;
-        width: 80%;
-        height: 40px;
-        margin: 0;
-    }
-
-    #mobile-menu.is-active .bar:nth-child(2) {
-        opacity: 0;
-    }
-
-    #mobile-menu.is-active .bar:nth-child(1) {
-        transform: translateY(8px) rotate(45deg);
-    }
-
-    #mobile-menu.is-active .bar:nth-child(3) {
-        transform: translateY(-8px) rotate(-45deg);
-    }
-
 }
 
 /* Hero section css */
