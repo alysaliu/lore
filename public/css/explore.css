@@ -253,7 +253,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-top: 150px;
+    margin-top: 24px;
     padding-top: 32px;
     padding-left: 32px;
     padding-right: 32px;
@@ -263,7 +263,7 @@
     height:100%;
     width: 100%;
     max-width: 624px;
-    box-shadow: 0 8px 24px rgb(0, 0, 0);
+    box-shadow: 0 8px 24px rgb(19, 19, 19);
 }
 
 .search-test {
@@ -311,7 +311,7 @@
     flex-direction: row;
     align-items: center;
     gap: 8px;
-    padding: 8px 0 12px 0;
+    padding: 8px 0 16px 0;
     color: var(--color-text-secondary);
     font-size: 1rem;
     font-weight: 300;
