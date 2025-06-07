@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lore website</title>
-    <link rel="stylesheet" href="css/signup.css">
+    <link rel="stylesheet" href="css/login.css">
     <script src="https://kit.fontawesome.com/96509c7481.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,12 +26,9 @@
                 <li class="navbar__item">
                     <a href="explore.html" class="navbar__links"> Search </a>
                 </li>
-                <li class="navbar__item">
-                    <a href="/" class="navbar__links"> Profile </a>
-                </li>
-                <li class="navbar__btn">
-                    <a href="signup-login.html" class="button"> Sign up </a>
-                </li>
+                <div class="nav-right" id="nav-auth">
+                    <!-- JS will insert Sign Up or Profile circle here -->
+                </div>
             </ul>
         </div>
     </nav>
@@ -40,29 +37,29 @@
 
 <div class="form-section">
     <div class="title">
-        <h1>Welcome to Lore</h1>
+        <h1>Welcome back to Lore</h1>
         <h3>Dive into the rabbithole</h3>
     </div>
 
     <img class="logo" src="images/Rabbit.svg" alt="rabbit" >
-    <form id="signup-form">
+    <form id="login-form">
       <div class="input-wrapper">
-        <input type="email" class="signup-input" id="signup-email" placeholder="Email">
+        <input type="email" class="login-input" id="login-email" placeholder="Email">
         <span class="input-icon"><i class="fas fa-envelope"></i></span>
       </div>
   
       <div class="input-wrapper">
-        <input type="password" class="signup-input" id="signup-password" placeholder="Password">
+        <input type="password" class="login-input" id="login-password" placeholder="Password">
         <span class="input-icon"><i class="fas fa-lock"></i></span>
       </div>
   
-      <button type="submit" class="signup-btn" id="signupbtn">Sign up</button>
+      <button type="submit" class="signup-btn" id="loginbtn">Log in</button>
       <p>or</p>
-      <button class="login-btn" >I've been here before :)</button>
+      <button class="login-btn" onclick="window.location.href='signup.html'">I'm new, sign me up!</button>
       
     </form>
   </div>
 
-    <script type="module" src="js/signup-login.js"></script>
+    <script type="module" src="js/login.js"></script>
 </body>
 </html>

@@ -10,6 +10,7 @@ import {
 import {
   doc,
   setDoc,
+  getDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -18,6 +19,8 @@ document.getElementById("signup-form")?.addEventListener("submit", async (e) => 
   e.preventDefault();
   const email = document.getElementById("signup-email").value;
   const password = document.getElementById("signup-password").value;
+  const firstname = document.getElementById("firstname").value;
+  const lastname = document.getElementById("lastname").value;
 
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -29,6 +32,8 @@ document.getElementById("signup-form")?.addEventListener("submit", async (e) => 
     
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
+        firstname: firstname,
+        lastname: lastname,
         email: user.email,
         createdAt: serverTimestamp()
       });
@@ -51,7 +56,7 @@ document.getElementById("signup-form")?.addEventListener("submit", async (e) => 
       console.log("Firestore user document and list created!");
 
       // ✅ Redirect after signup
-      window.location.href = "explore.html"; // change to your actual page
+      window.location.href = "explore.html";
     } else {
       console.error("Invalid user object:", user);
       alert("Signup failed: " + error.message);
@@ -59,54 +64,9 @@ document.getElementById("signup-form")?.addEventListener("submit", async (e) => 
 
   } catch (error) {
     console.error("Signup error:", error.message);
+    alert("Signup error: " + error.message);
   }
 });
-
-// import { auth, db } from '../../src/firebase.js'; 
-
-// import {
-//   createUserWithEmailAndPassword,
-//   signInWithEmailAndPassword,
-//   onAuthStateChanged,
-//   signOut
-// } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-
-// const user = auth.currentUser;
-// console.log("user email", user);
-// createUserWithEmailAndPassword(auth, user)
-//   .then(async (userCredential) => {
-//     const user = userCredential.user;
-//     console.log('User is signed up:', user.email);
-
-//     // Now save to Firestore
-//     const userRef = doc(db, "users", user.uid);
-//     await setDoc(userRef, {
-//       email: user.email,
-//       createdAt: new Date()
-//     });
-
-//     console.log('User document written to Firestore!');
-//   })
-//   .catch((error) => {
-//     console.error("Signup error:", error.code, error.message);
-//   });
-
-
-// // Sign up
-// document.getElementById("signup-form")?.addEventListener("submit", (e) => {
-//   e.preventDefault();
-//   const email = document.getElementById("signup-email").value;
-//   const password = document.getElementById("signup-password").value;
-
-//   createUserWithEmailAndPassword(auth, email, password)
-//     .then(userCredential => {
-//       console.log("Signed up:", userCredential.user);
-//     })
-//     .catch(error => {
-//       console.error("Signup error:", error.message);
-//     });
-// });
 
 // Log in
 document.getElementById("login-form")?.addEventListener("submit", (e) => {
@@ -135,11 +95,53 @@ document.getElementById("logout-button")?.addEventListener("click", () => {
 });
 
 // Listen for auth state changes
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
+  const navAuth = document.getElementById("nav-auth");
+  navAuth.innerHTML = ""; // Clear old content
+
   if (user) {
-    console.log("User is logged in:", user.email);
-    // Show/hide elements as needed
+    // Get user's Firestore document to fetch first and last name
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+
+    let initials = "";
+    if (userSnap.exists()) {
+      const data = userSnap.data();
+      const firstName = data.firstname || "";
+      const lastName = data.lastname || "";
+      initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+    } else {
+      // Fallback to email initials
+      const name = user.email;
+      initials = name
+        .split(/[@.\s_]/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part.charAt(0).toUpperCase())
+        .join("");
+    }
+
+    const profileLink = document.createElement("a");
+    profileLink.href = "profile.html";
+    profileLink.className = "profile-circle";
+    profileLink.textContent = initials;
+
+    navAuth.appendChild(profileLink);
+
   } else {
+    const loginLink = document.createElement("a");
+    loginLink.href = "login.html";
+    loginLink.className = "navbar__links";
+    loginLink.textContent = "Log in";
+
+    const signupBtn = document.createElement("a");
+    signupBtn.href = "signup.html";
+    signupBtn.className = "signup-nav-btn";
+    signupBtn.textContent = "Sign up";
+
+    navAuth.appendChild(loginLink);
+    navAuth.appendChild(signupBtn);
     console.log("No user is logged in");
   }
 });
+
