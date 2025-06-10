@@ -43,15 +43,15 @@ document.getElementById("signup-form")?.addEventListener("submit", async (e) => 
         items: []
       });
 
-      const followersRef = doc(db, "users", user.uid, "followers", "followerUserId");
-      await setDoc(followersRef, {
-        uids: []
-      });
+      // const followersRef = doc(db, "users", user.uid, "followers", followerUserId);
+      // await setDoc(followersRef, {
+      //   timestamp: new Date().toISOString()
+      // });
 
-      const followingRef = doc(db, "users", user.uid, "following", "followingUserId");
-      await setDoc(followingRef, {
-        uids: []
-      });
+      // const followingRef = doc(db, "users", user.uid, "following", followingUserId);
+      // await setDoc(followingRef, {
+      //   timestamp: new Date().toISOString()
+      // });
     
       console.log("Firestore user document and list created!");
 

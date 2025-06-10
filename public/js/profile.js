@@ -52,17 +52,20 @@ onAuthStateChanged(auth, async (user) => {
       const total = data.ratingCount || 0;
       document.getElementById("rating-count").textContent = total;
 
+      // Followers count
       const followersCol = collection(db, "users", user.uid, "followers");
       const followersSnap = await getDocs(followersCol);
-      const followersCount = followersSnap.docs.filter(doc => doc.data().followerUserId).length;
+      const followersCount = followersSnap.size;
       document.getElementById("followers-count").textContent = followersCount;
       console.log("followers", followersCount);
 
+      // Following count
       const followingCol = collection(db, "users", user.uid, "following");
       const followingSnap = await getDocs(followingCol);
-      const followingCount = followingSnap.docs.filter(doc => doc.data().followingUserId).length;
+      const followingCount = followingSnap.size;
       document.getElementById("following-count").textContent = followingCount;
-      console.log("followers", followersCount);
+      console.log("following", followingCount);
+
     } else {
       // Fallback to email initials
       const name = user.email;
