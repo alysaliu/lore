@@ -78,12 +78,12 @@ const slides = [
   let current = 0;
   const container = document.getElementById('slideshow-container');
   const text = document.getElementById('blurry-text');
-  const circle = document.getElementById('blurred-circle');
+  // const circle = document.getElementById('blurred-circle');
   
   function updateBackground() {
     container.style.backgroundImage = `url(${slides[current].image})`;
-    text.style.color = slides[current].color;
-    circle.style.background = slides[current].color;
+    // text.style.color = slides[current].color;
+    // circle.style.background = slides[current].color;
     current = (current + 1) % slides.length;
   }
   

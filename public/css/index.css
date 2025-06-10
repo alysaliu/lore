@@ -34,7 +34,6 @@
 /* Navbar CSS*/
 .navbar {
     background: var(--color-surface-default);
-    backdrop-filter: blur(10px); /* this does the blurring */
     -webkit-backdrop-filter: blur(10px);
     height: 80ps;
     display: flex;
@@ -119,7 +118,7 @@
     text-align: center;
 }
 
-.button {
+.button-link {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -133,12 +132,14 @@
     background: var(--color-action-default);
     color: var(--color-text-inverse);
     font-weight: 500;
+    font-size: 14px;
 }
 
-.button:hover {
+.button-link:hover {
     background: var(--color-action-hovered);
     color: var(--color-text-inverse);
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .navbar__links:hover {
@@ -252,7 +253,7 @@
 
 .main__container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
     align-items: center;
     justify-self: center;
     margin: 0 auto;
@@ -264,15 +265,17 @@
     padding-left: 50px;
     overflow: hidden;
     z-index: 2;
+    
 }
 
-.blurry-text {
+/* .blurry-text {
     transition: color 1s ease-in-out;
     text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-}
+} */
 
 .main__content h1 {
     font-size: 4rem;
+    font-weight: 600;
     /* background-color: #ff8177;
     background-image: linear-gradient(to top, #ff0844 0%, #ffb199 100%); */
 }
@@ -417,7 +420,6 @@
 
 /* Services Section CSS */
 .services {
-    background: var(--color-surface-default);
     display: flex;
     flex-direction: column;
     gap: 32px;
@@ -434,8 +436,8 @@
 }
 
 .services__container {
-    padding-left: 50px;
-    padding-right: 50px;
+    /* padding-left: 50px;
+    padding-right: 50px; */
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -444,7 +446,7 @@
 }
 
 .services__card {
-    background: var(--color-surface-default);
+    backdrop-filter: blur(5px); /* this does the blurring */
     border: 0.5px solid var(--color-border-default);
     border-radius: 8px;
     padding: 22px 24px 28px 28px;
