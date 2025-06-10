@@ -73,6 +73,8 @@
 
 .navbar__menu {
   display: flex;
+  flex-direction: row;
+  gap: 3rem;
   align-items: center;
   list-style: none;
   text-align: center;
@@ -80,7 +82,7 @@
 
 .navbar__item {
   height: 80px;
-  width: 100px;
+  width: fit-content;
 }
 
 .navbar__links {
@@ -91,6 +93,7 @@
   text-decoration: none;
   height: 100%;
   font-weight: 500;
+  width: fit-content;
 }
 
 .signup-nav-btn {
@@ -110,7 +113,7 @@
 .nav-right {
   display: flex;
   flex-direction: row;
-  gap: 1rem;
+  gap: 2.5rem;
   align-items: center;
   list-style: none;
   text-align: center;
@@ -383,16 +386,47 @@
   font-weight: 300;
 }
 
+.btn {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-default);
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--color-text-default);
+  width: fit-content;
+  font-size: 14px;
+  font-weight: 400;
+  margin-top: 8px;
+  background-color: rgba(245, 236, 236, 0);
+  backdrop-filter: blur(8px);
+
+}
+
+#link-icon {
+  margin-top: 2px;
+}
+
+.btn:hover {
+  background-color: rgba(183, 183, 183, 0.11);
+  transition: background-color 0.2s ease;
+}
+
 .rating-box {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background-color: var(--color-surface-default);
+  /* background-color: var(--color-surface-default); */
   color: var(--color-text-default);
-  padding: 20px 24px 24px 24px;
+  /* padding: 20px 24px 24px 24px; */
   border-radius: 16px;
-  border: 1px solid var(--color-border-default);
+  border: 1px solid transparent;
   z-index: 100;
+  /* box-shadow: 0 8px 24px rgb(19, 19, 19); */
 }
 
 .rating-box h3 {
@@ -494,4 +528,31 @@
   background-color: var(--color-surface-inverse);
   color: var(--color-text-inverse);
   font-weight: 500;
+}
+
+.comparison-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.compare-btn {
+  flex: 1;
+  padding: 24px 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-default);
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: var(--color-surface-default);
+  color: var(--color-text-default);
+  width: 100%;
+}
+
+#skip-compare {
+  text-align: center;
+  justify-self: center;
+  align-self: center;
+  margin-top: 12px;
+  text-decoration: none;
+  color: var(--color-text-secondary);
 }
