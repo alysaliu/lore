@@ -1,30 +1,21 @@
 import { auth, db } from './firebase.js';
 
 import {
-  onAuthStateChanged,
-  signOut
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 import {
   doc,
   getDoc,
+  setDoc,
   collection,
-  getDocs
+  getDocs,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const API_KEY = "909b5462da779f4d639070d34f685811";
-
-// Log out
-document.getElementById("logout-button")?.addEventListener("click", () => {
-  signOut(auth)
-    .then(() => {
-      console.log("Logged out");
-      window.location.href = "login.html";
-    })
-    .catch(error => {
-      console.error("Logout error:", error.message);
-    });
-});
+const params = new URLSearchParams(window.location.search);
+const selectedUserId = params.get("uid");
 
 // Listen for auth state changes
 onAuthStateChanged(auth, async (user) => {
@@ -37,17 +28,67 @@ onAuthStateChanged(auth, async (user) => {
     const userSnap = await getDoc(userRef);
     console.log("A user is logged in");
 
+    // FOLLOW / UNFOLLOW LOGIC
+    if (selectedUserId && selectedUserId !== user.uid) {
+      const followBtn = document.getElementById("follow-button");
+      if (followBtn) {
+        const currentUserId = user.uid;
+
+        const followingRef = doc(db, "users", currentUserId, "following", selectedUserId);
+        const followerRef = doc(db, "users", selectedUserId, "followers", currentUserId);
+
+        const followingSnap = await getDoc(followingRef);
+        let isFollowing = followingSnap.exists();
+
+        // Set initial button text
+        followBtn.textContent = isFollowing ? "Unfollow" : "Follow";
+
+        followBtn.addEventListener("click", async () => {
+          const timestamp = new Date().toISOString();
+
+          if (isFollowing) {
+            // Unfollow: remove both docs
+            await Promise.all([
+              deleteDoc(followingRef),
+              deleteDoc(followerRef)
+            ]);
+            followBtn.textContent = "Follow";
+            isFollowing = false;
+          } else {
+            // Follow: add both docs
+            await Promise.all([
+              setDoc(followingRef, {
+                followingUserId: selectedUserId,
+                timestamp
+              }),
+              setDoc(followerRef, {
+                followerUserId: currentUserId,
+                timestamp
+              })
+            ]);
+            followBtn.textContent = "Unfollow";
+            isFollowing = true;
+          }
+        });
+      }
+    }
+    const selectedUserRef = doc(db, "users", selectedUserId);
+    const selectedUserSnap = await getDoc(selectedUserRef);
+
     let initials = "";
     if (userSnap.exists()) {
       const data = userSnap.data();
       const firstName = data.firstname || "";
       const lastName = data.lastname || "";
-      const fullName = `${data.firstname || ""} ${data.lastname || ""}`.trim();
       initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+    } 
+    if (selectedUserSnap.exists()) {
+      const data = selectedUserSnap.data();
+      const fullName = `${data.firstname || ""} ${data.lastname || ""}`.trim();
 
       // Set name and email
       document.getElementById("user-name").textContent = fullName || "Unnamed";
-      document.getElementById("user-email").textContent = user.email || "";
+      document.getElementById("user-email").textContent = selectedUserRef.email || "";
 
       const total = data.ratingCount || 0;
       document.getElementById("rating-count").textContent = total;
@@ -63,7 +104,8 @@ onAuthStateChanged(auth, async (user) => {
       const followingCount = followingSnap.docs.filter(doc => doc.data().followingUserId).length;
       document.getElementById("following-count").textContent = followingCount;
       console.log("followers", followersCount);
-    } else {
+    } 
+    else {
       // Fallback to email initials
       const name = user.email;
       initials = name
@@ -88,7 +130,7 @@ onAuthStateChanged(auth, async (user) => {
 
     if (shareBtn) {
       shareBtn.addEventListener("click", () => {
-        const shareLink = `${window.location.origin}/public/user.html?uid=${user.uid}`;
+        const shareLink = `${window.location.origin}/user.html?uid=${selectedUserId}`;
 
         // Optionally copy to clipboard
         navigator.clipboard.writeText(shareLink).then(() => {
@@ -117,33 +159,6 @@ onAuthStateChanged(auth, async (user) => {
 
     tabContent.innerHTML = "<p>Please log in to view your rated movies.</p>";
   }
-});
-
-//quick tip alert
-const closeBtn = document.getElementById("inline-alert-icon-tip");
-const tip = document.querySelector(".inline-alert-tip");
-
-closeBtn.addEventListener("click", () => {
-  tip.classList.add("hide");
-  tip.addEventListener("transitionend", () => {
-    tip.style.display = "none";
-  }, { once: true });
-});
-
-// Check quick top localStorage on load
-document.addEventListener("DOMContentLoaded", () => {
-  if (localStorage.getItem("dismissedTip") === "true") {
-    tip.style.display = "none";
-  }
-});
-
-closeBtn.addEventListener("click", () => {
-  tip.classList.add("hide");
-  localStorage.setItem("dismissedTip", "true");
-
-  tip.addEventListener("transitionend", () => {
-    tip.style.display = "none";
-  }, { once: true });
 });
 
 //tabs
@@ -184,7 +199,7 @@ async function loadRatedMovies() {
   const user = auth.currentUser;
   if (!user) return tabContent.innerHTML = "<p>Please log in to view your rated movies.</p>";
 
-  const ratingsRef = doc(db, "users", user.uid);
+  const ratingsRef = doc(db, "users", selectedUserId);
   const userDoc = await getDoc(ratingsRef);
   const data = userDoc.exists() ? userDoc.data().ratings || {} : {};
 
@@ -251,7 +266,7 @@ async function loadRatedShows() {
     return;
   }
 
-  const ratingsRef = doc(db, "users", user.uid);
+  const ratingsRef = doc(db, "users", selectedUserId);
   const userDoc = await getDoc(ratingsRef);
   const data = userDoc.exists() ? userDoc.data().ratings || {} : {};
 
@@ -315,7 +330,7 @@ async function loadWatchlist() {
     return;
   }
 
-  const userRef = doc(db, "users", user.uid);
+  const userRef = doc(db, "users", selectedUserId);
   const userDoc = await getDoc(userRef);
   const data = userDoc.exists() ? userDoc.data() : {};
   const watchlist = data.lists?.watchlist || [];

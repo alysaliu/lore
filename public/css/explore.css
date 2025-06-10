@@ -262,7 +262,7 @@
     background-color: var(--color-surface-contrast);
     height:100%;
     width: 100%;
-    max-width: 624px;
+    max-width: 750px;
     box-shadow: 0 8px 24px rgb(19, 19, 19);
 }
 
