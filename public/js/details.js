@@ -50,6 +50,7 @@ onAuthStateChanged(auth, async (user) => {
 
     navAuth.appendChild(profileLink);
     checkIfAlreadyRated(user);
+    renderWatchlistButton(user); // Pass the user directly to the function
   } else {
     const loginLink = document.createElement("a");
     loginLink.href = "login.html";
@@ -172,9 +173,10 @@ function renderInitialRatingBox() {
 
 
 
-async function renderWatchlistButton() {
+// Adjust the renderWatchlistButton to receive the user directly
+async function renderWatchlistButton(user) {
   const container = document.getElementById("watchlist-container");
-  const user = auth.currentUser;
+  console.log("user", user);
 
   let alreadyAdded = false;
 
@@ -182,9 +184,10 @@ async function renderWatchlistButton() {
   if (user) {
     const userRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userRef);
-    const lists = userDoc.exists() ? userDoc.data().lists || {} : {};
-    const watchlist = lists.watchlist || [];
+    const data = userDoc.exists() ? userDoc.data() : {};
+    const watchlist = data.lists?.watchlist || [];
     alreadyAdded = watchlist.some(item => item.mediaId === selectedMediaId);
+    console.log("alreadyAdded", alreadyAdded);
   }
 
   // Render button regardless of auth state
@@ -222,7 +225,31 @@ async function renderWatchlistButton() {
         }
       }, { merge: true });
 
-      renderWatchlistButton(); // Re-render with "Added" state
+      renderWatchlistButton(user); // Re-render with "Added" state
+    });
+  } else {
+    // Add click logic for "Already added" button (removal)
+    document.getElementById("add-to-watchlist").addEventListener("click", async () => {
+      if (!auth.currentUser) {
+        alert("Please log in to use your watchlist.");
+        return;
+      }
+
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      const userDoc = await getDoc(userRef);
+      const lists = userDoc.exists() ? userDoc.data().lists || {} : {};
+      const watchlist = lists.watchlist || [];
+
+      const updatedWatchlist = watchlist.filter(item => item.mediaId !== selectedMediaId);
+
+      await setDoc(userRef, {
+        lists: {
+          ...lists,
+          watchlist: updatedWatchlist
+        }
+      }, { merge: true });
+
+      renderWatchlistButton(user); // Re-render with "Add to watchlist" state
     });
   }
 }
