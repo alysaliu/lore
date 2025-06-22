@@ -53,18 +53,16 @@ onAuthStateChanged(auth, async (user) => {
       document.getElementById("rating-count").textContent = total;
 
       // Followers count
-      const followersCol = collection(db, "users", user.uid, "followers");
-      const followersSnap = await getDocs(followersCol);
-      const followersCount = followersSnap.size;
-      document.getElementById("followers-count").textContent = followersCount;
-      console.log("followers", followersCount);
+      if (data.followerlist && Array.isArray(data.followerlist)) {
+        const followersCount = data.followerlist.length;
+        document.getElementById("followers-count").textContent = followersCount;
+      }
 
       // Following count
-      const followingCol = collection(db, "users", user.uid, "following");
-      const followingSnap = await getDocs(followingCol);
-      const followingCount = followingSnap.size;
-      document.getElementById("following-count").textContent = followingCount;
-      console.log("following", followingCount);
+      if (data.followinglist && Array.isArray(data.followinglist)) {
+        const followingCount = data.followinglist.length;
+          document.getElementById("following-count").textContent = followingCount;
+      }
 
     } else {
       // Fallback to email initials
@@ -91,7 +89,8 @@ onAuthStateChanged(auth, async (user) => {
 
     if (shareBtn) {
       shareBtn.addEventListener("click", () => {
-        const shareLink = `${window.location.origin}/public/user.html?uid=${user.uid}`;
+        //this will only work on the live website
+        const shareLink = `${window.location.origin}/user.html?uid=${user.uid}`;
 
         // Optionally copy to clipboard
         navigator.clipboard.writeText(shareLink).then(() => {
@@ -199,7 +198,9 @@ async function loadRatedMovies() {
   }
 
   if (itemRatings.length === 0) {
-    tabContent.innerHTML = "<p>No rated movies yet.</p>";
+    tabContent.innerHTML = `
+      <div class="empty-state">No movies rated yet.</div>
+    `;
     return;
   }
 
@@ -250,7 +251,9 @@ async function loadRatedMovies() {
 async function loadRatedShows() {
   const user = auth.currentUser;
   if (!user) {
-    tabContent.innerHTML = "<p>Please log in to view your rated shows.</p>";
+    tabContent.innerHTML = `
+      <div class="empty-state">Please log in to view ratings.</div>
+    `;
     return;
   }
 
@@ -266,7 +269,9 @@ async function loadRatedShows() {
   }
 
   if (showRatings.length === 0) {
-    tabContent.innerHTML = "<p>No rated shows yet.</p>";
+    tabContent.innerHTML = `
+    <div class="empty-state">No shows rated yet.</div>
+    `;
     return;
   }
 
@@ -312,6 +317,7 @@ async function loadRatedShows() {
 }
 
 async function loadWatchlist() {
+  console.log("watchlist loaded");
   const user = auth.currentUser;
   if (!user) {
     tabContent.innerHTML = "<p>Please log in to view your watchlist.</p>";
@@ -324,8 +330,10 @@ async function loadWatchlist() {
   const watchlist = data.lists?.watchlist || [];
 
   if (watchlist.length === 0) {
-    tabContent.innerHTML = "<p>Your watchlist is empty.</p>";
-    return;
+    tabContent.innerHTML = `
+    <div class="empty-state">No movies or shows added to your watchlist yet.</div>
+  `;
+  return;
   }
 
   const enrichedItems = await Promise.all(
@@ -333,10 +341,12 @@ async function loadWatchlist() {
       const res = await fetch(`https://api.themoviedb.org/3/${item.mediaType}/${item.mediaId}?api_key=${API_KEY}&language=en-US`);
       const details = await res.json();
 
+      console.log("mediatype", item.mediaType);
+
       return {
         rank: index + 1,
         mediaId: item.mediaId,
-        mediaType: item.media_type,
+        mediaType: item.mediaType,
         title: details.title || details.name || "Untitled",
         releaseDate: details.release_date || details.first_air_date || "Unknown",
         posterPath: details.poster_path || "",

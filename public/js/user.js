@@ -7,161 +7,16 @@ import {
 import {
   doc,
   getDoc,
-  setDoc,
+  updateDoc,
   collection,
   getDocs,
-  deleteDoc
+  arrayUnion,
+  arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const API_KEY = "909b5462da779f4d639070d34f685811";
 const params = new URLSearchParams(window.location.search);
 const selectedUserId = params.get("uid");
-
-// Listen for auth state changes
-// onAuthStateChanged(auth, async (user) => {
-//   const navAuth = document.getElementById("nav-auth");
-//   navAuth.innerHTML = ""; // Clear old content
-
-//   if (user) {
-//     // Get user's Firestore document to fetch first and last name
-//     const userRef = doc(db, "users", user.uid);
-//     const userSnap = await getDoc(userRef);
-//     console.log("A user is logged in");
-
-//     // FOLLOW / UNFOLLOW LOGIC
-//     if (selectedUserId && selectedUserId !== user.uid) {
-//       const followBtn = document.getElementById("follow-button");
-//       if (followBtn) {
-//         const currentUserId = user.uid;
-
-//         const followingRef = doc(db, "users", currentUserId, "following", selectedUserId);
-//         const followerRef = doc(db, "users", selectedUserId, "followers", currentUserId);
-
-//         const followingSnap = await getDoc(followingRef);
-//         let isFollowing = followingSnap.exists();
-
-//         // Set initial button text
-//         followBtn.textContent = isFollowing ? "Unfollow" : "Follow";
-
-//         followBtn.addEventListener("click", async () => {
-//           const timestamp = new Date().toISOString();
-
-//           if (isFollowing) {
-//             // Unfollow: remove both docs
-//             await Promise.all([
-//               deleteDoc(followingRef),
-//               deleteDoc(followerRef)
-//             ]);
-//             followBtn.textContent = "Follow";
-//             isFollowing = false;
-//           } else {
-//             // Follow: add both docs
-//             await Promise.all([
-//               setDoc(followingRef, {
-//                 followingUserId: selectedUserId,
-//                 timestamp
-//               }),
-//               setDoc(followerRef, {
-//                 followerUserId: currentUserId,
-//                 timestamp
-//               })
-//             ]);
-//             followBtn.textContent = "Unfollow";
-//             isFollowing = true;
-//           }
-//         });
-//       }
-//     }
-//     const selectedUserRef = doc(db, "users", selectedUserId);
-//     const selectedUserSnap = await getDoc(selectedUserRef);
-
-//     let initials = "";
-//     if (userSnap.exists()) {
-//       const data = userSnap.data();
-//       const firstName = data.firstname || "";
-//       const lastName = data.lastname || "";
-//       initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-//     } 
-//     if (selectedUserSnap.exists()) {
-//       const data = selectedUserSnap.data();
-//       const fullName = `${data.firstname || ""} ${data.lastname || ""}`.trim();
-
-//       // Set name and email
-//       document.getElementById("user-name").textContent = fullName || "Unnamed";
-//       document.getElementById("user-email").textContent = selectedUserRef.email || "";
-
-//       const total = data.ratingCount || 0;
-//       document.getElementById("rating-count").textContent = total;
-
-//       // Followers count
-//       const followersCol = collection(db, "users", user.uid, "followers");
-//       const followersSnap = await getDocs(followersCol);
-//       const followersCount = followersSnap.size;
-//       document.getElementById("followers-count").textContent = followersCount;
-//       console.log("followers", followersCount);
-
-//       // Following count
-//       const followingCol = collection(db, "users", user.uid, "following");
-//       const followingSnap = await getDocs(followingCol);
-//       const followingCount = followingSnap.size;
-//       document.getElementById("following-count").textContent = followingCount;
-//       console.log("following", followingCount);
-//     } 
-//     else {
-//       // Fallback to email initials
-//       const name = user.email;
-//       initials = name
-//         .split(/[@.\s_]/)
-//         .filter(Boolean)
-//         .slice(0, 2)
-//         .map(part => part.charAt(0).toUpperCase())
-//         .join("");
-//     }
-
-//     const profileLink = document.createElement("a");
-//     profileLink.href = "profile.html";
-//     profileLink.className = "profile-circle";
-//     profileLink.textContent = initials;
-
-//     navAuth.appendChild(profileLink);
-
-//     selectTab("movies");
-
-//     //share profile
-//     const shareBtn = document.getElementById("share");
-
-//     if (shareBtn) {
-//       shareBtn.addEventListener("click", () => {
-//         const shareLink = `${window.location.origin}/user.html?uid=${selectedUserId}`;
-
-//         // Optionally copy to clipboard
-//         navigator.clipboard.writeText(shareLink).then(() => {
-//           alert("Profile link copied to clipboard!");
-//         }).catch(err => {
-//           console.error("Failed to copy: ", err);
-//           alert("Here's your profile link: " + shareLink);
-//         });
-//       });
-//     }
-
-//   } else {
-//     const loginLink = document.createElement("a");
-//     loginLink.href = "login.html";
-//     loginLink.className = "navbar__links";
-//     loginLink.textContent = "Log in";
-
-//     const signupBtn = document.createElement("a");
-//     signupBtn.href = "signup.html";
-//     signupBtn.className = "signup-nav-btn";
-//     signupBtn.textContent = "Sign up";
-
-//     navAuth.appendChild(loginLink);
-//     navAuth.appendChild(signupBtn);
-//     console.log("No user is logged in");
-
-//     tabContent.innerHTML = "<p>Please log in to view your rated movies.</p>";
-//   }
-// });
 
 onAuthStateChanged(auth, async (user) => {
   const navAuth = document.getElementById("nav-auth");
@@ -171,47 +26,44 @@ onAuthStateChanged(auth, async (user) => {
     const currentUserId = user.uid;
     const userRef = doc(db, "users", currentUserId);
     const userSnap = await getDoc(userRef);
+    const data = userSnap.data();
+    const selectedUserRef = doc(db, "users", selectedUserId);
+    const selectedUserSnap = await getDoc(selectedUserRef);
     console.log("A user is logged in");
 
     // FOLLOW / UNFOLLOW LOGIC
-    if (selectedUserId && selectedUserId !== currentUserId) {
+    if (selectedUserId !== currentUserId) {
       const followBtn = document.getElementById("follow-button");
       if (followBtn) {
-        const followingRef = doc(db, "users", currentUserId, "following", selectedUserId);
-        const followerRef = doc(db, "users", selectedUserId, "followers", currentUserId);
-
-        const followingSnap = await getDoc(followingRef);
-        let isFollowing = followingSnap.exists();
-
+        let isFollowing = false;
+        const followinglist = data.followinglist || [];
+        isFollowing = followinglist.includes(selectedUserId);
         // Set initial button text
         followBtn.textContent = isFollowing ? "Unfollow" : "Follow";
 
         followBtn.addEventListener("click", async () => {
-          const timestamp = new Date().toISOString();
-
           if (isFollowing) {
-            // Unfollow: delete both documents
-            await Promise.all([
-              deleteDoc(followingRef),
-              deleteDoc(followerRef)
-            ]);
-            followBtn.textContent = "Follow";
-            isFollowing = false;
+            // Unfollow
+            await updateDoc(userRef, {
+              followinglist: arrayRemove(selectedUserId)
+            });
+            await updateDoc(selectedUserRef, {
+              followerlist: arrayRemove(selectedUserId)
+            });
           } else {
             // Follow: create both documents with timestamps
-            await Promise.all([
-              setDoc(followingRef, { timestamp }),
-              setDoc(followerRef, { timestamp })
-            ]);
+            await updateDoc(userRef, {
+              followinglist: arrayUnion(selectedUserId)
+            });
+            await updateDoc(selectedUserRef, {
+              followerlist: arrayUnion(currentUserId)
+            });
             followBtn.textContent = "Unfollow";
             isFollowing = true;
           }
         });
       }
     }
-
-    const selectedUserRef = doc(db, "users", selectedUserId);
-    const selectedUserSnap = await getDoc(selectedUserRef);
 
     let initials = "";
     if (userSnap.exists()) {
@@ -233,18 +85,16 @@ onAuthStateChanged(auth, async (user) => {
       document.getElementById("rating-count").textContent = total;
 
       // Followers count
-      const followersCol = collection(db, "users", selectedUserId, "followers");
-      const followersSnap = await getDocs(followersCol);
-      const followersCount = followersSnap.size;
-      document.getElementById("followers-count").textContent = followersCount;
-      console.log("followers", followersCount);
+      if (data.followerlist && Array.isArray(data.followerlist)) {
+        const followersCount = data.followerlist.length;
+        document.getElementById("followers-count").textContent = followersCount;
+      }
 
       // Following count
-      const followingCol = collection(db, "users", selectedUserId, "following");
-      const followingSnap = await getDocs(followingCol);
-      const followingCount = followingSnap.size;
-      document.getElementById("following-count").textContent = followingCount;
-      console.log("following", followingCount);
+      if (data.followinglist && Array.isArray(data.followinglist)) {
+        const followingCount = data.followinglist.length;
+          document.getElementById("following-count").textContent = followingCount;
+      }
     } else {
       // Fallback to email initials
       const name = user.email;
@@ -484,7 +334,7 @@ async function loadWatchlist() {
       return {
         rank: index + 1,
         mediaId: item.mediaId,
-        mediaType: item.media_type,
+        mediaType: item.mediaType,
         title: details.title || details.name || "Untitled",
         releaseDate: details.release_date || details.first_air_date || "Unknown",
         posterPath: details.poster_path || "",

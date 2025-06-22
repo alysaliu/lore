@@ -42,20 +42,8 @@ document.getElementById("signup-form")?.addEventListener("submit", async (e) => 
       await setDoc(listRef, {
         items: []
       });
-
-      // const followersRef = doc(db, "users", user.uid, "followers", followerUserId);
-      // await setDoc(followersRef, {
-      //   timestamp: new Date().toISOString()
-      // });
-
-      // const followingRef = doc(db, "users", user.uid, "following", followingUserId);
-      // await setDoc(followingRef, {
-      //   timestamp: new Date().toISOString()
-      // });
     
       console.log("Firestore user document and list created!");
-
-      // ✅ Redirect after signup
       window.location.href = "explore.html";
     } else {
       console.error("Invalid user object:", user);

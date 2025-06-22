@@ -334,6 +334,11 @@
     color: var(--color-text-secondary);
 }
 
+.empty-state {
+    color: var(--color-text-secondary);
+    font-weight: 300;
+}
+
 .user-info-1 {
     display: flex;
     flex-direction: column;
