@@ -77,6 +77,7 @@ document.getElementById("login-form")?.addEventListener("submit", (e) => {
     })
     .catch(error => {
       console.error("Login error:", error.message);
+      alert("Login error:" + error.message);
     });
 });
 
