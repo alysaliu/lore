@@ -42,7 +42,9 @@ export default function MediaCard({
         href={`/details?id=${mediaId}&media_type=${mediaType}`}
         className={styles.cardGrid}
       >
-        <img src={posterUrl} alt={title} className={styles.posterGrid} />
+        <div className={styles.posterWrapper}>
+          <img src={posterUrl} alt={title} className={styles.posterGrid} />
+        </div>
         <div className={styles.gridInfo}>
           <div className={styles.gridTitle}>{title}</div>
           {year && <div className={styles.gridYear}>{year}</div>}

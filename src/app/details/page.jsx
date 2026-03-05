@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
-import { fetchMediaDetails, fetchMediaName, getOriginalUrl, getPosterUrl } from '../../lib/tmdb';
+import { fetchMediaDetails, fetchMediaName, getPosterUrl } from '../../lib/tmdb';
 import styles from './page.module.css';
 
 const SCORE_RANGES = {
@@ -22,6 +22,7 @@ function DetailsContent() {
 
   const [loading, setLoading] = useState(true);
   const [media, setMedia] = useState(null);
+  const [bgGradient, setBgGradient] = useState(null);
 
   // Watchlist
   const [inWatchlist, setInWatchlist] = useState(false);
@@ -86,6 +87,53 @@ function DetailsContent() {
     });
     return () => unsubscribe();
   }, [id, mediaType]);
+
+  // Extract dominant colors from poster for background gradient
+  useEffect(() => {
+    if (!media?.poster_path) return;
+
+    const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
+    img.src = getPosterUrl(media.poster_path, 'w92');
+
+    img.onload = () => {
+      const W = 10, H = 15;
+      const canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, W, H);
+      const pixels = ctx.getImageData(0, 0, W, H).data;
+
+      // Pick the most saturated pixel from the top half (left glow) and bottom half (right glow)
+      const saturation = (r, g, b) => {
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        return max === 0 ? 0 : (max - min) / max;
+      };
+
+      let r1 = 0, g1 = 0, b1 = 0, sat1 = -1;
+      let r3 = 0, g3 = 0, b3 = 0, sat3 = -1;
+      const halfH = Math.floor(H / 2);
+
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          const i = (y * W + x) * 4;
+          const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
+          const s = saturation(r, g, b);
+          if (y < halfH) {
+            if (s > sat1) { sat1 = s; r1 = r; g1 = g; b1 = b; }
+          } else {
+            if (s > sat3) { sat3 = s; r3 = r; g3 = g; b3 = b; }
+          }
+        }
+      }
+
+      setBgGradient(
+        `radial-gradient(ellipse 70% 60% at 10% 0%, rgba(${r1},${g1},${b1},0.9) 0%, rgba(${r1},${g1},${b1},0.4) 50%, transparent 100%),` +
+        `radial-gradient(ellipse 70% 60% at 90% 0%, rgba(${r3},${g3},${b3},0.7) 0%, transparent 100%)`
+      );
+    };
+  }, [media?.poster_path]);
 
   const handleWatchlist = async () => {
     const user = auth.currentUser;
@@ -219,39 +267,44 @@ function DetailsContent() {
   if (!media) return null;
 
   const posterUrl = getPosterUrl(media.poster_path, 'w500');
-  const backdropUrl = getOriginalUrl(media.poster_path);
   const year = (media.release_date || media.first_air_date || '').split('-')[0];
   const displayType = mediaType === 'movie' ? 'movie' : 'show';
 
+  const runtimeMins = media.runtime || media.episode_run_time?.[0];
+  const runtime = runtimeMins ? `${Math.floor(runtimeMins / 60)}h ${runtimeMins % 60}m` : null;
+
+  const director = (media.credits?.crew || []).find((c) => c.job === 'Director')?.name;
+  const cast = (media.credits?.cast || []).slice(0, 3).map((c) => c.name).join(', ');
+
   return (
-    <div className={styles.mainContent}>
-      <div
-        className={styles.posterHeader}
-        style={{ backgroundImage: backdropUrl ? `url(${backdropUrl})` : 'none' }}
-      >
-        <div className={styles.overlayGradient}></div>
-      </div>
+    <div className={styles.mainContent} style={bgGradient ? { background: `${bgGradient}, var(--color-surface-default)` } : {}}>
 
       <div className={styles.content}>
         <div className={styles.headerContainer}>
-          <img src={posterUrl} alt={currentTitle} className={styles.poster} />
+          <div className={styles.posterCard}>
+            <img src={posterUrl} alt={currentTitle} className={styles.posterCardImage} />
+          </div>
+
           <div className={styles.info}>
             <div className={styles.title}>{currentTitle}</div>
-            <div className={styles.badgesYearContainer}>
-              {year && <div className={styles.year}>{year}</div>}
-              <div className={styles.genres}>
-                {(media.genres || []).map((g) => (
-                  <span key={g.id} className={styles.genreBadge}>{g.name}</span>
-                ))}
-              </div>
+            <div className={styles.metaRow}>
+              {year && <span className={styles.metaItem}>{year}</span>}
+              {runtime && <><span className={styles.metaDot}>·</span><span className={styles.metaItem}>{runtime}</span></>}
+            </div>
+            <div className={styles.genres}>
+              {(media.genres || []).map((g) => (
+                <span key={g.id} className={styles.genreBadge}>{g.name}</span>
+              ))}
             </div>
             <div className={styles.description}>{media.overview}</div>
-
-            <button
-              className={styles.btn}
-              onClick={handleWatchlist}
-              disabled={false}
-            >
+            {(director || cast) && (
+              <div className={styles.creditsLine}>
+                {director && <><span className={styles.creditsLabel}>Dir.</span><span className={styles.creditsValue}>{director}</span></>}
+                {director && cast && <span className={styles.metaDot}>·</span>}
+                {cast && <><span className={styles.creditsLabel}>Starring</span><span className={styles.creditsValue}>{cast}</span></>}
+              </div>
+            )}
+            <button className={styles.btn} onClick={handleWatchlist}>
               <i className={`fas fa-${inWatchlist ? 'check' : 'plus'}`}></i>
               {inWatchlist ? 'Added to watchlist' : 'Add to watchlist'}
             </button>

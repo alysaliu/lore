@@ -15,7 +15,7 @@
 
 .mainContent {
   background: var(--color-surface-default);
-  min-height: 95vh;
+  min-height: 100vh;
 }
 
 .posterHeader {
@@ -40,61 +40,96 @@
 
 .content {
   position: relative;
-  margin-top: -350px;
+  margin: 0 auto;
+  padding-top: 100px;
   display: flex;
   flex-direction: column;
-  justify-self: center;
   gap: var(--space-8);
-  max-width: 750px;
+  max-width: 1000px;
   padding-left: var(--page-padding-mobile);
   padding-right: var(--page-padding-mobile);
 }
 
 .headerContainer {
   display: flex;
-  gap: 2rem;
-  width: fit-content;
-  justify-self: center;
-  align-items: center;
+  gap: 3rem;
+  align-items: flex-start;
   z-index: 1;
 }
 
-.poster {
-  width: 178px;
-  border-radius: 10px;
-  z-index: 200;
-}
-
-.info {
+/* Poster card */
+.posterCard {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  flex-shrink: 0;
+  width: 220px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-contrast);
 }
 
-.badgesYearContainer {
+.posterCardImage {
+  width: 100%;
+  display: block;
+}
+
+.posterCardInfo {
+  padding: var(--space-3) var(--space-3) var(--space-4);
   display: flex;
-  flex-direction: row;
-  gap: var(--space-2);
-  align-items: baseline;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.title {
-  font-size: 28px;
-  font-weight: 500;
-  line-height: 34px;
+.posterCardTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   color: var(--color-text-default);
 }
 
-.year {
+.posterCardYear {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #c9a84c;
+}
+
+/* Info section */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+}
+
+.title {
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-text-default);
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--color-text-secondary);
-  font-size: 16px;
-  line-height: 24px;
+  font-size: 15px;
   font-weight: 300;
+}
+
+.metaItem {
+  color: var(--color-text-secondary);
+}
+
+.metaDot {
+  color: var(--color-text-secondary);
+  opacity: 0.5;
 }
 
 .genres {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
@@ -107,10 +142,29 @@
 }
 
 .description {
-  max-width: 600px;
+  max-width: 560px;
   color: var(--color-icon-secondary);
-  line-height: 140%;
+  line-height: 160%;
   font-weight: 300;
+  font-size: 15px;
+}
+
+.creditsLine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+
+.creditsLabel {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
+.creditsValue {
+  color: var(--color-text-default);
+  font-weight: 400;
 }
 
 /* ── Watchlist button ─────────────────────── */

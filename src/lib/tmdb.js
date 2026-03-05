@@ -12,7 +12,7 @@ export async function searchMedia(query) {
 
 export async function fetchMediaDetails(mediaType, id) {
   const res = await fetch(
-    `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&language=en-US`
+    `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&language=en-US&append_to_response=credits`
   );
   return res.json();
 }
