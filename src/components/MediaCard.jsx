@@ -33,7 +33,7 @@ export default function MediaCard({
 }) {
   const isProfile = variant === 'profile';
   const isGrid = variant === 'grid';
-  const posterSize = isProfile ? 'w200' : 'w185';
+  const posterSize = isGrid ? 'w342' : isProfile ? 'w200' : 'w185';
   const posterUrl = getPosterUrl(posterPath, posterSize);
 
   if (isGrid) {

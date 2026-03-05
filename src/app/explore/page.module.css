@@ -111,11 +111,26 @@
 
 .resultsContainer {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: var(--space-4);
   overflow-y: auto;
   padding: var(--space-4) 0 var(--space-6);
   align-content: start;
+  flex: 1;
+  min-height: 0;
+}
+
+.resultsContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.resultsContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.resultsContainer::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 3px;
 }
 
 .emptyState {
