@@ -1,0 +1,62 @@
+'use client';
+
+import { createContext, useContext, useEffect, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [initials, setInitials] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+
+        try {
+          const userRef = doc(db, 'users', firebaseUser.uid);
+          const userSnap = await getDoc(userRef);
+
+          if (userSnap.exists()) {
+            const data = userSnap.data();
+            const first = data.firstname || '';
+            const last = data.lastname || '';
+            setInitials((first.charAt(0) + last.charAt(0)).toUpperCase());
+          } else {
+            // Fallback: derive initials from email
+            const parts = firebaseUser.email
+              .split(/[@.\s_]/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((p) => p.charAt(0).toUpperCase());
+            setInitials(parts.join(''));
+          }
+        } catch {
+          setInitials('');
+        }
+      } else {
+        setUser(null);
+        setInitials('');
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, initials, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  return ctx;
+}

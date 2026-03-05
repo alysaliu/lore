@@ -1,0 +1,80 @@
+/* ============================================
+   LORE DESIGN SYSTEM — CENTRAL TOKENS
+   All CSS custom properties live here.
+   Import this file once via globals.css.
+   ============================================ */
+
+:root {
+  /* ── Surface colors ───────────────────────── */
+  --color-surface-default: #141218;
+  --color-surface-contrast: #1c1b21;
+  --color-surface-selected: #303039;
+  --color-surface-hovered: #2b2a33;
+  --color-surface-inverse: #fefefe;
+
+  /* ── Text colors ──────────────────────────── */
+  --color-text-default: #fefefe;
+  --color-text-secondary: #77787c;
+  --color-text-inverse: #323233;
+
+  /* ── Icon colors ──────────────────────────── */
+  --color-icon-default: #fefefe;
+  --color-icon-secondary: #ceced2;
+  --color-icon-tertiary: #6c6c70;
+
+  /* ── Action colors ────────────────────────── */
+  --color-action-default: #fefefe;
+  --color-action-hovered: #b6b6b9;
+
+  /* ── Link colors ──────────────────────────── */
+  --color-link-default: #fefefe;
+  --color-link-alt: #6589ff;
+
+  /* ── Border colors ────────────────────────── */
+  --color-border-default: #2a2930;
+  --color-border-selected: #58585f;
+
+  /* ── Semantic alert colors ────────────────── */
+  --color-alert-tip-bg: #19262e;
+  --color-alert-tip-text: #93b3c7;
+  --color-alert-analysis-bg: #262340;
+  --color-alert-analysis-text: #a19dca;
+
+  /* ── Spacing scale ────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Layout ───────────────────────────────── */
+  --max-width: 1300px;
+  --content-max-width: 750px;
+  --navbar-height: 80px;
+  --page-padding: 50px;
+  --page-padding-mobile: 25px;
+
+  /* ── Border radius ────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 32px;
+
+  /* ── Transitions ──────────────────────────── */
+  --transition-fast: all 0.2s ease;
+  --transition-base: all 0.3s ease;
+  --transition-slow: all 0.5s ease;
+
+  /* ── Typography ───────────────────────────── */
+  --font-sans: 'Inter', sans-serif;
+  --font-tight: 'Inter Tight', sans-serif;
+
+  /* ── Shadows ──────────────────────────────── */
+  --shadow-card: 0 8px 24px rgb(19, 19, 19);
+  --shadow-profile: 0 8px 24px rgb(22, 22, 22);
+}

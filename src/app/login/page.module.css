@@ -1,0 +1,139 @@
+.formSection {
+  background: var(--color-surface-default);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  padding: 50px 25px 25px;
+  width: 100%;
+  margin-top: 10vh;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-9);
+}
+
+.title h1 {
+  color: var(--color-text-default);
+  text-align: center;
+  font-weight: 600;
+  font-size: 28px;
+}
+
+.title h3 {
+  color: var(--color-text-secondary);
+  text-align: center;
+  font-weight: 400;
+  font-size: 16px;
+}
+
+.logo {
+  width: 60px;
+  height: 60px;
+  margin-bottom: var(--space-6);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 320px;
+}
+
+.inputWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 40px 10px 12px;
+  font-size: 16px;
+  font-weight: 300;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-sizing: border-box;
+  outline: none;
+  box-shadow: none;
+  background-color: var(--color-surface-default);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  color: var(--color-text-default);
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.inputWrapper:focus-within .input {
+  border: 1px solid var(--color-border-selected);
+}
+
+.inputWrapper:focus-within .inputIcon {
+  color: var(--color-icon-default);
+}
+
+.inputIcon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: var(--color-icon-tertiary);
+  pointer-events: none;
+  transition: var(--transition-fast);
+}
+
+.submitBtn {
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: var(--color-surface-inverse);
+  color: var(--color-text-inverse);
+  font-weight: 500;
+  width: 100%;
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.submitBtn:hover {
+  background-color: var(--color-action-hovered);
+}
+
+.altBtn {
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: var(--color-surface-default);
+  color: var(--color-text-default);
+  width: 100%;
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.altBtn:hover {
+  background-color: var(--color-surface-hovered);
+}
+
+.orText {
+  color: var(--color-text-secondary);
+  font-weight: 300;
+  text-align: center;
+}
+
+.error {
+  color: #ff6b6b;
+  font-size: 14px;
+  font-weight: 300;
+  text-align: center;
+}

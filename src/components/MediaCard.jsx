@@ -1,0 +1,71 @@
+import Link from 'next/link';
+import { getPosterUrl } from '../lib/tmdb';
+import styles from './MediaCard.module.css';
+
+/**
+ * MediaCard — used in both explore results and profile rated/watchlist tabs.
+ *
+ * Props:
+ *   mediaId      — TMDB id
+ *   mediaType    — "movie" | "tv"
+ *   title        — display title
+ *   year         — release year string
+ *   overview     — description text
+ *   posterPath   — TMDB poster_path (e.g. "/abc123.jpg")
+ *   genres       — string[] of genre names (optional)
+ *   score        — numeric score (optional, profile tabs only)
+ *   rank         — ranking number (optional)
+ *   note         — user's note (optional)
+ *   variant      — "explore" | "profile" (default "explore")
+ */
+export default function MediaCard({
+  mediaId,
+  mediaType,
+  title,
+  year,
+  overview,
+  posterPath,
+  genres = [],
+  score,
+  rank,
+  note,
+  variant = 'explore',
+}) {
+  const isProfile = variant === 'profile';
+  const posterSize = isProfile ? 'w200' : 'w185';
+  const posterUrl = getPosterUrl(posterPath, posterSize);
+
+  return (
+    <Link
+      href={`/details?id=${mediaId}&media_type=${mediaType}`}
+      className={`${styles.card} ${isProfile ? styles.cardProfile : ''}`}
+    >
+      <img
+        src={posterUrl}
+        alt={title}
+        className={isProfile ? styles.posterImageSmall : styles.posterImage}
+      />
+      <div className={styles.textContainer}>
+        <div className={styles.titleContainer}>
+          <div className={styles.header}>
+            {rank != null ? `${rank}. ` : ''}{title}
+          </div>
+          {year && <div className={styles.metadata}>{year}</div>}
+        </div>
+        {genres.length > 0 && (
+          <div className={styles.genres}>
+            {genres.map((g) => (
+              <span key={g} className={styles.genreBadge}>{g}</span>
+            ))}
+          </div>
+        )}
+        {(note || overview) && (
+          <div className={styles.body}>{note || overview}</div>
+        )}
+      </div>
+      {score != null && (
+        <div className={styles.score}>{score}</div>
+      )}
+    </Link>
+  );
+}

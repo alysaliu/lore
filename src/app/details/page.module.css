@@ -1,0 +1,310 @@
+.loading {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-default);
+  height: 100vh;
+  align-items: center;
+  padding-top: 100px;
+  color: var(--color-icon-secondary);
+}
+
+.loading img {
+  height: 300px;
+  width: 300px;
+}
+
+.mainContent {
+  background: var(--color-surface-default);
+  min-height: 95vh;
+}
+
+.posterHeader {
+  position: relative;
+  height: 450px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 30%;
+  z-index: 1;
+}
+
+.overlayGradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 450px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, var(--color-surface-default) 100%);
+  z-index: 5;
+}
+
+.content {
+  position: relative;
+  margin-top: -350px;
+  display: flex;
+  flex-direction: column;
+  justify-self: center;
+  gap: var(--space-8);
+  max-width: 750px;
+  padding-left: var(--page-padding-mobile);
+  padding-right: var(--page-padding-mobile);
+}
+
+.headerContainer {
+  display: flex;
+  gap: 2rem;
+  width: fit-content;
+  justify-self: center;
+  align-items: center;
+  z-index: 1;
+}
+
+.poster {
+  width: 178px;
+  border-radius: 10px;
+  z-index: 200;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.badgesYearContainer {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 34px;
+  color: var(--color-text-default);
+}
+
+.year {
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 300;
+}
+
+.genres {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.genreBadge {
+  background-color: var(--color-surface-contrast);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--color-text-default);
+}
+
+.description {
+  max-width: 600px;
+  color: var(--color-icon-secondary);
+  line-height: 140%;
+  font-weight: 300;
+}
+
+/* ── Watchlist button ─────────────────────── */
+.btn {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  color: var(--color-text-default);
+  width: fit-content;
+  margin-top: var(--space-2);
+  background-color: rgba(245, 236, 236, 0);
+  backdrop-filter: blur(8px);
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.btn:hover {
+  background-color: rgba(183, 183, 183, 0.11);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ── Rating box ───────────────────────────── */
+.ratingBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: var(--color-text-default);
+  border-radius: 16px;
+  border: 1px solid transparent;
+  z-index: 100;
+}
+
+.ratingBox h3 {
+  font-weight: 450;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.ratingOptions {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.ratingButton {
+  flex: 1;
+  display: grid;
+  grid-template-rows: auto;
+  gap: var(--space-1);
+  justify-content: left;
+  background-color: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  padding: 12px var(--space-4);
+  border-radius: var(--radius-md);
+  color: var(--color-text-default);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.ratingButton:hover {
+  background-color: var(--color-surface-hovered);
+}
+
+.ratingButtonSelected {
+  composes: ratingButton;
+  background-color: var(--color-surface-selected);
+  border-color: transparent;
+}
+
+.ratingLabel {
+  font-size: 14px;
+  line-height: 18px;
+  text-align: left;
+}
+
+.ratingEmoji {
+  font-size: 28px;
+  line-height: 34px;
+}
+
+/* ── Note input ──────────────────────────── */
+.noteInput {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 300;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-sizing: border-box;
+  outline: none;
+  box-shadow: none;
+  background-color: var(--color-surface-default);
+  -webkit-appearance: none;
+  appearance: none;
+  color: var(--color-text-default);
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.noteInput:focus {
+  border-color: var(--color-border-selected);
+}
+
+/* ── Button row ──────────────────────────── */
+.buttonRow {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+  gap: var(--space-4);
+}
+
+.cancelBtn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: var(--color-surface-default);
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+}
+
+.nextBtn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: var(--color-surface-inverse);
+  color: var(--color-text-inverse);
+  font-weight: 500;
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.nextBtn:hover {
+  background-color: var(--color-action-hovered);
+}
+
+/* ── Comparison buttons ──────────────────── */
+.comparisonButtons {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-2);
+}
+
+.compareBtn {
+  flex: 1;
+  padding: 24px 0.6rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: var(--color-surface-default);
+  color: var(--color-text-default);
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.compareBtn:hover {
+  background-color: var(--color-surface-hovered);
+}
+
+.skipLink {
+  text-align: center;
+  justify-self: center;
+  align-self: center;
+  margin-top: var(--space-3);
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-family: var(--font-sans);
+}
+
+.resultText {
+  color: var(--color-text-default);
+  font-weight: 300;
+}

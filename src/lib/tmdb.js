@@ -1,0 +1,37 @@
+const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+const BASE_URL = 'https://api.themoviedb.org/3';
+export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
+
+export async function searchMedia(query) {
+  const res = await fetch(
+    `${BASE_URL}/search/multi?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1&include_adult=false`
+  );
+  const data = await res.json();
+  return data.results || [];
+}
+
+export async function fetchMediaDetails(mediaType, id) {
+  const res = await fetch(
+    `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&language=en-US`
+  );
+  return res.json();
+}
+
+export async function fetchMediaName(id, mediaType) {
+  try {
+    const data = await fetchMediaDetails(mediaType, id);
+    return mediaType === 'movie' ? data.title : data.name;
+  } catch {
+    return null;
+  }
+}
+
+export function getPosterUrl(posterPath, size = 'w185') {
+  if (!posterPath) return '/images/placeholder.png';
+  return `${TMDB_IMAGE_BASE}/${size}${posterPath}`;
+}
+
+export function getOriginalUrl(posterPath) {
+  if (!posterPath) return null;
+  return `${TMDB_IMAGE_BASE}/original${posterPath}`;
+}

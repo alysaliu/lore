@@ -1,0 +1,106 @@
+.card {
+  background-color: var(--color-surface-contrast);
+  padding: var(--space-2);
+  height: 140px;
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-4);
+  cursor: pointer;
+  transition: var(--transition-slow);
+  text-decoration: none;
+}
+
+.card:hover {
+  background-color: var(--color-surface-hovered);
+  border-radius: var(--radius-md);
+}
+
+/* Profile card variant (shorter) */
+.cardProfile {
+  composes: card;
+  height: 100px;
+  align-items: center;
+}
+
+.posterImage {
+  width: 80px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.posterImageSmall {
+  composes: posterImage;
+  width: 60px;
+  height: 90px;
+}
+
+.textContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  gap: var(--space-2);
+  justify-content: center;
+  min-width: 0;
+}
+
+.titleContainer {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-2);
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.header {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--color-text-default);
+}
+
+.metadata {
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: #777;
+}
+
+.body {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--color-icon-secondary);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.genres {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.genreBadge {
+  background-color: var(--color-surface-hovered);
+  padding: 4px var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--color-text-default);
+}
+
+.score {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-weight: 500;
+  font-size: 24px;
+  height: 60px;
+  width: 60px;
+  min-width: 60px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  color: var(--color-text-default);
+}

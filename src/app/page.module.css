@@ -1,0 +1,187 @@
+/* ── Hero / slideshow ─────────────────────── */
+.main {
+  background-color: var(--color-surface-default);
+}
+
+.slideshowContainer {
+  width: 100%;
+  height: 90vh;
+  background-size: cover;
+  background-position: center;
+  transition: background-image 1s ease-in-out;
+}
+
+.mainContainer {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  align-items: center;
+  justify-self: center;
+  margin: 0 auto;
+  height: 90vh;
+  color: #fff;
+  width: 100%;
+  max-width: var(--max-width);
+  padding-right: var(--page-padding);
+  padding-left: var(--page-padding);
+  overflow: hidden;
+  z-index: 2;
+}
+
+.mainContent h1 {
+  font-size: 4rem;
+  font-weight: 600;
+}
+
+.mainContent p {
+  margin-top: 1rem;
+  font-size: 2rem;
+  font-weight: 300;
+}
+
+/* ── Services section ─────────────────────── */
+.services {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  align-items: center;
+  height: 50vh;
+  padding-top: var(--space-12);
+  padding-bottom: var(--space-12);
+  z-index: 100;
+}
+
+.servicesContainer {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-6);
+  max-width: var(--max-width);
+}
+
+.servicesCard {
+  backdrop-filter: blur(5px);
+  border: 0.5px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 22px 24px 28px 28px;
+  display: grid;
+  grid-template-rows: auto;
+  gap: var(--space-2);
+}
+
+.servicesCard h2 {
+  color: var(--color-text-default);
+  font-weight: 400;
+  font-size: 1.2rem;
+}
+
+.servicesCard p {
+  color: var(--color-text-secondary);
+  margin-bottom: 1rem;
+}
+
+.buttonLink {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  padding: var(--space-2) var(--space-3);
+  width: 100%;
+  border: none;
+  outline: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-action-default);
+  color: var(--color-text-inverse);
+  font-weight: 500;
+  font-size: 14px;
+  transition: var(--transition-base);
+  cursor: pointer;
+}
+
+.buttonLink:hover {
+  background: var(--color-action-hovered);
+  color: var(--color-text-inverse);
+}
+
+/* ── Responsive ───────────────────────────── */
+@media screen and (max-width: 960px) {
+  .mainContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    height: 90vh;
+    padding-right: var(--page-padding-mobile);
+    padding-left: var(--page-padding-mobile);
+  }
+
+  .servicesContainer {
+    padding-left: var(--page-padding-mobile);
+    padding-right: var(--page-padding-mobile);
+    gap: var(--space-3);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .mainContainer {
+    display: grid;
+    grid-template-columns: auto;
+    align-items: center;
+    width: 100%;
+    margin: 0 auto;
+    height: 90vh;
+  }
+
+  .mainContent {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .mainContent h1 {
+    font-size: 2.5rem;
+    margin-top: 2rem;
+  }
+
+  .mainContent p {
+    margin-top: 1rem;
+    font-size: 1.5rem;
+  }
+
+  .services {
+    height: 90vh;
+  }
+
+  .servicesContainer {
+    display: grid;
+    grid-template-columns: auto;
+    align-items: center;
+    justify-self: center;
+    width: 100%;
+    margin: 0 auto;
+    height: auto;
+  }
+
+  .servicesCard h2 {
+    text-align: center;
+  }
+
+  .servicesCard p {
+    text-align: center;
+    font-size: 1rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .mainContent {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .mainContent h1 {
+    font-size: 2rem;
+    margin-top: 3rem;
+  }
+
+  .mainContent p {
+    margin-top: 2rem;
+    font-size: 1.5rem;
+  }
+}
