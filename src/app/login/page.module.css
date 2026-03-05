@@ -131,6 +131,40 @@
   text-align: center;
 }
 
+.googleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  background-color: var(--color-surface-default);
+  color: var(--color-text-default);
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.googleBtn:hover {
+  background-color: var(--color-surface-hovered);
+  border-color: var(--color-border-selected);
+}
+
+.googleBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.googleIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 .error {
   color: #ff6b6b;
   font-size: 14px;

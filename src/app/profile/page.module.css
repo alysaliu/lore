@@ -15,8 +15,7 @@
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   background-color: var(--color-surface-contrast);
-  min-height: 100%;
-  height: fit-content;
+  min-height: calc(100vh - var(--navbar-height) - var(--space-6));
   width: 100%;
   max-width: var(--content-max-width);
   box-shadow: var(--shadow-profile);

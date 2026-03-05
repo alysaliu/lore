@@ -90,6 +90,52 @@
   color: var(--color-text-default);
 }
 
+.cardGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.cardGrid:hover .posterGrid {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transform: translateY(-3px);
+}
+
+.posterGrid {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-default);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gridInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gridTitle {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--color-text-default);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gridYear {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--color-text-secondary);
+}
+
 .score {
   display: flex;
   flex-direction: column;

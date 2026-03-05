@@ -105,7 +105,7 @@ export default function ExplorePage() {
                   year={year}
                   overview={item.overview}
                   posterPath={item.poster_path}
-                  variant="explore"
+                  variant="grid"
                 />
               );
             })

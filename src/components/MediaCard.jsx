@@ -32,8 +32,24 @@ export default function MediaCard({
   variant = 'explore',
 }) {
   const isProfile = variant === 'profile';
+  const isGrid = variant === 'grid';
   const posterSize = isProfile ? 'w200' : 'w185';
   const posterUrl = getPosterUrl(posterPath, posterSize);
+
+  if (isGrid) {
+    return (
+      <Link
+        href={`/details?id=${mediaId}&media_type=${mediaType}`}
+        className={styles.cardGrid}
+      >
+        <img src={posterUrl} alt={title} className={styles.posterGrid} />
+        <div className={styles.gridInfo}>
+          <div className={styles.gridTitle}>{title}</div>
+          {year && <div className={styles.gridYear}>{year}</div>}
+        </div>
+      </Link>
+    );
+  }
 
   return (
     <Link
