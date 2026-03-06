@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
@@ -14,6 +14,7 @@ const SCORE_RANGES = {
   'good': [7, 8],
   'amazing': [9, 10],
 };
+
 
 function DetailsContent() {
   const searchParams = useSearchParams();
@@ -36,7 +37,9 @@ function DetailsContent() {
   const [compareTitle, setCompareTitle] = useState('');
   const [currentTitle, setCurrentTitle] = useState('');
   const [finalScore, setFinalScore] = useState(null);
-  const [existingRating, setExistingRating] = useState(null);
+  const [, setExistingRating] = useState(null);
+  const [existingSentiment, setExistingSentiment] = useState(null);
+  const [isReranking, setIsReranking] = useState(false);
   const [cancelled, setCancelled] = useState(false);
 
   // Load media details
@@ -75,6 +78,7 @@ function DetailsContent() {
           for (const entry of ratings[mediaType][sentiment]) {
             if (entry.mediaId === id) {
               setExistingRating(entry);
+              setExistingSentiment(sentiment);
               setRatingPhase('done');
               setFinalScore(entry.score);
               return;
@@ -129,8 +133,8 @@ function DetailsContent() {
       }
 
       setBgGradient(
-        `radial-gradient(ellipse 70% 60% at 10% 0%, rgba(${r1},${g1},${b1},0.9) 0%, rgba(${r1},${g1},${b1},0.4) 50%, transparent 100%),` +
-        `radial-gradient(ellipse 70% 60% at 90% 0%, rgba(${r3},${g3},${b3},0.7) 0%, transparent 100%)`
+        `radial-gradient(ellipse 70% 60% at 10% 0%, rgba(${r1},${g1},${b1},0.25) 0%, rgba(${r1},${g1},${b1},0.1) 50%, transparent 100%),` +
+        `radial-gradient(ellipse 70% 60% at 90% 0%, rgba(${r3},${g3},${b3},0.18) 0%, transparent 100%)`
       );
     };
   }, [media?.poster_path]);
@@ -167,14 +171,27 @@ function DetailsContent() {
     if (!ratings[mediaType]) ratings[mediaType] = {};
     if (!ratings[mediaType][selectedSentiment]) ratings[mediaType][selectedSentiment] = [];
 
-    const group = ratings[mediaType][selectedSentiment];
+    const group = (ratings[mediaType][selectedSentiment] || []).filter(item => item.mediaId !== id);
 
     if (group.length === 0) {
       const [, max] = SCORE_RANGES[selectedSentiment];
       const newRating = { mediaId: id, mediaType, note: note || null, score: max, timestamp: new Date().toISOString() };
+      // Remove from all other sentiment groups before saving
+      for (const sentiment of Object.keys(ratings[mediaType])) {
+        if (sentiment === selectedSentiment) continue;
+        const cleaned = (ratings[mediaType][sentiment] || []).filter(item => item.mediaId !== id);
+        if (cleaned.length !== (ratings[mediaType][sentiment] || []).length) {
+          const [sMin, sMax] = SCORE_RANGES[sentiment] || [1, 10];
+          for (let i = 0; i < cleaned.length; i++) {
+            const ratio = i / (cleaned.length - 1 || 1);
+            cleaned[i].score = Math.round((sMax - (sMax - sMin) * ratio) * 10) / 10;
+          }
+          ratings[mediaType][sentiment] = cleaned;
+        }
+      }
       ratings[mediaType][selectedSentiment] = [newRating];
       await setDoc(ratingsRef, { ratings }, { merge: true });
-      await incrementRatingCount(user.uid);
+      if (!isReranking) await incrementRatingCount(user.uid);
       setFinalScore(max);
       setRatingPhase('done');
       return;
@@ -222,7 +239,24 @@ function DetailsContent() {
     const userDoc = await getDoc(ratingsRef);
     const ratings = userDoc.exists() ? userDoc.data().ratings || {} : {};
 
-    const group = [...(ratings[mediaType]?.[selectedSentiment] || [])];
+    if (!ratings[mediaType]) ratings[mediaType] = {};
+
+    // Remove current item from every sentiment group and recalculate their scores
+    for (const sentiment of Object.keys(ratings[mediaType])) {
+      if (sentiment === selectedSentiment) continue;
+      const cleaned = (ratings[mediaType][sentiment] || []).filter(item => item.mediaId !== id);
+      if (cleaned.length !== (ratings[mediaType][sentiment] || []).length) {
+        const [sMin, sMax] = SCORE_RANGES[sentiment] || [1, 10];
+        for (let i = 0; i < cleaned.length; i++) {
+          const ratio = i / (cleaned.length - 1 || 1);
+          cleaned[i].score = Math.round((sMax - (sMax - sMin) * ratio) * 10) / 10;
+        }
+        ratings[mediaType][sentiment] = cleaned;
+      }
+    }
+
+    // Build target group, excluding current item
+    const group = [...(ratings[mediaType][selectedSentiment] || [])].filter(item => item.mediaId !== id);
     const [min, max] = SCORE_RANGES[selectedSentiment];
 
     group.splice(position, 0, {
@@ -238,14 +272,22 @@ function DetailsContent() {
       group[i].score = Math.round((max - (max - min) * ratio) * 10) / 10;
     }
 
-    if (!ratings[mediaType]) ratings[mediaType] = {};
     ratings[mediaType][selectedSentiment] = group;
     await updateDoc(ratingsRef, { ratings });
-    await incrementRatingCount(user.uid);
+    if (!isReranking) await incrementRatingCount(user.uid);
 
     setFinalScore(group[position].score);
+    setExistingSentiment(selectedSentiment);
+    setIsReranking(false);
     setRatingPhase('done');
     setInsertionState(null);
+  };
+
+  const handleRerank = () => {
+    setRatingPhase('initial');
+    setSelectedSentiment(null);
+    setNote('');
+    setIsReranking(true);
   };
 
   const incrementRatingCount = async (uid) => {
@@ -283,6 +325,13 @@ function DetailsContent() {
         <div className={styles.headerContainer}>
           <div className={styles.posterCard}>
             <img src={posterUrl} alt={currentTitle} className={styles.posterCardImage} />
+            <button
+              className={`${styles.watchlistIconBtn} ${inWatchlist ? styles.watchlistIconBtnActive : ''}`}
+              onClick={handleWatchlist}
+              data-tooltip={inWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+            >
+              <i className={`fas fa-${inWatchlist ? 'check' : 'plus'}`}></i>
+            </button>
           </div>
 
           <div className={styles.info}>
@@ -290,8 +339,7 @@ function DetailsContent() {
             <div className={styles.metaRow}>
               {year && <span className={styles.metaItem}>{year}</span>}
               {runtime && <><span className={styles.metaDot}>·</span><span className={styles.metaItem}>{runtime}</span></>}
-            </div>
-            <div className={styles.genres}>
+              {(media.genres || []).length > 0 && <span className={styles.metaDot}>·</span>}
               {(media.genres || []).map((g) => (
                 <span key={g.id} className={styles.genreBadge}>{g.name}</span>
               ))}
@@ -304,23 +352,21 @@ function DetailsContent() {
                 {cast && <><span className={styles.creditsLabel}>Starring</span><span className={styles.creditsValue}>{cast}</span></>}
               </div>
             )}
-            <button className={styles.btn} onClick={handleWatchlist}>
-              <i className={`fas fa-${inWatchlist ? 'check' : 'plus'}`}></i>
-              {inWatchlist ? 'Added to watchlist' : 'Add to watchlist'}
-            </button>
-          </div>
-        </div>
 
-        {/* Rating box */}
-        <div className={styles.ratingBox}>
+            <hr className={styles.divider} />
+
+            {/* Rating box */}
+            <div className={styles.ratingBox}>
           {cancelled ? (
             <p className={styles.resultText}>Ok! Come back when you've watched it.</p>
           ) : ratingPhase === 'done' ? (
-            <p className={styles.resultText}>
-              {existingRating
-                ? `Your rating: ${finalScore}`
-                : `Thanks! You rated this a ${finalScore}.`}
-            </p>
+            <div className={styles.ratingDone}>
+              <div className={styles.ratingColumn}>
+                <div className="eyebrow">Your rating</div>
+                <div className={styles.ratingColumnScore}>{finalScore}</div>
+                <button className={styles.rerankBtn} onClick={handleRerank}>Re-rank</button>
+              </div>
+            </div>
           ) : ratingPhase === 'comparing' ? (
             <>
               <h3>Which did you like more?</h3>
@@ -373,6 +419,8 @@ function DetailsContent() {
               </div>
             </>
           )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

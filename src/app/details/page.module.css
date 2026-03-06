@@ -59,6 +59,7 @@
 
 /* Poster card */
 .posterCard {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -72,6 +73,55 @@
 .posterCardImage {
   width: 100%;
   display: block;
+}
+
+.watchlistIconBtn {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.watchlistIconBtn:hover {
+  background: rgba(0, 0, 0, 0.75);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.watchlistIconBtnActive {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.watchlistIconBtn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.watchlistIconBtn[data-tooltip]:hover::after {
+  opacity: 1;
 }
 
 .posterCardInfo {
@@ -134,19 +184,20 @@
 }
 
 .genreBadge {
-  background-color: var(--color-surface-contrast);
-  padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-md);
+  background-color: transparent;
+  border: 1px solid var(--color-border-default);
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
   font-size: 0.875rem;
   color: var(--color-text-default);
 }
 
 .description {
   max-width: 560px;
-  color: var(--color-icon-secondary);
+  color: var(--color-text-secondary);
   line-height: 160%;
   font-weight: 300;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .creditsLine {
@@ -163,8 +214,8 @@
 }
 
 .creditsValue {
-  color: var(--color-text-default);
-  font-weight: 400;
+  color: var(--color-text-secondary);
+  font-weight: 600;
 }
 
 /* ── Watchlist button ─────────────────────── */
@@ -234,11 +285,19 @@
   color: var(--color-text-default);
   cursor: pointer;
   font-family: var(--font-sans);
-  transition: var(--transition-fast);
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .ratingButton:hover {
   background-color: var(--color-surface-hovered);
+  border-color: var(--color-border-selected);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ratingButton:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .ratingButtonSelected {
@@ -358,7 +417,57 @@
   font-family: var(--font-sans);
 }
 
+.divider {
+  border: none;
+  border-top: 1px solid var(--color-border-secondary);
+  margin: var(--space-4) 0;
+}
+
 .resultText {
   color: var(--color-text-default);
   font-weight: 300;
+}
+
+.ratingDone {
+  display: flex;
+  gap: 0;
+}
+
+.ratingColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-right: var(--space-8);
+}
+
+.ratingColumnScore {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--color-text-default);
+  line-height: 1;
+}
+
+.ratingColumnSentiment {
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--color-text-secondary);
+}
+
+.rerankBtn {
+  margin-top: var(--space-1);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+  align-self: flex-start;
+}
+
+.rerankBtn:hover {
+  color: var(--color-text-default);
 }

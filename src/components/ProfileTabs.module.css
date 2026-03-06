@@ -1,8 +1,9 @@
 .tabs {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  gap: var(--space-6);
   border-bottom: 1px solid var(--color-surface-hovered);
+  padding-top: var(--space-4);
 }
 
 .tab {
@@ -12,10 +13,9 @@
   margin-bottom: -1px;
   cursor: pointer;
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: 400;
   border-bottom: 1px solid transparent;
   transition: var(--transition-fast);
-  width: 33.333%;
   font-family: var(--font-sans);
   font-size: 1rem;
 }
@@ -28,7 +28,7 @@
   composes: tab;
   border-bottom: 1px solid var(--color-text-default);
   color: var(--color-text-default);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .tabContent {
@@ -40,4 +40,136 @@
   color: var(--color-text-secondary);
   font-weight: 300;
   padding: var(--space-4) 0;
+}
+
+/* ── Watchlist filter chips ──────────────────── */
+.filterRow {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-4) 0 var(--space-2);
+}
+
+.chip {
+  padding: 6px 10px;
+  border-radius: 20px;
+  color: var(--color-text-default);
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  border: 1px solid var(--color-border-selected);
+  transition: var(--transition-fast);
+  background: transparent;
+  font-family: var(--font-sans);
+}
+
+.chip:hover {
+  background-color: var(--color-surface-selected);
+}
+
+.chipSelected {
+  composes: chip;
+  background-color: var(--color-surface-selected);
+  border-color: transparent;
+}
+
+/* ── Rated / watchlist rows ──────────────────── */
+.ratedRow {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+.ratedRow:hover .rowTitle {
+  color: var(--color-text-default);
+  opacity: 0.8;
+}
+
+.rowRank {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+  padding-top: var(--space-1);
+}
+
+.rowPoster {
+  width: 48px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.rowInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.rowTitleLine {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.rowTitle {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-default);
+}
+
+.rowYear {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--color-text-secondary);
+}
+
+.rowNote {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--color-text-secondary);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.rowGenres {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.rowGenreBadge {
+  background-color: var(--color-surface-hovered);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.rowScore {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-default);
+  line-height: 1;
+  flex-shrink: 0;
+  min-width: 52px;
+  text-align: right;
+}
+
+.rowDivider {
+  border: none;
+  border-top: 1px solid var(--color-border-secondary);
+  margin: 0;
 }

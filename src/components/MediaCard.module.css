@@ -130,6 +130,66 @@
   display: block;
 }
 
+.watchlistBtn {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.posterWrapper:hover .watchlistBtn {
+  opacity: 1;
+}
+
+.watchlistBtn:hover {
+  background: rgba(0, 0, 0, 0.75);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.watchlistBtnActive {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.watchlistBtn[data-tooltip] {
+  position: absolute;
+}
+
+.watchlistBtn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.watchlistBtn[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
 .gridInfo {
   display: flex;
   flex-direction: column;
@@ -139,7 +199,7 @@
 
 .gridTitle {
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--color-text-default);
   display: -webkit-box;
   -webkit-box-orient: vertical;

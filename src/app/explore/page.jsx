@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import MediaCard from '../../components/MediaCard';
 import { searchMedia } from '../../lib/tmdb';
+import { auth, db } from '../../lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import styles from './page.module.css';
 
 function debounce(fn, delay) {
@@ -18,6 +20,33 @@ export default function ExplorePage() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(null); // null = empty state, [] = no results
   const [selectedType, setSelectedType] = useState('all');
+  const [watchlist, setWatchlist] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      setCurrentUser(user);
+      if (!user) { setWatchlist([]); return; }
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      setWatchlist(snap.exists() ? snap.data().lists?.watchlist || [] : []);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleWatchlistToggle = async (mediaId, mediaType) => {
+    if (!currentUser) return;
+    const userRef = doc(db, 'users', currentUser.uid);
+    const snap = await getDoc(userRef);
+    const data = snap.exists() ? snap.data() : {};
+    const lists = data.lists || {};
+    const current = lists.watchlist || [];
+    const isIn = current.some((item) => item.mediaId === mediaId);
+    const updated = isIn
+      ? current.filter((item) => item.mediaId !== mediaId)
+      : [...current, { mediaId, mediaType, timestamp: new Date().toISOString() }];
+    await setDoc(userRef, { lists: { ...lists, watchlist: updated } }, { merge: true });
+    setWatchlist(updated);
+  };
 
   const fetchResults = useCallback(
     debounce(async (q, type) => {
@@ -106,6 +135,8 @@ export default function ExplorePage() {
                   overview={item.overview}
                   posterPath={item.poster_path}
                   variant="grid"
+                  inWatchlist={watchlist.some((w) => w.mediaId === String(item.id))}
+                  onWatchlistToggle={handleWatchlistToggle}
                 />
               );
             })

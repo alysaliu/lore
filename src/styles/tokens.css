@@ -32,6 +32,7 @@
 
   /* ── Border colors ────────────────────────── */
   --color-border-default: #2a2930;
+  --color-border-secondary: #1e1d24;
   --color-border-selected: #58585f;
 
   /* ── Semantic alert colors ────────────────── */

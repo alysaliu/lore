@@ -30,6 +30,8 @@ export default function MediaCard({
   rank,
   note,
   variant = 'explore',
+  inWatchlist = false,
+  onWatchlistToggle,
 }) {
   const isProfile = variant === 'profile';
   const isGrid = variant === 'grid';
@@ -44,6 +46,15 @@ export default function MediaCard({
       >
         <div className={styles.posterWrapper}>
           <img src={posterUrl} alt={title} className={styles.posterGrid} />
+          {onWatchlistToggle && (
+            <button
+              className={`${styles.watchlistBtn} ${inWatchlist ? styles.watchlistBtnActive : ''}`}
+              onClick={(e) => { e.preventDefault(); onWatchlistToggle(String(mediaId), mediaType); }}
+              data-tooltip={inWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+            >
+              <i className={`fas fa-${inWatchlist ? 'check' : 'plus'}`}></i>
+            </button>
+          )}
         </div>
         <div className={styles.gridInfo}>
           <div className={styles.gridTitle}>{title}</div>

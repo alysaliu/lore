@@ -72,28 +72,28 @@ export default function ProfilePage() {
                 <p className={styles.email}>{user?.email || ''}</p>
               </div>
               <div className={styles.statsSection}>
-                <div>
+                <div className={styles.statItem}>
+                  <span className="eyebrow">Ratings</span>
                   <span className={styles.statNumber}>{ratingCount}</span>
-                  <span className={styles.statDescription}> ratings</span>
                 </div>
-                <div>
+                <div className={styles.statItem}>
+                  <span className="eyebrow">Followers</span>
                   <span className={styles.statNumber}>{followersCount}</span>
-                  <span className={styles.statDescription}> followers</span>
                 </div>
-                <div>
+                <div className={styles.statItem}>
+                  <span className="eyebrow">Following</span>
                   <span className={styles.statNumber}>{followingCount}</span>
-                  <span className={styles.statDescription}> following</span>
                 </div>
               </div>
             </div>
-            <div className={styles.buttons}>
-              <button className={styles.btn} onClick={handleShare}>
-                <i className="fas fa-link"></i>Share profile
-              </button>
-              <button className={styles.logoutButton} onClick={handleLogout}>
-                Log out
-              </button>
-            </div>
+          </div>
+          <div className={styles.buttons}>
+            <button className={styles.btn} onClick={handleShare}>
+              <i className="fas fa-link"></i>Share profile
+            </button>
+            <button className={styles.logoutButton} onClick={handleLogout}>
+              Log out
+            </button>
           </div>
         </div>
 
