@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
@@ -48,8 +48,12 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
+  const signOut = useCallback(async () => {
+    await firebaseSignOut(auth);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, initials, loading }}>
+    <AuthContext.Provider value={{ user, initials, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -3,14 +3,22 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
-  const { user, initials } = useAuth();
+  const router = useRouter();
+  const { user, initials, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const toggleMenu = () => setMenuOpen((prev) => !prev);
+
+  const handleLogout = async () => {
+    await signOut();
+    router.push('/login');
+  };
 
   return (
     <nav className={styles.navbar}>
@@ -38,9 +46,39 @@ export default function Navbar() {
           </li>
           <div className={styles.navRight}>
             {user ? (
-              <Link href="/profile" className={styles.profileCircle}>
-                {initials}
-              </Link>
+              <div
+                className={styles.userMenuWrapper}
+                onMouseEnter={() => setUserMenuOpen(true)}
+                onMouseLeave={() => setUserMenuOpen(false)}
+              >
+                <button
+                  type="button"
+                  className={styles.profileCircle}
+                  aria-haspopup="true"
+                  aria-expanded={userMenuOpen}
+                  aria-label="User menu"
+                >
+                  {initials}
+                </button>
+                {userMenuOpen && (
+                  <div className={styles.userDropdown} role="menu">
+                    <Link href="/profile" className={styles.userDropdownItem} role="menuitem">
+                      Profile
+                    </Link>
+                    <button type="button" className={styles.userDropdownItem} role="menuitem">
+                      Settings
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.userDropdownItem} ${styles.userDropdownItemLogout}`}
+                      role="menuitem"
+                      onClick={handleLogout}
+                    >
+                      Log out
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <Link href="/login" className={styles.signupNavBtn}>Sign in</Link>
