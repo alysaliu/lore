@@ -19,6 +19,7 @@ export default function ProfileTabs({ userId }) {
   const [shows, setShows] = useState(null);
   const [watchlist, setWatchlist] = useState(null);
   const [watchlistFilter, setWatchlistFilter] = useState('all');
+  const [expandedShows, setExpandedShows] = useState({});
 
   useEffect(() => {
     if (!userId) return;
@@ -205,13 +206,20 @@ export default function ProfileTabs({ userId }) {
     const wholeShow = group.find(item => item.season == null);
     const seasons = group.filter(item => item.season != null).sort((a, b) => a.season - b.season);
     const showScore = getShowScore(group);
+    const isExpanded = !!expandedShows[first.mediaId];
 
     // Single whole-show entry — render as normal row
     if (!seasons.length) return renderRatedRow(first, 'tv', rank);
 
+    const toggleExpanded = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setExpandedShows(prev => ({ ...prev, [first.mediaId]: !prev[first.mediaId] }));
+    };
+
     return (
       <div key={first.mediaId}>
-        <Link href={`/details?id=${first.mediaId}&media_type=tv`} className={styles.showGroupRow}>
+        <div className={styles.showGroupRow} onClick={toggleExpanded} style={{ cursor: 'pointer' }}>
           {rank != null && <span className={styles.rowRank}>{rank}</span>}
           <img
             src={getPosterUrl(first.posterPath, 'w200')}
@@ -220,24 +228,51 @@ export default function ProfileTabs({ userId }) {
           />
           <div className={styles.rowInfo}>
             <div className={styles.rowTitleLine}>
-              <span className={styles.rowTitle}>{first.title}</span>
+              <Link
+                href={`/details?id=${first.mediaId}&media_type=tv`}
+                className={styles.rowTitle}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {first.title}
+              </Link>
               {first.year && <span className={styles.rowYear}>{first.year}</span>}
+              <span className={styles.chevronBtn}>
+                <span className={isExpanded ? styles.chevronUp : styles.chevronDown}>›</span>
+              </span>
             </div>
-            {wholeShow && (
-              <div className={styles.seasonEntry}>
-                <span className={styles.seasonLabel}>Whole show</span>
-                <span className={styles.seasonScore}>{wholeShow.score}</span>
+            {!isExpanded && wholeShow?.note && (
+              <div className={styles.rowNote}>{wholeShow.note}</div>
+            )}
+            {first.genres?.length > 0 && (
+              <div className={styles.rowGenres}>
+                {first.genres.map((g) => (
+                  <span key={g} className={styles.rowGenreBadge}>{g}</span>
+                ))}
               </div>
             )}
-            {seasons.map(item => (
-              <div key={item.season} className={styles.seasonEntry}>
-                <span className={styles.seasonLabel}>Season {item.season}</span>
-                <span className={styles.seasonScore}>{item.score}</span>
-              </div>
-            ))}
           </div>
           <div className={styles.rowScore}>{showScore}</div>
-        </Link>
+        </div>
+        <div className={isExpanded ? styles.seasonBreakdown : styles.seasonBreakdownHidden}>
+          {wholeShow && (
+            <div className={styles.seasonBreakdownEntry}>
+              <div className={styles.seasonBreakdownLeft}>
+                <span className="eyebrow">Whole show</span>
+                <span className={styles.seasonBreakdownNote}>{wholeShow.note || 'No review written'}</span>
+              </div>
+              <span className={styles.seasonBreakdownScore}>{wholeShow.score}</span>
+            </div>
+          )}
+          {seasons.map(item => (
+            <div key={item.season} className={styles.seasonBreakdownEntry}>
+              <div className={styles.seasonBreakdownLeft}>
+                <span className="eyebrow">Season {item.season}</span>
+                <span className={styles.seasonBreakdownNote}>{item.note || 'No review written'}</span>
+              </div>
+              <span className={styles.seasonBreakdownScore}>{item.score}</span>
+            </div>
+          ))}
+        </div>
         <hr className={styles.rowDivider} />
       </div>
     );

@@ -125,6 +125,12 @@
   font-size: 15px;
   font-weight: 500;
   color: var(--color-text-default);
+  text-decoration: none;
+}
+
+.rowTitle:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .rowYear {
@@ -180,7 +186,7 @@
   flex-direction: row;
   align-items: flex-start;
   gap: var(--space-4);
-  padding: var(--space-4) 0;
+  padding: var(--space-4) 0 var(--space-2);
   text-decoration: none;
 }
 
@@ -203,5 +209,78 @@
   font-weight: 700;
   color: var(--color-text-default);
   min-width: 36px;
+  text-align: right;
+}
+
+/* ── Expandable show breakdown ───────────────── */
+.chevronBtn {
+  padding: 0 0 0 var(--space-1);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.chevronDown {
+  display: inline-block;
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  transform: rotate(90deg);
+  transition: transform 0.15s ease;
+}
+
+.chevronUp {
+  display: inline-block;
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease;
+}
+
+.seasonBreakdown {
+  display: flex;
+  flex-direction: column;
+  padding-left: calc(20px + var(--space-4) + 48px + var(--space-4));
+}
+
+.seasonBreakdownHidden {
+  display: none;
+}
+
+.seasonBreakdownEntry {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-border-secondary);
+}
+
+.seasonBreakdownLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.seasonBreakdownNote {
+  font-size: 13px;
+  font-weight: 300;
+
+  color: var(--color-text-secondary);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.seasonBreakdownScore {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-default);
+  flex-shrink: 0;
+  min-width: 40px;
   text-align: right;
 }
