@@ -28,8 +28,9 @@ function DetailsContent() {
   // Watchlist
   const [inWatchlist, setInWatchlist] = useState(false);
 
-  // Rating state machine: 'initial' | 'comparing' | 'done'
+  // Rating state machine: 'season' (TV only) | 'initial' | 'comparing' | 'done'
   const [ratingPhase, setRatingPhase] = useState('initial');
+  const [selectedSeason, setSelectedSeason] = useState(null); // null = whole show
   const [selectedSentiment, setSelectedSentiment] = useState(null);
   const [note, setNote] = useState('');
   const [comparisonGroup, setComparisonGroup] = useState([]);
@@ -41,6 +42,9 @@ function DetailsContent() {
   const [existingSentiment, setExistingSentiment] = useState(null);
   const [isReranking, setIsReranking] = useState(false);
   const [cancelled, setCancelled] = useState(false);
+  const [userRatings, setUserRatings] = useState(null);
+  const [existingShowRatings, setExistingShowRatings] = useState([]);
+  const [showRatingForm, setShowRatingForm] = useState(false);
 
   // Load media details
   useEffect(() => {
@@ -74,14 +78,18 @@ function DetailsContent() {
 
         // Existing rating
         const ratings = data.ratings || {};
-        for (const sentiment in ratings[mediaType] || {}) {
-          for (const entry of ratings[mediaType][sentiment]) {
-            if (entry.mediaId === id) {
-              setExistingRating(entry);
-              setExistingSentiment(sentiment);
-              setRatingPhase('done');
-              setFinalScore(entry.score);
-              return;
+        setUserRatings(ratings);
+        refreshShowRatings(ratings);
+        if (mediaType === 'movie') {
+          for (const sentiment in ratings[mediaType] || {}) {
+            for (const entry of ratings[mediaType][sentiment]) {
+              if (entry.mediaId === id) {
+                setExistingRating(entry);
+                setExistingSentiment(sentiment);
+                setRatingPhase('done');
+                setFinalScore(entry.score);
+                return;
+              }
             }
           }
         }
@@ -171,15 +179,17 @@ function DetailsContent() {
     if (!ratings[mediaType]) ratings[mediaType] = {};
     if (!ratings[mediaType][selectedSentiment]) ratings[mediaType][selectedSentiment] = [];
 
-    const group = (ratings[mediaType][selectedSentiment] || []).filter(item => item.mediaId !== id);
+    const matchesCurrent = (item) => item.mediaId === id && (item.season ?? null) === (selectedSeason ?? null);
+
+    const group = (ratings[mediaType][selectedSentiment] || []).filter(item => !matchesCurrent(item));
 
     if (group.length === 0) {
       const [, max] = SCORE_RANGES[selectedSentiment];
-      const newRating = { mediaId: id, mediaType, note: note || null, score: max, timestamp: new Date().toISOString() };
+      const newRating = { mediaId: id, mediaType, note: note || null, score: max, timestamp: new Date().toISOString(), ...(selectedSeason != null && { season: selectedSeason }) };
       // Remove from all other sentiment groups before saving
       for (const sentiment of Object.keys(ratings[mediaType])) {
         if (sentiment === selectedSentiment) continue;
-        const cleaned = (ratings[mediaType][sentiment] || []).filter(item => item.mediaId !== id);
+        const cleaned = (ratings[mediaType][sentiment] || []).filter(item => !matchesCurrent(item));
         if (cleaned.length !== (ratings[mediaType][sentiment] || []).length) {
           const [sMin, sMax] = SCORE_RANGES[sentiment] || [1, 10];
           for (let i = 0; i < cleaned.length; i++) {
@@ -192,8 +202,18 @@ function DetailsContent() {
       ratings[mediaType][selectedSentiment] = [newRating];
       await setDoc(ratingsRef, { ratings }, { merge: true });
       if (!isReranking) await incrementRatingCount(user.uid);
-      setFinalScore(max);
-      setRatingPhase('done');
+      refreshShowRatings(ratings);
+      if (mediaType === 'tv') {
+        setSelectedSentiment(null);
+        setSelectedSeason(null);
+        setNote('');
+        setIsReranking(false);
+        setRatingPhase('initial');
+        setShowRatingForm(false);
+      } else {
+        setFinalScore(max);
+        setRatingPhase('done');
+      }
       return;
     }
 
@@ -202,8 +222,9 @@ function DetailsContent() {
     const initState = { low: 0, high: group.length - 1, mid: Math.floor((0 + group.length - 1) / 2) };
     setInsertionState(initState);
 
-    const compareName = await fetchMediaName(group[initState.mid].mediaId, group[initState.mid].mediaType || mediaType);
-    setCompareTitle(compareName || '?');
+    const compareEntry0 = group[initState.mid];
+    const compareName0 = await fetchMediaName(compareEntry0.mediaId, compareEntry0.mediaType || mediaType);
+    setCompareTitle(compareEntry0.season != null ? `${compareName0} (Season ${compareEntry0.season})` : (compareName0 || '?'));
     setRatingPhase('comparing');
   };
 
@@ -224,8 +245,9 @@ function DetailsContent() {
     } else {
       const newMid = Math.floor((newLow + newHigh) / 2);
       setInsertionState({ low: newLow, high: newHigh, mid: newMid });
-      const compareName = await fetchMediaName(comparisonGroup[newMid].mediaId, comparisonGroup[newMid].mediaType || mediaType);
-      setCompareTitle(compareName || '?');
+      const compareEntry = comparisonGroup[newMid];
+      const compareName = await fetchMediaName(compareEntry.mediaId, compareEntry.mediaType || mediaType);
+      setCompareTitle(compareEntry.season != null ? `${compareName} (Season ${compareEntry.season})` : (compareName || '?'));
     }
   };
 
@@ -241,10 +263,12 @@ function DetailsContent() {
 
     if (!ratings[mediaType]) ratings[mediaType] = {};
 
+    const matchesCurrent = (item) => item.mediaId === id && (item.season ?? null) === (selectedSeason ?? null);
+
     // Remove current item from every sentiment group and recalculate their scores
     for (const sentiment of Object.keys(ratings[mediaType])) {
       if (sentiment === selectedSentiment) continue;
-      const cleaned = (ratings[mediaType][sentiment] || []).filter(item => item.mediaId !== id);
+      const cleaned = (ratings[mediaType][sentiment] || []).filter(item => !matchesCurrent(item));
       if (cleaned.length !== (ratings[mediaType][sentiment] || []).length) {
         const [sMin, sMax] = SCORE_RANGES[sentiment] || [1, 10];
         for (let i = 0; i < cleaned.length; i++) {
@@ -256,7 +280,7 @@ function DetailsContent() {
     }
 
     // Build target group, excluding current item
-    const group = [...(ratings[mediaType][selectedSentiment] || [])].filter(item => item.mediaId !== id);
+    const group = [...(ratings[mediaType][selectedSentiment] || [])].filter(item => !matchesCurrent(item));
     const [min, max] = SCORE_RANGES[selectedSentiment];
 
     group.splice(position, 0, {
@@ -265,6 +289,7 @@ function DetailsContent() {
       note: note || null,
       score: 0,
       timestamp: new Date().toISOString(),
+      ...(selectedSeason != null && { season: selectedSeason }),
     });
 
     for (let i = 0; i < group.length; i++) {
@@ -275,16 +300,55 @@ function DetailsContent() {
     ratings[mediaType][selectedSentiment] = group;
     await updateDoc(ratingsRef, { ratings });
     if (!isReranking) await incrementRatingCount(user.uid);
+    refreshShowRatings(ratings);
 
-    setFinalScore(group[position].score);
-    setExistingSentiment(selectedSentiment);
-    setIsReranking(false);
-    setRatingPhase('done');
+    if (mediaType === 'tv') {
+      setSelectedSentiment(null);
+      setSelectedSeason(null);
+      setNote('');
+      setIsReranking(false);
+      setInsertionState(null);
+      setRatingPhase('initial');
+      setShowRatingForm(false);
+    } else {
+      setFinalScore(group[position].score);
+      setExistingSentiment(selectedSentiment);
+      setIsReranking(false);
+      setRatingPhase('done');
+      setInsertionState(null);
+    }
     setInsertionState(null);
+  };
+
+  const refreshShowRatings = (ratings) => {
+    const all = [];
+    for (const sentiment in ratings[mediaType] || {}) {
+      for (const entry of ratings[mediaType][sentiment]) {
+        if (entry.mediaId === id) {
+          all.push({ season: entry.season ?? null, score: entry.score });
+        }
+      }
+    }
+    setExistingShowRatings(all.sort((a, b) => (a.season ?? Infinity) - (b.season ?? Infinity)));
+  };
+
+  const handleRerankSeason = (season) => {
+    setSelectedSeason(season);
+    setSelectedSentiment(null);
+    setNote('');
+    setIsReranking(true);
+    setRatingPhase('initial');
+    setShowRatingForm(true);
+  };
+
+  const handleSeasonSelect = (season) => {
+    setSelectedSeason(season);
+    setSelectedSentiment(null);
   };
 
   const handleRerank = () => {
     setRatingPhase('initial');
+    setSelectedSeason(null);
     setSelectedSentiment(null);
     setNote('');
     setIsReranking(true);
@@ -357,12 +421,33 @@ function DetailsContent() {
 
             {/* Rating box */}
             <div className={styles.ratingBox}>
+          {mediaType === 'tv' && existingShowRatings.length > 0 && (
+            <div className={styles.existingRatings}>
+              <span className="eyebrow">Your ratings</span>
+              {existingShowRatings.map((r) => (
+                <div key={r.season ?? 'show'} className={styles.existingRatingRow}>
+                  <span className={styles.existingRatingLabel}>
+                    {r.season != null ? `Season ${r.season}` : 'Whole show'}
+                  </span>
+                  <span className={styles.existingRatingScore}>{r.score}</span>
+                  <button className={styles.rerankBtn} onClick={() => handleRerankSeason(r.season)}>
+                    Re-rank
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {mediaType === 'tv' && existingShowRatings.length > 0 && !showRatingForm && !cancelled && ratingPhase !== 'comparing' && (
+            <button className={styles.rateAnotherBtn} onClick={() => setShowRatingForm(true)}>
+              Rate another season
+            </button>
+          )}
           {cancelled ? (
             <p className={styles.resultText}>Ok! Come back when you've watched it.</p>
-          ) : ratingPhase === 'done' ? (
+          ) : ratingPhase === 'done' && mediaType !== 'tv' ? (
             <div className={styles.ratingDone}>
               <div className={styles.ratingColumn}>
-                <div className="eyebrow">Your rating</div>
+                <div className="eyebrow">Your rating{selectedSeason != null ? ` · Season ${selectedSeason}` : ''}</div>
                 <div className={styles.ratingColumnScore}>{finalScore}</div>
                 <button className={styles.rerankBtn} onClick={handleRerank}>Re-rank</button>
               </div>
@@ -372,7 +457,7 @@ function DetailsContent() {
               <h3>Which did you like more?</h3>
               <div className={styles.comparisonButtons}>
                 <button className={styles.compareBtn} onClick={() => handleComparison(true)}>
-                  {currentTitle}
+                  {selectedSeason != null ? `${currentTitle} (Season ${selectedSeason})` : currentTitle}
                 </button>
                 <button className={styles.compareBtn} onClick={() => handleComparison(false)}>
                   {compareTitle}
@@ -382,9 +467,34 @@ function DetailsContent() {
                 Too tough, skip
               </button>
             </>
-          ) : (
+          ) : (mediaType === 'tv' && existingShowRatings.length > 0 && !showRatingForm) ? null : (
             <>
-              <h3>How would you rate this {displayType}?</h3>
+              {mediaType === 'tv' ? (
+                <div className={styles.seasonDropdownRow}>
+                  How would you rate{' '}
+                  <span className={styles.seasonDropdownWrapper}>
+                    <span className={styles.seasonDropdownSizer}>
+                      <select
+                        className={styles.seasonDropdown}
+                        value={selectedSeason ?? 'whole'}
+                        onChange={(e) => handleSeasonSelect(e.target.value === 'whole' ? null : Number(e.target.value))}
+                      >
+                        <option value="whole">all</option>
+                        {(media?.seasons || []).filter(s => s.season_number > 0).map(s => (
+                          <option key={s.season_number} value={s.season_number}>Season {s.season_number}</option>
+                        ))}
+                      </select>
+                      <span aria-hidden="true">
+                        {selectedSeason != null ? `Season ${selectedSeason}` : 'all'}
+                      </span>
+                    </span>
+                    <i className={`fas fa-chevron-down ${styles.seasonDropdownIcon}`}></i>
+                  </span>
+                  {' '}of {currentTitle}?
+                </div>
+              ) : (
+                <h3>How would you rate this {displayType}?</h3>
+              )}
               <div className={styles.ratingOptions}>
                 {[
                   { value: 'not-good', label: 'Not good', emoji: '😒' },
@@ -410,10 +520,16 @@ function DetailsContent() {
                 onChange={(e) => setNote(e.target.value)}
               />
               <div className={styles.buttonRow}>
-                <button className={styles.cancelBtn} onClick={() => setCancelled(true)}>
-                  I haven't watched it yet
-                </button>
-                <button className={styles.nextBtn} onClick={handleNext}>
+                {mediaType === 'tv' && existingShowRatings.length > 0 && (
+                  <button className={styles.cancelBtn} onClick={() => setShowRatingForm(false)}>
+                    Cancel
+                  </button>
+                )}
+                <button
+                  className={styles.nextBtn}
+                  onClick={handleNext}
+                  disabled={!(mediaType === 'tv' && existingShowRatings.length > 0) && !selectedSentiment}
+                >
                   Next
                 </button>
               </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import ProfileTabs from '../../components/ProfileTabs';
@@ -46,17 +46,20 @@ function UserContent() {
     const currentUserRef = doc(db, 'users', user.uid);
     const targetUserRef = doc(db, 'users', selectedUserId);
 
-    if (isFollowing) {
-      await updateDoc(currentUserRef, { followinglist: arrayRemove(selectedUserId) });
-      await updateDoc(targetUserRef, { followerlist: arrayRemove(user.uid) });
-      setIsFollowing(false);
-    } else {
-      await updateDoc(currentUserRef, { followinglist: arrayUnion(selectedUserId) });
-      await updateDoc(targetUserRef, { followerlist: arrayUnion(user.uid) });
-      setIsFollowing(true);
+    try {
+      if (isFollowing) {
+        await updateDoc(currentUserRef, { followinglist: arrayRemove(selectedUserId) });
+        await updateDoc(targetUserRef, { followerlist: arrayRemove(user.uid) });
+        setIsFollowing(false);
+      } else {
+        await setDoc(currentUserRef, { followinglist: arrayUnion(selectedUserId) }, { merge: true });
+        await setDoc(targetUserRef, { followerlist: arrayUnion(user.uid) }, { merge: true });
+        setIsFollowing(true);
+      }
+      loadTargetUser();
+    } catch (err) {
+      console.error('Follow failed:', err);
     }
-    // Refresh target user stats
-    loadTargetUser();
   };
 
   const handleShare = () => {

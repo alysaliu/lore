@@ -74,7 +74,7 @@ export default function ProfileTabs({ userId }) {
     const seen = new Map();
     for (const sentiment in data.tv || {}) {
       for (const entry of data.tv[sentiment]) {
-        const key = String(entry.mediaId);
+        const key = `${entry.mediaId}-s${entry.season ?? 'show'}`;
         if (!seen.has(key) || entry.score > seen.get(key).score) {
           seen.set(key, { ...entry, sentiment });
         }
@@ -127,13 +127,13 @@ export default function ProfileTabs({ userId }) {
     setWatchlist(enriched);
   };
 
-  const renderRatedRow = (item, mediaType) => (
+  const renderRatedRow = (item, mediaType, rankOverride) => (
     <div key={item.mediaId}>
       <Link
         href={`/details?id=${item.mediaId}&media_type=${mediaType}`}
         className={styles.ratedRow}
       >
-        <span className={styles.rowRank}>{item.rank}</span>
+        <span className={styles.rowRank}>{rankOverride ?? item.rank}</span>
         <img
           src={getPosterUrl(item.posterPath, 'w200')}
           alt={item.title}
@@ -191,6 +191,58 @@ export default function ProfileTabs({ userId }) {
     </div>
   );
 
+  const getShowScore = (group) => {
+    const wholeShow = group.find(item => item.season == null);
+    if (wholeShow) return wholeShow.score;
+    const seasons = group.filter(item => item.season != null);
+    if (!seasons.length) return 0;
+    const avg = seasons.reduce((sum, item) => sum + item.score, 0) / seasons.length;
+    return Math.round(avg * 10) / 10;
+  };
+
+  const renderShowGroup = (group, rank) => {
+    const first = group[0];
+    const wholeShow = group.find(item => item.season == null);
+    const seasons = group.filter(item => item.season != null).sort((a, b) => a.season - b.season);
+    const showScore = getShowScore(group);
+
+    // Single whole-show entry — render as normal row
+    if (!seasons.length) return renderRatedRow(first, 'tv', rank);
+
+    return (
+      <div key={first.mediaId}>
+        <Link href={`/details?id=${first.mediaId}&media_type=tv`} className={styles.showGroupRow}>
+          {rank != null && <span className={styles.rowRank}>{rank}</span>}
+          <img
+            src={getPosterUrl(first.posterPath, 'w200')}
+            alt={first.title}
+            className={styles.rowPoster}
+          />
+          <div className={styles.rowInfo}>
+            <div className={styles.rowTitleLine}>
+              <span className={styles.rowTitle}>{first.title}</span>
+              {first.year && <span className={styles.rowYear}>{first.year}</span>}
+            </div>
+            {wholeShow && (
+              <div className={styles.seasonEntry}>
+                <span className={styles.seasonLabel}>Whole show</span>
+                <span className={styles.seasonScore}>{wholeShow.score}</span>
+              </div>
+            )}
+            {seasons.map(item => (
+              <div key={item.season} className={styles.seasonEntry}>
+                <span className={styles.seasonLabel}>Season {item.season}</span>
+                <span className={styles.seasonScore}>{item.score}</span>
+              </div>
+            ))}
+          </div>
+          <div className={styles.rowScore}>{showScore}</div>
+        </Link>
+        <hr className={styles.rowDivider} />
+      </div>
+    );
+  };
+
   const renderContent = () => {
     if (activeTab === 'movies') {
       if (movies === null) return <p className={styles.emptyState}>Loading...</p>;
@@ -201,7 +253,17 @@ export default function ProfileTabs({ userId }) {
     if (activeTab === 'shows') {
       if (shows === null) return <p className={styles.emptyState}>Loading...</p>;
       if (shows.length === 0) return <p className={styles.emptyState}>No shows rated yet.</p>;
-      return shows.map((item) => renderRatedRow(item, 'tv'));
+
+      // Group by mediaId, sort each group by best score
+      const groupMap = {};
+      for (const item of shows) {
+        if (!groupMap[item.mediaId]) groupMap[item.mediaId] = [];
+        groupMap[item.mediaId].push(item);
+      }
+      const sortedGroups = Object.values(groupMap).sort(
+        (a, b) => getShowScore(b) - getShowScore(a)
+      );
+      return sortedGroups.map((group, i) => renderShowGroup(group, i + 1));
     }
 
     if (activeTab === 'watchlist') {

@@ -315,6 +315,7 @@
 .ratingEmoji {
   font-size: 28px;
   line-height: 34px;
+  text-align: left;
 }
 
 /* ── Note input ──────────────────────────── */
@@ -375,8 +376,13 @@
   transition: var(--transition-fast);
 }
 
-.nextBtn:hover {
+.nextBtn:hover:not(:disabled) {
   background-color: var(--color-action-hovered);
+}
+
+.nextBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* ── Comparison buttons ──────────────────── */
@@ -470,4 +476,107 @@
 
 .rerankBtn:hover {
   color: var(--color-text-default);
+}
+
+/* ── Existing show ratings list ──────────────── */
+.existingRatings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-secondary);
+}
+
+.existingRatingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.existingRatingLabel {
+  flex: 1;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.existingRatingScore {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-default);
+}
+
+.rateAnotherBtn {
+  width: fit-content;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-default);
+  color: var(--color-text-default);
+  font-size: 1rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.rateAnotherBtn:hover {
+  background-color: var(--color-surface-hovered);
+}
+
+/* ── Season dropdown ─────────────────────────── */
+.seasonDropdownRow {
+  font-size: 18px;
+  font-weight: 450;
+  color: var(--color-text-default);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.seasonDropdownWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-border-selected);
+}
+
+/* inline-grid sizer: hidden span sets width, select overlaps it */
+.seasonDropdownSizer {
+  display: inline-grid;
+}
+
+.seasonDropdownSizer > span {
+  grid-area: 1 / 1;
+  font-size: 18px;
+  font-weight: 450;
+  font-family: var(--font-sans);
+  visibility: hidden;
+  pointer-events: none;
+  white-space: pre;
+  text-align: center;
+}
+
+.seasonDropdown {
+  grid-area: 1 / 1;
+  width: 100%;
+  min-width: 0;
+  background: none;
+  border: none;
+  font-size: 18px;
+  font-weight: 450;
+  color: var(--color-text-default);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  text-align: center;
+}
+
+.seasonDropdownIcon {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  pointer-events: none;
 }
