@@ -14,7 +14,7 @@
 
   /* ── Text colors ──────────────────────────── */
   --color-text-default: #fefefe;
-  --color-text-secondary: #77787c;
+  --color-text-secondary: rgba(255, 255, 255, 0.5);
   --color-text-inverse: #323233;
 
   /* ── Icon colors ──────────────────────────── */

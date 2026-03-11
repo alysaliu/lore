@@ -10,6 +10,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [initials, setInitials] = useState('');
+  const [photoURL, setPhotoURL] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,21 +27,24 @@ export function AuthProvider({ children }) {
             const first = data.firstname || '';
             const last = data.lastname || '';
             setInitials((first.charAt(0) + last.charAt(0)).toUpperCase());
+            setPhotoURL(data.photoURL || '');
           } else {
-            // Fallback: derive initials from email
             const parts = firebaseUser.email
               .split(/[@.\s_]/)
               .filter(Boolean)
               .slice(0, 2)
               .map((p) => p.charAt(0).toUpperCase());
             setInitials(parts.join(''));
+            setPhotoURL('');
           }
         } catch {
           setInitials('');
+          setPhotoURL('');
         }
       } else {
         setUser(null);
         setInitials('');
+        setPhotoURL('');
       }
       setLoading(false);
     });
@@ -53,7 +57,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, initials, loading, signOut }}>
+    <AuthContext.Provider value={{ user, initials, photoURL, setPhotoURL, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

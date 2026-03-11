@@ -38,6 +38,15 @@ export default function LoginPage() {
         await setDoc(doc(db, 'users', user.uid, 'lists', 'watchlist'), {
           items: [],
         });
+
+        router.push('/onboarding');
+        return;
+      }
+
+      const userData = snap.data();
+      if (!userData.username) {
+        router.push('/onboarding');
+        return;
       }
 
       router.push('/explore');

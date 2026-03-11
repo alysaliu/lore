@@ -83,7 +83,18 @@ function UserContent() {
           <div className={styles.userInfo}>
             <div className={styles.userInfoRow}>
               <div className={styles.identifierSection}>
-                <h2>{fullName || 'Unnamed'}</h2>
+                <div className={styles.avatarCircle}>
+                  {targetUserData?.photoURL
+                    ? <img src={targetUserData.photoURL} alt="Profile" className={styles.avatarImg} />
+                    : <span>{fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
+                  }
+                </div>
+                <div>
+                  <h2>{fullName || 'Unnamed'}</h2>
+                  {targetUserData?.username && (
+                    <p className={styles.username}>@{targetUserData.username}</p>
+                  )}
+                </div>
               </div>
               <div className={styles.statsSection}>
                 <div>

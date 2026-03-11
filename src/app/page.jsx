@@ -38,12 +38,12 @@ export default function HomePage() {
               <div className={styles.servicesCard}>
                 <h2>📺 Rate movies and shows</h2>
                 <p>All your watching history in one place, stack-ranked against each other</p>
-                <Link href="/signup" className={styles.buttonLink}>Sign up</Link>
+                <Link href="/login" className={styles.buttonLink}>Sign up</Link>
               </div>
               <div className={styles.servicesCard}>
                 <h2>👯‍♀️ Connect with friends</h2>
                 <p>View friends' profiles and see Lore's out-of-pocket take on their taste</p>
-                <Link href="/signup" className={styles.buttonLink}>Sign up</Link>
+                <Link href="/login" className={styles.buttonLink}>Sign up</Link>
               </div>
               <div className={styles.servicesCard}>
                 <h2>📢 Share your feedback</h2>

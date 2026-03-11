@@ -27,7 +27,7 @@
 .title h3 {
   color: var(--color-text-secondary);
   text-align: center;
-  font-weight: 400;
+  font-weight: 300;
   font-size: 16px;
 }
 
@@ -86,6 +86,22 @@
   color: var(--color-icon-tertiary);
   pointer-events: none;
   transition: var(--transition-fast);
+}
+
+.inputIconLeft {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--color-icon-tertiary);
+  pointer-events: none;
+  line-height: 1;
+}
+
+.inputWithPrefix {
+  composes: input;
+  padding-left: 36px;
 }
 
 .submitBtn {

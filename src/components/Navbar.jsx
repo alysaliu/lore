@@ -9,7 +9,7 @@ import styles from './Navbar.module.css';
 
 export default function Navbar() {
   const router = useRouter();
-  const { user, initials, signOut } = useAuth();
+  const { user, initials, photoURL, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -58,7 +58,10 @@ export default function Navbar() {
                   aria-expanded={userMenuOpen}
                   aria-label="User menu"
                 >
-                  {initials}
+                  {photoURL
+                    ? <img src={photoURL} alt="Profile" className={styles.profileCircleImg} />
+                    : initials
+                  }
                 </button>
                 {userMenuOpen && (
                   <div className={styles.userDropdown} role="menu">
