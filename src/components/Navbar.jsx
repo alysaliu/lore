@@ -68,9 +68,9 @@ export default function Navbar() {
                     <Link href="/profile" className={styles.userDropdownItem} role="menuitem">
                       Profile
                     </Link>
-                    <button type="button" className={styles.userDropdownItem} role="menuitem">
+                    <Link href="/settings" className={styles.userDropdownItem} role="menuitem">
                       Settings
-                    </button>
+                    </Link>
                     <button
                       type="button"
                       className={`${styles.userDropdownItem} ${styles.userDropdownItemLogout}`}

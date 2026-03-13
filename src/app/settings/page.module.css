@@ -1,0 +1,142 @@
+.settingsSection {
+  background: var(--color-surface-default);
+  min-height: calc(100vh - var(--navbar-height));
+  padding-top: var(--space-6);
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.settingsContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  padding: 0;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background-color: var(--color-surface-contrast);
+  min-height: calc(100vh - var(--navbar-height) - var(--space-6));
+  width: 100%;
+  max-width: var(--content-max-width);
+  box-shadow: var(--shadow-profile);
+  overflow: hidden;
+}
+
+.sidebar {
+  flex-shrink: 0;
+  width: 200px;
+  border-right: 1px solid var(--color-border-default);
+  background: var(--color-surface-default);
+}
+
+.sidebarList {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2);
+}
+
+.sidebarList li {
+  margin: 0;
+}
+
+.sidebarTab {
+  display: block;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebarTab:hover {
+  color: var(--color-text-default);
+  background: var(--color-surface-hovered);
+}
+
+.sidebarTabActive {
+  color: var(--color-text-default);
+  background: var(--color-surface-selected);
+}
+
+.sidebarTabActive:hover {
+  background: var(--color-surface-selected);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-8);
+  overflow: auto;
+}
+
+.panel {
+  max-width: 480px;
+}
+
+.panelTitle {
+  color: var(--color-text-default);
+  font-weight: 700;
+  font-size: 22px;
+  margin: 0 0 var(--space-2);
+}
+
+.panelDescription {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  margin: 0 0 var(--space-6);
+}
+
+.panelBody {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-default);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.settingBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.settingBlockTitle {
+  color: var(--color-text-default);
+  font-weight: 600;
+  font-size: 15px;
+  margin: 0;
+}
+
+.settingBlockDescription {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  margin: 0 0 var(--space-2);
+}
+
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-default);
+  background: var(--color-surface-contrast);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  width: fit-content;
+  transition: background-color 0.15s ease;
+}
+
+.primaryBtn:hover {
+  background: var(--color-surface-hovered);
+}
