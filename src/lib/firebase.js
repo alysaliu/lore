@@ -12,10 +12,13 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Prevent re-initializing on hot reload
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// Only initialize when API key is set (e.g. skip in CI/build without secrets)
+const hasConfig = !!firebaseConfig.apiKey;
+const app = hasConfig
+  ? (getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0])
+  : null;
 
-export const db = getFirestore(app);
-export const auth = getAuth(app);
-export const storage = getStorage(app);
+export const db = app ? getFirestore(app) : null;
+export const auth = app ? getAuth(app) : null;
+export const storage = app ? getStorage(app) : null;
 export const googleProvider = new GoogleAuthProvider();
