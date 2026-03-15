@@ -21,18 +21,6 @@ export default function ProfileTabs({ userId }) {
   const [watchlistFilter, setWatchlistFilter] = useState('all');
   const [expandedShows, setExpandedShows] = useState({});
 
-  useEffect(() => {
-    if (!userId) return;
-    loadMovies(userId);
-  }, [userId]);
-
-  const selectTab = (tab) => {
-    setActiveTab(tab);
-    if (tab === 'movies' && movies === null) loadMovies(userId);
-    if (tab === 'shows' && shows === null) loadShows(userId);
-    if (tab === 'watchlist' && watchlist === null) loadWatchlist(userId);
-  };
-
   const loadMovies = async (uid) => {
     const userDoc = await getDoc(doc(db, 'users', uid));
     const data = userDoc.exists() ? userDoc.data().ratings || {} : {};
@@ -126,6 +114,19 @@ export default function ProfileTabs({ userId }) {
       })
     );
     setWatchlist(enriched);
+  };
+
+  useEffect(() => {
+    if (!userId) return;
+    const timer = setTimeout(() => loadMovies(userId), 0);
+    return () => clearTimeout(timer);
+  }, [userId]);
+
+  const selectTab = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'movies' && movies === null) loadMovies(userId);
+    if (tab === 'shows' && shows === null) loadShows(userId);
+    if (tab === 'watchlist' && watchlist === null) loadWatchlist(userId);
   };
 
   const renderRatedRow = (item, mediaType, rankOverride) => (
