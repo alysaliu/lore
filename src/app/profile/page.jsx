@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -43,7 +44,7 @@ export default function ProfilePage() {
       const snap = await getDoc(doc(db, 'users', user.uid));
       if (snap.exists()) setUserData(snap.data());
     })();
-  }, [user, loading]);
+  }, [user, loading, router]);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -139,7 +140,7 @@ export default function ProfilePage() {
               <div className={styles.identifierSection}>
                 <button className={styles.avatarBtn} onClick={handleAvatarClick} disabled={uploading} aria-label="Change profile picture">
                   {photoURL
-                    ? <img src={photoURL} alt="Profile" className={styles.avatarImg} />
+                    ? <Image src={photoURL} alt="Profile" className={styles.avatarImg} width={96} height={96} />
                     : <span className={styles.avatarInitials}>{fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
                   }
                   <span className={styles.avatarOverlay}>{uploading ? '...' : <i className="fas fa-camera" />}</span>

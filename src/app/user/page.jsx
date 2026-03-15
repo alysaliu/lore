@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -95,7 +96,7 @@ function UserContent() {
               <div className={styles.identifierSection}>
                 <div className={styles.avatarCircle}>
                   {targetUserData?.photoURL
-                    ? <img src={targetUserData.photoURL} alt="Profile" className={styles.avatarImg} />
+                    ? <Image src={targetUserData.photoURL} alt="Profile" className={styles.avatarImg} width={96} height={96} />
                     : <span>{fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
                   }
                 </div>

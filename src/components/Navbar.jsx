@@ -59,7 +59,7 @@ export default function Navbar() {
                   aria-label="User menu"
                 >
                   {photoURL
-                    ? <img src={photoURL} alt="Profile" className={styles.profileCircleImg} />
+                    ? <Image src={photoURL} alt="Profile" className={styles.profileCircleImg} width={36} height={36} />
                     : initials
                   }
                 </button>

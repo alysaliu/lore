@@ -19,7 +19,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (!loading && !user) router.push('/login');
-  }, [user, loading]);
+  }, [user, loading, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

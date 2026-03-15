@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { fetchMediaDetails, getPosterUrl } from '../lib/tmdb';
@@ -136,10 +137,12 @@ export default function ProfileTabs({ userId }) {
         className={styles.ratedRow}
       >
         <span className={styles.rowRank}>{rankOverride ?? item.rank}</span>
-        <img
+        <Image
           src={getPosterUrl(item.posterPath, 'w200')}
           alt={item.title}
           className={styles.rowPoster}
+          width={200}
+          height={300}
         />
         <div className={styles.rowInfo}>
           <div className={styles.rowTitleLine}>
@@ -169,10 +172,12 @@ export default function ProfileTabs({ userId }) {
         href={`/details?id=${item.mediaId}&media_type=${item.mediaType}`}
         className={styles.ratedRow}
       >
-        <img
+        <Image
           src={getPosterUrl(item.posterPath, 'w200')}
           alt={item.title}
           className={styles.rowPoster}
+          width={200}
+          height={300}
         />
         <div className={styles.rowInfo}>
           <div className={styles.rowTitleLine}>
@@ -222,10 +227,12 @@ export default function ProfileTabs({ userId }) {
       <div key={first.mediaId}>
         <div className={styles.showGroupRow} onClick={toggleExpanded} style={{ cursor: 'pointer' }}>
           {rank != null && <span className={styles.rowRank}>{rank}</span>}
-          <img
+          <Image
             src={getPosterUrl(first.posterPath, 'w200')}
             alt={first.title}
             className={styles.rowPoster}
+            width={200}
+            height={300}
           />
           <div className={styles.rowInfo}>
             <div className={styles.rowTitleLine}>
