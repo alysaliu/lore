@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!auth) {
-      setLoading(false);
+      queueMicrotask(() => setLoading(false));
       return;
     }
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {

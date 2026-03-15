@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
@@ -46,7 +46,7 @@ function DetailsContent() {
   const [existingShowRatings, setExistingShowRatings] = useState([]);
   const [showRatingForm, setShowRatingForm] = useState(false);
 
-  const refreshShowRatings = (ratings) => {
+  const refreshShowRatings = useCallback((ratings) => {
     const all = [];
     for (const sentiment in ratings[mediaType] || {}) {
       for (const entry of ratings[mediaType][sentiment]) {
@@ -56,7 +56,7 @@ function DetailsContent() {
       }
     }
     setExistingShowRatings(all.sort((a, b) => (a.season ?? Infinity) - (b.season ?? Infinity)));
-  };
+  }, [id, mediaType]);
 
   // Load media details
   useEffect(() => {
@@ -110,7 +110,7 @@ function DetailsContent() {
       }
     });
     return () => unsubscribe();
-  }, [id, mediaType]);
+  }, [id, mediaType, refreshShowRatings]);
 
   // Extract dominant colors from poster for background gradient
   useEffect(() => {
@@ -388,7 +388,7 @@ function DetailsContent() {
       <div className={styles.content}>
         <div className={styles.headerContainer}>
           <div className={styles.posterCard}>
-            <img src={posterUrl} alt={currentTitle} className={styles.posterCardImage} />
+            <Image src={posterUrl} alt={currentTitle} className={styles.posterCardImage} width={500} height={750} />
             <button
               className={`${styles.watchlistIconBtn} ${inWatchlist ? styles.watchlistIconBtnActive : ''}`}
               onClick={handleWatchlist}

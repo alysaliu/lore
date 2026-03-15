@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { getPosterUrl } from '../lib/tmdb';
 import styles from './MediaCard.module.css';
 
@@ -45,7 +46,7 @@ export default function MediaCard({
         className={styles.cardGrid}
       >
         <div className={styles.posterWrapper}>
-          <img src={posterUrl} alt={title} className={styles.posterGrid} />
+          <Image src={posterUrl} alt={title} className={styles.posterGrid} width={342} height={513} />
           {onWatchlistToggle && (
             <button
               className={`${styles.watchlistBtn} ${inWatchlist ? styles.watchlistBtnActive : ''}`}
@@ -69,10 +70,12 @@ export default function MediaCard({
       href={`/details?id=${mediaId}&media_type=${mediaType}`}
       className={`${styles.card} ${isProfile ? styles.cardProfile : ''}`}
     >
-      <img
+      <Image
         src={posterUrl}
         alt={title}
         className={isProfile ? styles.posterImageSmall : styles.posterImage}
+        width={isProfile ? 200 : 185}
+        height={isProfile ? 300 : 278}
       />
       <div className={styles.textContainer}>
         <div className={styles.titleContainer}>
