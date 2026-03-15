@@ -405,7 +405,11 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+<<<<<<< HEAD
   padding: 8px;
+=======
+  padding: var(--space-3) 0;
+>>>>>>> e67262e (Followers and Following List!!!)
   text-decoration: none;
   color: inherit;
   transition: background-color 0.15s ease;
