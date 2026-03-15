@@ -99,8 +99,13 @@ export default function ProfilePage() {
       const snap = await getDoc(usernameRef);
       if (snap.exists()) { setUsernameError('Already taken.'); setSavingUsername(false); return; }
 
-      if (userData?.username) await deleteDoc(doc(db, 'usernames', userData.username));
-      await setDoc(usernameRef, { uid: user.uid });
+      let isDeveloper = false;
+      if (userData?.username) {
+        const oldSnap = await getDoc(doc(db, 'usernames', userData.username));
+        if (oldSnap.exists()) isDeveloper = Boolean(oldSnap.data().isDeveloper);
+        await deleteDoc(doc(db, 'usernames', userData.username));
+      }
+      await setDoc(usernameRef, { uid: user.uid, isDeveloper });
       await updateDoc(doc(db, 'users', user.uid), { username: trimmed });
       setUserData((prev) => ({ ...prev, username: trimmed }));
       setEditingUsername(false);

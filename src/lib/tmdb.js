@@ -10,6 +10,24 @@ export async function searchMedia(query) {
   return data.results || [];
 }
 
+/**
+ * Search for movies only. Use this when you need reliable movie matching (e.g. Letterboxd import).
+ * Pass year to narrow by primary_release_year.
+ */
+export async function searchMovies(query, year = null) {
+  const params = new URLSearchParams({
+    api_key: API_KEY,
+    language: 'en-US',
+    query,
+    page: '1',
+    include_adult: 'false',
+  });
+  if (year) params.set('primary_release_year', String(year));
+  const res = await fetch(`${BASE_URL}/search/movie?${params}`);
+  const data = await res.json();
+  return data.results || [];
+}
+
 export async function fetchMediaDetails(mediaType, id) {
   const res = await fetch(
     `${BASE_URL}/${mediaType}/${id}?api_key=${API_KEY}&language=en-US&append_to_response=credits`
