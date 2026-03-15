@@ -43,7 +43,7 @@ export default function OnboardingPage() {
         return;
       }
 
-      await setDoc(usernameRef, { uid: user.uid });
+      await setDoc(usernameRef, { uid: user.uid, isDeveloper: false });
       await updateDoc(doc(db, 'users', user.uid), { username: trimmed });
 
       router.push('/explore');
