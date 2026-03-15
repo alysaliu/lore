@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -22,6 +24,9 @@ export default function ProfilePage() {
   const [usernameInput, setUsernameInput] = useState('');
   const [usernameError, setUsernameError] = useState('');
   const [savingUsername, setSavingUsername] = useState(false);
+  const [listModalType, setListModalType] = useState(null); // 'followers' | 'following'
+  const [listUsers, setListUsers] = useState([]);
+  const [listLoading, setListLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
@@ -116,6 +121,30 @@ export default function ProfilePage() {
     localStorage.setItem('dismissedTip', 'true');
   };
 
+  const openListModal = async (type) => {
+    if (!userData || !db) return;
+    const uids = type === 'followers' ? (userData.followerlist || []) : (userData.followinglist || []);
+    setListModalType(type);
+    setListUsers([]);
+    setListLoading(true);
+    try {
+      const snaps = await Promise.all(uids.map((uid) => getDoc(doc(db, 'users', uid))));
+      const users = snaps
+        .filter((s) => s.exists())
+        .map((s) => ({ uid: s.id, ...s.data() }));
+      setListUsers(users);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  const closeListModal = () => {
+    setListModalType(null);
+    setListUsers([]);
+  };
+
   if (loading) return null;
 
   const fullName = userData
@@ -153,14 +182,24 @@ export default function ProfilePage() {
                   <span className="eyebrow">Ratings</span>
                   <span className={styles.statNumber}>{ratingCount}</span>
                 </div>
-                <div className={styles.statItem}>
+                <button
+                  type="button"
+                  className={styles.statItemButton}
+                  onClick={() => openListModal('followers')}
+                  aria-label="View followers"
+                >
                   <span className="eyebrow">Followers</span>
                   <span className={styles.statNumber}>{followersCount}</span>
-                </div>
-                <div className={styles.statItem}>
+                </button>
+                <button
+                  type="button"
+                  className={styles.statItemButton}
+                  onClick={() => openListModal('following')}
+                  aria-label="View following"
+                >
                   <span className="eyebrow">Following</span>
                   <span className={styles.statNumber}>{followingCount}</span>
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -215,6 +254,52 @@ export default function ProfilePage() {
               <button className={styles.modalSaveBtn} onClick={saveUsername} disabled={savingUsername}>
                 {savingUsername ? 'Saving...' : 'Save'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {listModalType && (
+        <div className={styles.modalBackdrop} onClick={closeListModal} role="dialog" aria-modal="true" aria-labelledby="list-modal-title">
+          <div className={styles.modalList} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 id="list-modal-title" className={styles.modalTitle}>
+                {listModalType === 'followers' ? 'Followers' : 'Following'}
+              </h3>
+              <button className={styles.modalCloseBtn} onClick={closeListModal} aria-label="Close">
+                <X size={16} />
+              </button>
+            </div>
+            <div className={styles.modalListBody}>
+              {listLoading ? (
+                <p className={styles.modalListEmpty}>Loading…</p>
+              ) : listUsers.length === 0 ? (
+                <p className={styles.modalListEmpty}>
+                  {listModalType === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
+                </p>
+              ) : (
+                <ul className={styles.modalListUl}>
+                  {listUsers.map((u) => {
+                    const name = `${u.firstname || ''} ${u.lastname || ''}`.trim() || 'Unnamed';
+                    return (
+                      <li key={u.uid}>
+                        <Link href={`/user?uid=${u.uid}`} className={styles.modalListRow} onClick={closeListModal}>
+                          <div className={styles.modalListAvatar}>
+                            {u.photoURL
+                              ? <Image src={u.photoURL} alt="" width={40} height={40} className={styles.modalListAvatarImg} />
+                              : <span className={styles.modalListInitials}>{name ? `${name.split(' ')[0][0]}${name.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
+                            }
+                          </div>
+                          <div className={styles.modalListInfo}>
+                            <span className={styles.modalListName}>{name}</span>
+                            {u.username && <span className={styles.modalListUsername}>@{u.username}</span>}
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           </div>
         </div>
