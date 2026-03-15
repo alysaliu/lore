@@ -46,6 +46,18 @@ function DetailsContent() {
   const [existingShowRatings, setExistingShowRatings] = useState([]);
   const [showRatingForm, setShowRatingForm] = useState(false);
 
+  const refreshShowRatings = (ratings) => {
+    const all = [];
+    for (const sentiment in ratings[mediaType] || {}) {
+      for (const entry of ratings[mediaType][sentiment]) {
+        if (entry.mediaId === id) {
+          all.push({ season: entry.season ?? null, score: entry.score });
+        }
+      }
+    }
+    setExistingShowRatings(all.sort((a, b) => (a.season ?? Infinity) - (b.season ?? Infinity)));
+  };
+
   // Load media details
   useEffect(() => {
     if (!id || !mediaType) return;
@@ -320,18 +332,6 @@ function DetailsContent() {
     setInsertionState(null);
   };
 
-  const refreshShowRatings = (ratings) => {
-    const all = [];
-    for (const sentiment in ratings[mediaType] || {}) {
-      for (const entry of ratings[mediaType][sentiment]) {
-        if (entry.mediaId === id) {
-          all.push({ season: entry.season ?? null, score: entry.score });
-        }
-      }
-    }
-    setExistingShowRatings(all.sort((a, b) => (a.season ?? Infinity) - (b.season ?? Infinity)));
-  };
-
   const handleRerankSeason = (season) => {
     setSelectedSeason(season);
     setSelectedSentiment(null);
@@ -365,7 +365,7 @@ function DetailsContent() {
     return (
       <div className={styles.loading}>
         <Image src="/images/jumpingin.gif" alt="Loading" width={300} height={300} unoptimized />
-        Hold tight, we're sniffing around for the right content...
+        Hold tight, we&apos;re sniffing around for the right content...
       </div>
     );
   }
@@ -443,7 +443,7 @@ function DetailsContent() {
             </button>
           )}
           {cancelled ? (
-            <p className={styles.resultText}>Ok! Come back when you've watched it.</p>
+            <p className={styles.resultText}>Ok! Come back when you&apos;ve watched it.</p>
           ) : ratingPhase === 'done' && mediaType !== 'tv' ? (
             <div className={styles.ratingDone}>
               <div className={styles.ratingColumn}>

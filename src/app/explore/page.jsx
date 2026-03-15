@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import MediaCard from '../../components/MediaCard';
 import { searchMedia } from '../../lib/tmdb';
@@ -48,19 +48,24 @@ export default function ExplorePage() {
     setWatchlist(updated);
   };
 
-  const fetchResults = useCallback(
-    debounce(async (q, type) => {
-      if (!q.trim()) {
-        setResults(null);
-        return;
-      }
-      const data = await searchMedia(q);
-      const filtered =
-        type === 'all' ? data : data.filter((item) => item.media_type === type);
-      setResults(filtered);
-    }, 300),
+  const debouncedSearch = useMemo(
+    () =>
+      debounce(async (q, type) => {
+        if (!q.trim()) {
+          setResults(null);
+          return;
+        }
+        const data = await searchMedia(q);
+        const filtered =
+          type === 'all' ? data : data.filter((item) => item.media_type === type);
+        setResults(filtered);
+      }, 300),
     []
   );
+
+  const fetchResults = useCallback((q, type) => {
+    debouncedSearch(q, type);
+  }, [debouncedSearch]);
 
   const handleInput = (e) => {
     const val = e.target.value;
