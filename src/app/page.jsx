@@ -42,12 +42,12 @@ export default function HomePage() {
               </div>
               <div className={styles.servicesCard}>
                 <h2>👯‍♀️ Connect with friends</h2>
-                <p>View friends' profiles and see Lore's out-of-pocket take on their taste</p>
+                <p>View friends&apos; profiles and see Lore&apos;s out-of-pocket take on their taste</p>
                 <Link href="/login" className={styles.buttonLink}>Sign up</Link>
               </div>
               <div className={styles.servicesCard}>
                 <h2>📢 Share your feedback</h2>
-                <p>Have feature ideas or bugs to share? We'd love to hear it!</p>
+                <p>Have feature ideas or bugs to share? We&apos;d love to hear it!</p>
                 <a
                   href="https://docs.google.com/forms/d/e/1FAIpQLSeSrXgl4tIrnMrwtHWfDLWmysxrcwl7JYetKZ5gydKJIqbqWw/viewform?usp=header"
                   className={styles.buttonLink}

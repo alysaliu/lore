@@ -15,18 +15,7 @@ function UserContent() {
 
   const [targetUserData, setTargetUserData] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [isSelf, setIsSelf] = useState(false);
-
-  useEffect(() => {
-    if (!selectedUserId) return;
-    loadTargetUser();
-  }, [selectedUserId]);
-
-  useEffect(() => {
-    if (!user || !selectedUserId) return;
-    setIsSelf(user.uid === selectedUserId);
-    checkFollowing();
-  }, [user, selectedUserId]);
+  const isSelf = user && selectedUserId && user.uid === selectedUserId;
 
   const loadTargetUser = async () => {
     const snap = await getDoc(doc(db, 'users', selectedUserId));
@@ -40,6 +29,27 @@ function UserContent() {
       setIsFollowing((data.followinglist || []).includes(selectedUserId));
     }
   };
+
+  useEffect(() => {
+    if (!selectedUserId) return;
+    let cancelled = false;
+    getDoc(doc(db, 'users', selectedUserId)).then((snap) => {
+      if (!cancelled && snap.exists()) setTargetUserData(snap.data());
+    });
+    return () => { cancelled = true; };
+  }, [selectedUserId]);
+
+  useEffect(() => {
+    if (!user || !selectedUserId) return;
+    let cancelled = false;
+    getDoc(doc(db, 'users', user.uid)).then((snap) => {
+      if (!cancelled && snap.exists()) {
+        const data = snap.data();
+        setIsFollowing((data.followinglist || []).includes(selectedUserId));
+      }
+    });
+    return () => { cancelled = true; };
+  }, [user, selectedUserId]);
 
   const handleFollow = async () => {
     if (!user) return;
