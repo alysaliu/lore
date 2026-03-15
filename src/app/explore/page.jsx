@@ -93,7 +93,7 @@ export default function ExplorePage() {
             onChange={handleInput}
           />
           <span className={styles.searchIcon}>
-            <i className="fas fa-search"></i>
+            <i className="fas fa-search" aria-hidden="true"></i>
           </span>
         </div>
 

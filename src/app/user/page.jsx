@@ -97,10 +97,10 @@ function UserContent() {
                 <div className={styles.avatarCircle}>
                   {targetUserData?.photoURL
                     ? <Image src={targetUserData.photoURL} alt="Profile" className={styles.avatarImg} width={96} height={96} />
-                    : <span>{fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
+                    : <span className={styles.avatarInitials}>{fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
                   }
                 </div>
-                <div>
+                <div className={styles.nameBlock}>
                   <h2>{fullName || 'Unnamed'}</h2>
                   {targetUserData?.username && (
                     <p className={styles.username}>@{targetUserData.username}</p>
@@ -108,33 +108,33 @@ function UserContent() {
                 </div>
               </div>
               <div className={styles.statsSection}>
-                <div>
+                <div className={styles.statItem}>
+                  <span className="eyebrow">Ratings</span>
                   <span className={styles.statNumber}>{ratingCount}</span>
-                  <span className={styles.statDescription}> ratings</span>
                 </div>
-                <div>
+                <div className={styles.statItem}>
+                  <span className="eyebrow">Followers</span>
                   <span className={styles.statNumber}>{followersCount}</span>
-                  <span className={styles.statDescription}> followers</span>
                 </div>
-                <div>
+                <div className={styles.statItem}>
+                  <span className="eyebrow">Following</span>
                   <span className={styles.statNumber}>{followingCount}</span>
-                  <span className={styles.statDescription}> following</span>
                 </div>
               </div>
             </div>
-            <div className={styles.buttons}>
-              <button className={styles.btn} onClick={handleShare}>
-                <i className="fas fa-link"></i>Share profile
+          </div>
+          <div className={styles.buttons}>
+            <button className={styles.btn} onClick={handleShare}>
+              <i className="fas fa-link" aria-hidden="true"></i>Share profile
+            </button>
+            {user && !isSelf && (
+              <button
+                className={`${styles.followButton} ${isFollowing ? styles.following : ''}`}
+                onClick={handleFollow}
+              >
+                {isFollowing ? 'Unfollow' : 'Follow'}
               </button>
-              {user && !isSelf && (
-                <button
-                  className={`${styles.followButton} ${isFollowing ? styles.following : ''}`}
-                  onClick={handleFollow}
-                >
-                  {isFollowing ? 'Unfollow' : 'Follow'}
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </div>
 

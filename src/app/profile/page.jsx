@@ -143,7 +143,7 @@ export default function ProfilePage() {
                     ? <Image src={photoURL} alt="Profile" className={styles.avatarImg} width={96} height={96} />
                     : <span className={styles.avatarInitials}>{fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
                   }
-                  <span className={styles.avatarOverlay}>{uploading ? '...' : <i className="fas fa-camera" />}</span>
+                  <span className={styles.avatarOverlay}>{uploading ? '...' : <i className="fas fa-camera" aria-hidden="true" />}</span>
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
                 <div className={styles.nameBlock}>
@@ -172,7 +172,7 @@ export default function ProfilePage() {
           </div>
           <div className={styles.buttons}>
             <button className={styles.btn} onClick={handleShare}>
-              <i className="fas fa-link"></i>Share profile
+              <i className="fas fa-link" aria-hidden="true"></i>Share profile
             </button>
           </div>
         </div>
@@ -183,7 +183,7 @@ export default function ProfilePage() {
               <div className={styles.alertHeader}>
                 💡 Quick tip
                 <button className={styles.alertClose} onClick={dismissTip}>
-                  <i className="fas fa-times"></i>
+                  <i className="fas fa-times" aria-hidden="true"></i>
                 </button>
               </div>
               <p>Share your profile link to add friends — more ways to connect coming soon!</p>
