@@ -3,9 +3,10 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import MediaCard from '../../components/MediaCard';
+import AddToListModal from '../../components/AddToListModal';
 import { searchMedia } from '../../lib/tmdb';
 import { auth, db } from '../../lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import styles from './page.module.css';
 
 function debounce(fn, delay) {
@@ -22,6 +23,7 @@ export default function ExplorePage() {
   const [selectedType, setSelectedType] = useState('all');
   const [watchlist, setWatchlist] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [modalMedia, setModalMedia] = useState(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -33,19 +35,12 @@ export default function ExplorePage() {
     return () => unsubscribe();
   }, []);
 
-  const handleWatchlistToggle = async (mediaId, mediaType) => {
-    if (!currentUser) return;
-    const userRef = doc(db, 'users', currentUser.uid);
-    const snap = await getDoc(userRef);
-    const data = snap.exists() ? snap.data() : {};
-    const lists = data.lists || {};
-    const current = lists.watchlist || [];
-    const isIn = current.some((item) => item.mediaId === mediaId);
-    const updated = isIn
-      ? current.filter((item) => item.mediaId !== mediaId)
-      : [...current, { mediaId, mediaType, timestamp: new Date().toISOString() }];
-    await setDoc(userRef, { lists: { ...lists, watchlist: updated } }, { merge: true });
-    setWatchlist(updated);
+  const handleModalClose = async () => {
+    setModalMedia(null);
+    if (currentUser) {
+      const snap = await getDoc(doc(db, 'users', currentUser.uid));
+      setWatchlist(snap.exists() ? snap.data().lists?.watchlist || [] : []);
+    }
   };
 
   const debouncedSearch = useMemo(
@@ -82,6 +77,14 @@ export default function ExplorePage() {
   };
 
   return (
+    <>
+    {modalMedia && (
+      <AddToListModal
+        mediaId={modalMedia.id}
+        mediaType={modalMedia.type}
+        onClose={handleModalClose}
+      />
+    )}
     <div className={styles.searchSection}>
       <div className={styles.searchContainer}>
         <div className={styles.searchWrapper}>
@@ -141,7 +144,7 @@ export default function ExplorePage() {
                   posterPath={item.poster_path}
                   variant="grid"
                   inWatchlist={watchlist.some((w) => w.mediaId === String(item.id))}
-                  onWatchlistToggle={handleWatchlistToggle}
+                  onAddToList={(id, type) => setModalMedia({ id, type })}
                 />
               );
             })
@@ -149,5 +152,6 @@ export default function ExplorePage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

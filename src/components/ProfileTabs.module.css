@@ -284,3 +284,256 @@
   min-width: 40px;
   text-align: right;
 }
+
+/* ── Lists tab ───────────────────────────────── */
+.listsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) 0 var(--space-6);
+}
+
+.newListBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-contrast);
+  color: var(--color-text-default);
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.newListBtn:hover {
+  background: var(--color-surface-hovered);
+}
+
+.listsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.listCard {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-surface-hovered);
+  transition: var(--transition-fast);
+  text-decoration: none;
+  display: block;
+}
+
+.listCard:hover {
+  opacity: 0.85;
+}
+
+.listCardPosters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 180px;
+  gap: 2px;
+}
+
+.listCardPosterCell {
+  overflow: hidden;
+}
+
+.listCardPosterImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.listCardPosterEmpty {
+  width: 100%;
+  height: 100%;
+  background: var(--color-surface-default);
+}
+
+.listCardInfo {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.listCardTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-default);
+}
+
+.listCardMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.listCardDesc {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* ── Create list modal ───────────────────────── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--color-surface-contrast);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 400px;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text-default);
+}
+
+.modalCloseBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.modalCloseBtn:hover {
+  color: var(--color-text-default);
+}
+
+.modalInput {
+  background: var(--color-surface-hovered);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text-default);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modalInput:focus {
+  outline: none;
+  border-color: var(--color-text-secondary);
+}
+
+.modalTextarea {
+  composes: modalInput;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modalVisibility {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.modalVisibilityBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-default);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.modalVisibilityBtnActive {
+  composes: modalVisibilityBtn;
+  background: var(--color-surface-selected);
+  border-color: var(--color-border-selected);
+  color: var(--color-text-default);
+}
+
+.modalButtons {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.modalCancelBtn {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.modalCancelBtn:hover {
+  color: var(--color-text-default);
+}
+
+.modalSaveBtn {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--color-surface-inverse);
+  color: var(--color-text-inverse);
+  font-size: 14px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.modalSaveBtn:hover:not(:disabled) {
+  background: var(--color-action-hovered);
+}
+
+.modalSaveBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
