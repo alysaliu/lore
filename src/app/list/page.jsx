@@ -1,18 +1,18 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
-import { fetchMediaDetails, getPosterUrl } from '../../../lib/tmdb';
-import { useAuth } from '../../../contexts/AuthContext';
-import MediaCard from '../../../components/MediaCard';
+import { db } from '../../lib/firebase';
+import { fetchMediaDetails, getPosterUrl } from '../../lib/tmdb';
+import { useAuth } from '../../contexts/AuthContext';
+import MediaCard from '../../components/MediaCard';
 import { Globe, Lock, X } from 'lucide-react';
 import styles from './page.module.css';
 
 function ListContent() {
-  const { id } = useParams();
   const searchParams = useSearchParams();
+  const id = searchParams.get('id');
   const uid = searchParams.get('uid');
   const router = useRouter();
   const { user } = useAuth();
@@ -116,7 +116,6 @@ function ListContent() {
     setItems((prev) => prev.filter(
       (i) => !(String(i.mediaId) === String(mediaId) && i.mediaType === mediaType)
     ));
-    setOpenMenuId(null);
   };
 
   const isOwner = user?.uid === uid;

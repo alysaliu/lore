@@ -355,7 +355,7 @@ export default function ProfileTabs({ userId }) {
   };
 
   const renderListCard = (list) => (
-    <Link key={list.id} href={`/list/${list.id}?uid=${userId}`} className={styles.listCard}>
+    <Link key={list.id} href={`/list?id=${list.id}&uid=${userId}`} className={styles.listCard}>
       <div className={styles.listCardPosters}>
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className={styles.listCardPosterCell}>
