@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from '../login/page.module.css';
@@ -43,8 +43,21 @@ export default function OnboardingPage() {
         return;
       }
 
-      await setDoc(usernameRef, { uid: user.uid, isDeveloper: false });
-      await updateDoc(doc(db, 'users', user.uid), { username: trimmed });
+      const nameParts = (user.displayName || '').split(' ');
+      const firstname = nameParts[0] || '';
+      const lastname = nameParts.slice(1).join(' ') || '';
+
+      await setDoc(usernameRef, { uid: user.uid });
+      await setDoc(doc(db, 'users', user.uid), {
+        firstname,
+        lastname,
+        email: user.email || null,
+        photoURL: user.photoURL || null,
+        username: trimmed,
+        isDeveloper: false,
+        createdAt: serverTimestamp(),
+        lists: { watchlist: [] },
+      });
 
       router.push('/explore');
     } catch (err) {

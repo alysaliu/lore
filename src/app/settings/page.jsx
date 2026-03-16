@@ -48,12 +48,7 @@ export default function SettingsPage() {
     if (!user) return;
     (async () => {
       const userSnap = await getDoc(doc(db, 'users', user.uid));
-      const username = userSnap.exists() ? userSnap.data().username : null;
-      if (!username) return;
-      const usernameSnap = await getDoc(doc(db, 'usernames', username));
-      if (usernameSnap.exists() && usernameSnap.data().isDeveloper) {
-        setIsDeveloper(true);
-      }
+      setIsDeveloper(Boolean(userSnap.exists() && userSnap.data().isDeveloper));
     })();
   }, [user]);
 

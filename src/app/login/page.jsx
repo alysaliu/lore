@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { signInWithPopup } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../../lib/firebase';
 import styles from './page.module.css';
 
@@ -19,26 +19,12 @@ export default function LoginPage() {
     try {
       const { user } = await signInWithPopup(auth, googleProvider);
 
-      // Create Firestore doc on first sign-in
+      // Only check if user has completed registration (has a username in DB)
       const userRef = doc(db, 'users', user.uid);
       const snap = await getDoc(userRef);
 
       if (!snap.exists()) {
-        const nameParts = (user.displayName || '').split(' ');
-        const firstname = nameParts[0] || '';
-        const lastname = nameParts.slice(1).join(' ') || '';
-
-        await setDoc(userRef, {
-          firstname,
-          lastname,
-          email: user.email,
-          createdAt: serverTimestamp(),
-        });
-
-        await setDoc(doc(db, 'users', user.uid, 'lists', 'watchlist'), {
-          items: [],
-        });
-
+        // New auth identity: no user doc until they complete onboarding
         router.push('/onboarding');
         return;
       }
