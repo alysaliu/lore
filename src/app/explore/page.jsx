@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import MediaCard from '../../components/MediaCard';
 import AddToListModal from '../../components/AddToListModal';
@@ -8,6 +9,24 @@ import { searchMedia } from '../../lib/tmdb';
 import { auth, db } from '../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import styles from './page.module.css';
+
+const FILTER_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'movie', label: 'Movies' },
+  { value: 'tv', label: 'TV shows' },
+  { value: 'profiles', label: 'Profiles' },
+];
+
+async function searchProfileByUsername(query) {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) return null;
+  const usernameSnap = await getDoc(doc(db, 'usernames', trimmed));
+  if (!usernameSnap.exists()) return null;
+  const uid = usernameSnap.data().uid;
+  const userSnap = await getDoc(doc(db, 'users', uid));
+  if (!userSnap.exists()) return null;
+  return { type: 'profile', uid: userSnap.id, ...userSnap.data() };
+}
 
 function debounce(fn, delay) {
   let timer;
@@ -50,10 +69,21 @@ export default function ExplorePage() {
           setResults(null);
           return;
         }
-        const data = await searchMedia(q);
-        const filtered =
-          type === 'all' ? data : data.filter((item) => item.media_type === type);
-        setResults(filtered);
+        if (type === 'profiles') {
+          const profile = await searchProfileByUsername(q);
+          setResults(profile ? [profile] : []);
+          return;
+        }
+        const mediaData = await searchMedia(q);
+        const filteredMedia =
+          type === 'all' ? mediaData : mediaData.filter((item) => item.media_type === type);
+        if (type === 'all') {
+          const profile = await searchProfileByUsername(q);
+          const combined = profile ? [profile, ...filteredMedia] : filteredMedia;
+          setResults(combined);
+        } else {
+          setResults(filteredMedia);
+        }
       }, 300),
     []
   );
@@ -90,7 +120,7 @@ export default function ExplorePage() {
         <div className={styles.searchWrapper}>
           <input
             type="text"
-            placeholder="Search movies and shows"
+            placeholder="Search movies, shows, or usernames"
             className={styles.searchInput}
             value={query}
             onChange={handleInput}
@@ -103,13 +133,13 @@ export default function ExplorePage() {
         <div className={styles.filterContainer}>
           <span>Filter by</span>
           <div className={styles.chipContainer}>
-            {['movie', 'tv'].map((type) => (
+            {FILTER_OPTIONS.map(({ value, label }) => (
               <button
-                key={type}
-                className={selectedType === type ? styles.chipSelected : styles.chip}
-                onClick={() => handleChip(type)}
+                key={value}
+                className={selectedType === value ? styles.chipSelected : styles.chip}
+                onClick={() => handleChip(value)}
               >
-                {type === 'movie' ? 'Movies' : 'TV shows'}
+                {label}
               </button>
             ))}
           </div>
@@ -131,6 +161,32 @@ export default function ExplorePage() {
             <div className={styles.emptyState}>No results found.</div>
           ) : (
             results.map((item) => {
+              if (item.type === 'profile') {
+                const fullName = `${item.firstname || ''} ${item.lastname || ''}`.trim() || 'Unnamed';
+                return (
+                  <Link
+                    key={`profile-${item.uid}`}
+                    href={`/user?uid=${item.uid}`}
+                    className={styles.profileCard}
+                  >
+                    <div className={styles.profileCardAvatar}>
+                      <div className={styles.profileCardAvatarCircle}>
+                        {item.photoURL ? (
+                          <Image src={item.photoURL} alt="" width={160} height={160} className={styles.profileCardImg} />
+                        ) : (
+                          <span className={styles.profileCardInitials}>
+                            {fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className={styles.profileCardInfo}>
+                      <span className={styles.profileCardName}>{fullName}</span>
+                      {item.username && <span className={styles.profileCardUsername}>@{item.username}</span>}
+                    </div>
+                  </Link>
+                );
+              }
               const title = item.title || item.name || 'No Title';
               const year = (item.release_date || item.first_air_date || '').split('-')[0];
               return (

@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
+// For GitHub Pages project site (e.g. lore-2026.github.io/lore/), set BASE_PATH=/lore in the deploy workflow
+const basePath = process.env.BASE_PATH || '';
 const nextConfig = {
+  ...(basePath && { basePath, assetPrefix: basePath + '/' }),
+  output: 'export',
   images: {
+    unoptimized: true,
     domains: ['image.tmdb.org', 'firebasestorage.googleapis.com'],
   },
 };

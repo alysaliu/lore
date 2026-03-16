@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
+import { getRatings, saveRatings } from '../../lib/ratingsFirestore';
 import { fetchMediaDetails, fetchMediaName, getPosterUrl } from '../../lib/tmdb';
 import AddToListModal from '../../components/AddToListModal';
 import styles from './page.module.css';
@@ -161,9 +162,7 @@ function DetailsContent() {
     const user = auth.currentUser;
     if (!user) { alert('Please log in to rate'); return; }
 
-    const ratingsRef = doc(db, 'users', user.uid);
-    const userDoc = await getDoc(ratingsRef);
-    let ratings = userDoc.exists() ? userDoc.data().ratings || {} : {};
+    let ratings = await getRatings(user.uid);
 
     if (!ratings[mediaType]) ratings[mediaType] = {};
     if (!ratings[mediaType][selectedSentiment]) ratings[mediaType][selectedSentiment] = [];
@@ -189,7 +188,7 @@ function DetailsContent() {
         }
       }
       ratings[mediaType][selectedSentiment] = [newRating];
-      await setDoc(ratingsRef, { ratings }, { merge: true });
+      await saveRatings(user.uid, ratings);
       if (!isReranking) await incrementRatingCount(user.uid);
       refreshShowRatings(ratings);
       if (mediaType === 'tv') {
@@ -244,11 +243,9 @@ function DetailsContent() {
     await saveWithInsertion(insertionState?.low ?? comparisonGroup.length);
   };
 
-  const saveWithInsertion = async (position) => {
+  const   saveWithInsertion = async (position) => {
     const user = auth.currentUser;
-    const ratingsRef = doc(db, 'users', user.uid);
-    const userDoc = await getDoc(ratingsRef);
-    const ratings = userDoc.exists() ? userDoc.data().ratings || {} : {};
+    let ratings = await getRatings(user.uid);
 
     if (!ratings[mediaType]) ratings[mediaType] = {};
 
@@ -287,7 +284,7 @@ function DetailsContent() {
     }
 
     ratings[mediaType][selectedSentiment] = group;
-    await updateDoc(ratingsRef, { ratings });
+    await saveRatings(user.uid, ratings);
     if (!isReranking) await incrementRatingCount(user.uid);
     refreshShowRatings(ratings);
 

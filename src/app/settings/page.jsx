@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { deleteAllRatings } from '../../lib/ratingsFirestore';
 import {
   parseRatingsCsv,
   importLetterboxdRatings,
@@ -153,7 +154,8 @@ export default function SettingsPage() {
     if (!user) return;
     setDeletingRatings(true);
     try {
-      await updateDoc(doc(db, 'users', user.uid), { ratings: {}, ratingCount: 0 });
+      await deleteAllRatings(user.uid);
+      await updateDoc(doc(db, 'users', user.uid), { ratingCount: 0 });
       setShowDeleteRatingsConfirm(false);
     } catch (err) {
       console.error('Failed to delete ratings', err);

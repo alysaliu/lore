@@ -4,8 +4,9 @@
  * Letterboxd uses 0.5–5 stars; Lore uses 1–10 and sentiment buckets.
  */
 import { searchMovies } from './tmdb';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
+import { getRatings, saveRatings } from './ratingsFirestore';
 
 const SENTIMENT_RANGES = [
   { sentiment: 'not-good', min: 1, max: 3 },
@@ -93,9 +94,9 @@ export async function importLetterboxdRatings(userId, rows) {
   let skipped = 0;
   let failed = 0;
 
-  const ratingsRef = doc(db, 'users', userId);
-  const userDoc = await getDoc(ratingsRef);
-  let ratings = userDoc.exists() ? userDoc.data().ratings || {} : {};
+  const userRef = doc(db, 'users', userId);
+  const userDoc = await getDoc(userRef);
+  let ratings = await getRatings(userId);
   if (!ratings.movie) ratings.movie = {};
   const existingMovieIds = new Set();
   for (const sentiment of Object.keys(ratings.movie)) {
@@ -145,13 +146,11 @@ export async function importLetterboxdRatings(userId, rows) {
   }
 
   if (successful > 0) {
+    await saveRatings(userId, ratings);
     const currentCount = userDoc.exists() && userDoc.data().ratingCount != null
       ? userDoc.data().ratingCount
       : 0;
-    await setDoc(ratingsRef, {
-      ratings,
-      ratingCount: currentCount + successful,
-    }, { merge: true });
+    await updateDoc(userRef, { ratingCount: currentCount + successful });
   }
 
   return { successful, skipped, failed, details };
