@@ -87,6 +87,7 @@ export async function saveRatings(uid, ratings) {
   const entries = flattenRatingsToEntries(ratings);
   const newIds = new Set(entries.map((e) => e.id));
 
+  // 1) Sync per-user ratings subcollection
   for (let i = 0; i < entries.length; i += BATCH_SIZE) {
     const batch = writeBatch(db);
     const chunk = entries.slice(i, i + BATCH_SIZE);
@@ -106,6 +107,9 @@ export async function saveRatings(uid, ratings) {
     }
     await batch.commit();
   }
+
+  // 2) Sync denormalized mediaRatings/{mediaKey}/userRatings docs for this user
+  await syncMediaRatingsForUser(uid, entries);
 }
 
 /**
@@ -122,5 +126,51 @@ export async function deleteAllRatings(uid) {
       batch.delete(d.ref);
     }
     await batch.commit();
+  }
+}
+
+/**
+ * Keep mediaRatings/{mediaKey}/userRatings in sync for a single user, based on
+ * the flattened per-user rating entries.
+ *
+ * Each logical rating (movie or tv season/show) becomes a doc whose path is:
+ * mediaRatings/{mediaKey}/userRatings/{uid_segmentId}
+ * where mediaKey is movie_{mediaId} or tv_{mediaId} and segmentId is
+ * "show" or "s{season}".
+ */
+async function syncMediaRatingsForUser(uid, flattenedEntries) {
+  if (!db) return;
+
+  // Deduplicate by media + season for this user's ratings in memory
+  const byKey = new Map();
+  for (const { data } of flattenedEntries) {
+    const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
+    const mediaKey = mediaType === 'movie' ? `movie_${data.mediaId}` : `tv_${data.mediaId}`;
+    const segmentId = data.season != null ? `s${data.season}` : 'show';
+    const key = `${mediaKey}|${segmentId}`;
+
+    const existing = byKey.get(key);
+    if (!existing || (data.score ?? 0) > (existing.score ?? 0)) {
+      byKey.set(key, { mediaKey, segmentId, data });
+    }
+  }
+
+  // Upsert the desired docs with current rating data.
+  // We do not attempt to delete stale docs here; backfill / maintenance scripts
+  // can perform any necessary cleanup offline.
+  for (const { mediaKey, segmentId, data } of byKey.values()) {
+    const docId = `${uid}_${segmentId}`;
+    const colRef = collection(doc(db, 'mediaRatings', mediaKey), 'userRatings');
+    const ref = doc(colRef, docId);
+    await setDoc(ref, {
+      uid,
+      mediaType: data.mediaType === 'tv' ? 'tv' : 'movie',
+      mediaId: data.mediaId,
+      sentiment: data.sentiment,
+      score: data.score,
+      note: data.note ?? null,
+      timestamp: data.timestamp ?? null,
+      ...(data.season != null && { season: data.season }),
+    });
   }
 }

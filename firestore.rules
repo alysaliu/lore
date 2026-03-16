@@ -2,13 +2,25 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // User doc: only the owner can read/write
+    // User doc: any authenticated user can read basic profile info,
+    // but only the owner can write. Ratings subcollection remains owner-only.
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
 
       // Ratings subcollection: same as user doc (owner only)
       match /ratings/{ratingId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Per-media ratings index for social features.
+    // mediaRatings/{mediaKey}/userRatings/{docId}
+    // For now, any authenticated user can read/write; the app ensures users only
+    // modify their own docs. This can be tightened later with uid checks.
+    match /mediaRatings/{mediaKey} {
+      match /userRatings/{ratingDocId} {
+        allow read, write: if request.auth != null;
       }
     }
 

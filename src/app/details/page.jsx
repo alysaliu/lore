@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
+import { useAuth } from '../../contexts/AuthContext';
 import { getRatings, saveRatings } from '../../lib/ratingsFirestore';
 import { fetchMediaDetails, fetchMediaName, getPosterUrl } from '../../lib/tmdb';
 import AddToListModal from '../../components/AddToListModal';
@@ -22,6 +24,7 @@ function DetailsContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
   const mediaType = searchParams.get('media_type');
+  const { user: authUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [media, setMedia] = useState(null);
@@ -47,6 +50,8 @@ function DetailsContent() {
   const [userRatings, setUserRatings] = useState(null);
   const [existingShowRatings, setExistingShowRatings] = useState([]);
   const [showRatingForm, setShowRatingForm] = useState(false);
+  const [friendsRatings, setFriendsRatings] = useState(null); // null = not loaded yet
+  const [friendsError, setFriendsError] = useState(null);
 
   const refreshShowRatings = useCallback((ratings) => {
     const all = [];
@@ -76,19 +81,21 @@ function DetailsContent() {
     return () => clearTimeout(timer);
   }, [id, mediaType]);
 
-  // Check auth state & watchlist / existing rating
+  // Load current user's ratings and friends' ratings when page is loaded
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (!user || !id || !mediaType) return;
+    if (!authUser || !id || !mediaType) {
+      setFriendsRatings([]);
+      return;
+    }
+
+    (async () => {
       try {
         // Fetch ratings from the per-user ratings subcollection
-        const ratings = await getRatings(user.uid);
-        // Debug: inspect loaded ratings for this user
-        // eslint-disable-next-line no-console
-        console.log('Loaded ratings for user', user.uid, ratings);
+        const ratings = await getRatings(authUser.uid);
         setUserRatings(ratings);
         refreshShowRatings(ratings);
         if (mediaType === 'movie') {
+          let found = false;
           for (const sentiment in ratings[mediaType] || {}) {
             for (const entry of ratings[mediaType][sentiment]) {
               if (String(entry.mediaId) === String(id)) {
@@ -96,17 +103,117 @@ function DetailsContent() {
                 setExistingSentiment(sentiment);
                 setRatingPhase('done');
                 setFinalScore(entry.score);
-                return;
+                found = true;
+                break;
               }
             }
+            if (found) break;
           }
         }
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error(e);
       }
-    });
-    return () => unsubscribe();
-  }, [id, mediaType, refreshShowRatings]);
+
+      // Load friends' ratings for this media
+      try {
+        const userRef = doc(db, 'users', authUser.uid);
+        const userSnap = await getDoc(userRef);
+        const following = userSnap.exists() ? (userSnap.data().followinglist || []) : [];
+
+        if (!following.length) {
+          setFriendsRatings([]);
+        } else {
+          const mediaKey = mediaType === 'tv' ? `tv_${id}` : `movie_${id}`;
+          const colRef = collection(db, 'mediaRatings', mediaKey, 'userRatings');
+          const snap = await getDocs(colRef);
+
+          // Group ratings by friend uid
+          const byFriend = new Map();
+          snap.forEach((d) => {
+            const data = d.data();
+            const uid = data.uid;
+            if (!uid) return;
+            if (uid === authUser.uid) return; // exclude current user
+            if (!following.includes(uid)) return; // only people I follow
+
+            if (!byFriend.has(uid)) {
+              byFriend.set(uid, {
+                uid,
+                wholeShow: null,
+                seasons: [],
+                mediaType: data.mediaType === 'tv' ? 'tv' : 'movie',
+              });
+            }
+            const entry = byFriend.get(uid);
+            if (data.season != null) {
+              entry.seasons.push({
+                season: data.season,
+                score: data.score,
+                note: data.note ?? null,
+              });
+            } else {
+              entry.wholeShow = {
+                score: data.score,
+                note: data.note ?? null,
+              };
+            }
+          });
+
+          const friendsArray = Array.from(byFriend.values());
+
+          // Enrich with user display data
+          const enriched = await Promise.all(
+            friendsArray.map(async (friend) => {
+              try {
+                const uSnap = await getDoc(doc(db, 'users', friend.uid));
+                if (!uSnap.exists()) return friend;
+                const uData = uSnap.data();
+                const fullName = `${uData.firstname || ''} ${uData.lastname || ''}`.trim();
+                return {
+                  ...friend,
+                  displayName: fullName || null,
+                  username: uData.username || null,
+                };
+              } catch {
+                return friend;
+              }
+            })
+          );
+
+          // For movies or whole-show view, compute a primary score for sorting
+          enriched.forEach((f) => {
+            if (f.mediaType === 'movie') {
+              f.primaryScore = f.wholeShow?.score ?? 0;
+            } else {
+              const seasonsSorted = [...f.seasons].sort((a, b) => (a.season ?? 0) - (b.season ?? 0));
+              f.seasons = seasonsSorted;
+              const scores = [];
+              if (f.wholeShow?.score != null) scores.push(f.wholeShow.score);
+              seasonsSorted.forEach((s) => {
+                if (s.score != null) scores.push(s.score);
+              });
+              if (scores.length) {
+                f.primaryScore = Math.round(
+                  (scores.reduce((sum, v) => sum + v, 0) / scores.length) * 10
+                ) / 10;
+              } else {
+                f.primaryScore = 0;
+              }
+            }
+          });
+
+          enriched.sort((a, b) => (b.primaryScore || 0) - (a.primaryScore || 0));
+          setFriendsRatings(enriched);
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to load friends ratings', err);
+        setFriendsError('Could not load friends ratings.');
+        setFriendsRatings([]);
+      }
+    })();
+  }, [authUser, id, mediaType, refreshShowRatings]);
 
   // Extract dominant colors from poster for background gradient
   useEffect(() => {
@@ -515,6 +622,68 @@ function DetailsContent() {
               </div>
             </>
           )}
+            </div>
+
+            {/* Friends' ratings section */}
+            <div className={styles.existingRatings}>
+              <span className="eyebrow">What your friends think</span>
+              {friendsRatings === null && !friendsError && (
+                <p className={styles.resultText}>Loading friends&apos; ratings…</p>
+              )}
+              {friendsError && (
+                <p className={styles.resultText}>{friendsError}</p>
+              )}
+              {friendsRatings && friendsRatings.length === 0 && !friendsError && (
+                <p className={styles.resultText}>
+                  None of the people you follow have rated this yet.
+                </p>
+              )}
+              {friendsRatings && friendsRatings.length > 0 && (
+                <div>
+                  {friendsRatings.map((friend) => {
+                    const displayName =
+                      friend.displayName ||
+                      (friend.username ? `@${friend.username}` : 'Friend');
+                    const reviewNote =
+                      friend.wholeShow?.note ||
+                      (friend.seasons.find((s) => s.note)?.note ?? '');
+
+                    return (
+                      <div key={friend.uid} className={styles.existingRatingRow}>
+                        <Link
+                          href={`/user?uid=${friend.uid}`}
+                          className={styles.friendProfileLink}
+                        >
+                          <div className={styles.friendAvatarCircle}>
+                            <span className={styles.friendAvatarInitials}>
+                              {displayName
+                                .replace(/^@/, '')
+                                .split(' ')
+                                .map((part) => part[0])
+                                .join('')
+                                .slice(0, 2)
+                                .toUpperCase()}
+                            </span>
+                          </div>
+                          <div className={styles.friendReviewText}>
+                            <span className={styles.existingRatingLabel}>
+                              {displayName}
+                            </span>
+                            {reviewNote && (
+                              <span className={styles.friendReviewNote}>
+                                {reviewNote}
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+                        <span className={styles.existingRatingScore}>
+                          {friend.primaryScore != null ? friend.primaryScore : '–'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
