@@ -52,7 +52,7 @@ function DetailsContent() {
     const all = [];
     for (const sentiment in ratings[mediaType] || {}) {
       for (const entry of ratings[mediaType][sentiment]) {
-        if (entry.mediaId === id) {
+        if (String(entry.mediaId) === String(id)) {
           all.push({ season: entry.season ?? null, score: entry.score });
         }
       }
@@ -81,19 +81,17 @@ function DetailsContent() {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (!user || !id || !mediaType) return;
       try {
-        const userRef = doc(db, 'users', user.uid);
-        const snap = await getDoc(userRef);
-        if (!snap.exists()) return;
-        const data = snap.data();
-
-        // Existing rating
-        const ratings = data.ratings || {};
+        // Fetch ratings from the per-user ratings subcollection
+        const ratings = await getRatings(user.uid);
+        // Debug: inspect loaded ratings for this user
+        // eslint-disable-next-line no-console
+        console.log('Loaded ratings for user', user.uid, ratings);
         setUserRatings(ratings);
         refreshShowRatings(ratings);
         if (mediaType === 'movie') {
           for (const sentiment in ratings[mediaType] || {}) {
             for (const entry of ratings[mediaType][sentiment]) {
-              if (entry.mediaId === id) {
+              if (String(entry.mediaId) === String(id)) {
                 setExistingRating(entry);
                 setExistingSentiment(sentiment);
                 setRatingPhase('done');
