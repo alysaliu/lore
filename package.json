@@ -9,6 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "preview": "npm run build && npx serve out",
     "lint": "eslint src",
     "test": "jest",
     "ci": "npm run test && npm run lint && npm run build"
