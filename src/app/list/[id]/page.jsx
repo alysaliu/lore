@@ -271,7 +271,7 @@ function ListContent() {
               </button>
             </div>
             <p className={styles.deleteConfirmText}>
-              Are you sure you want to delete <strong>{listData?.name}</strong>? This can't be undone.
+              Are you sure you want to delete <strong>{listData?.name}</strong>? This can&apos;t be undone.
             </p>
             <div className={styles.modalButtons}>
               <button className={styles.modalCancelBtn} onClick={() => setConfirmDelete(false)}>Cancel</button>

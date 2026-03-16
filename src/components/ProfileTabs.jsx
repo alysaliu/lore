@@ -361,7 +361,7 @@ export default function ProfileTabs({ userId }) {
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className={styles.listCardPosterCell}>
             {list.posters?.[i]
-              ? <img src={getPosterUrl(list.posters[i], 'w200')} alt="" className={styles.listCardPosterImg} aria-hidden="true" />
+              ? <Image src={getPosterUrl(list.posters[i], 'w200')} alt="" className={styles.listCardPosterImg} width={200} height={300} aria-hidden="true" />
               : <div className={styles.listCardPosterEmpty} />
             }
           </div>
