@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, addDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getRatings } from '../lib/ratingsFirestore';
 import { fetchMediaDetails, getPosterUrl } from '../lib/tmdb';
+import { useAuth } from '../contexts/AuthContext';
+import { X, Globe, Lock } from 'lucide-react';
 import styles from './ProfileTabs.module.css';
 
 /**
@@ -16,12 +18,22 @@ import styles from './ProfileTabs.module.css';
  *   userId — Firestore uid to load data for
  */
 export default function ProfileTabs({ userId }) {
+  const { user } = useAuth();
+  const isOwner = user?.uid === userId;
+
   const [activeTab, setActiveTab] = useState('movies');
   const [movies, setMovies] = useState(null);
   const [shows, setShows] = useState(null);
   const [watchlist, setWatchlist] = useState(null);
+  const [lists, setLists] = useState(null);
   const [watchlistFilter, setWatchlistFilter] = useState('all');
   const [expandedShows, setExpandedShows] = useState({});
+
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newListName, setNewListName] = useState('');
+  const [newListDesc, setNewListDesc] = useState('');
+  const [newListVisibility, setNewListVisibility] = useState('public');
+  const [savingList, setSavingList] = useState(false);
 
   const loadMovies = async (uid) => {
     const data = await getRatings(uid);
@@ -116,6 +128,31 @@ export default function ProfileTabs({ userId }) {
     setWatchlist(enriched);
   };
 
+  const loadLists = async (uid) => {
+    const q = query(collection(db, 'users', uid, 'customLists'), orderBy('createdAt', 'asc'));
+    const snap = await getDocs(q);
+    const rawLists = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const visible = isOwner ? rawLists : rawLists.filter((l) => l.visibility === 'public');
+
+    const enriched = await Promise.all(
+      visible.map(async (list) => {
+        const first4 = (list.items || []).slice(0, 4);
+        const posters = await Promise.all(
+          first4.map(async (item) => {
+            try {
+              const d = await fetchMediaDetails(item.mediaType, item.mediaId);
+              return d.poster_path || '';
+            } catch {
+              return '';
+            }
+          })
+        );
+        return { ...list, posters };
+      })
+    );
+    setLists(enriched);
+  };
+
   useEffect(() => {
     if (!userId) return;
     const timer = setTimeout(() => loadMovies(userId), 0);
@@ -127,6 +164,39 @@ export default function ProfileTabs({ userId }) {
     if (tab === 'movies' && movies === null) loadMovies(userId);
     if (tab === 'shows' && shows === null) loadShows(userId);
     if (tab === 'watchlist' && watchlist === null) loadWatchlist(userId);
+    if (tab === 'lists' && lists === null) loadLists(userId);
+  };
+
+  const createList = async () => {
+    if (!newListName.trim() || !user) return;
+    setSavingList(true);
+    try {
+      await addDoc(collection(db, 'users', userId, 'customLists'), {
+        name: newListName.trim(),
+        description: newListDesc.trim(),
+        visibility: newListVisibility,
+        items: [],
+        createdAt: serverTimestamp(),
+      });
+      setNewListName('');
+      setNewListDesc('');
+      setNewListVisibility('public');
+      setShowCreateModal(false);
+      setLists(null);
+      loadLists(userId);
+    } catch (err) {
+      console.error('Failed to create list:', err);
+    } finally {
+      setSavingList(false);
+    }
+  };
+
+  const getListItemLabel = (items) => {
+    const n = items?.length || 0;
+    const allMovies = n > 0 && items.every((i) => i.mediaType === 'movie');
+    const allTV = n > 0 && items.every((i) => i.mediaType === 'tv');
+    const noun = allMovies ? 'film' : allTV ? 'show' : 'title';
+    return `${n} ${noun}${n !== 1 ? 's' : ''}`;
   };
 
   const renderRatedRow = (item, mediaType, rankOverride) => (
@@ -213,7 +283,6 @@ export default function ProfileTabs({ userId }) {
     const showScore = getShowScore(group);
     const isExpanded = !!expandedShows[first.mediaId];
 
-    // Single whole-show entry — render as normal row
     if (!seasons.length) return renderRatedRow(first, 'tv', rank);
 
     const toggleExpanded = (e) => {
@@ -285,6 +354,35 @@ export default function ProfileTabs({ userId }) {
     );
   };
 
+  const renderListCard = (list) => (
+    <Link key={list.id} href={`/list?id=${list.id}&uid=${userId}`} className={styles.listCard}>
+      <div className={styles.listCardPosters}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className={styles.listCardPosterCell}>
+            {list.posters?.[i]
+              ? <Image src={getPosterUrl(list.posters[i], 'w200')} alt="" className={styles.listCardPosterImg} width={200} height={300} aria-hidden="true" />
+              : <div className={styles.listCardPosterEmpty} />
+            }
+          </div>
+        ))}
+      </div>
+      <div className={styles.listCardInfo}>
+        <span className={styles.listCardTitle}>{list.name}</span>
+        <div className={styles.listCardMeta}>
+          <span>{getListItemLabel(list.items)}</span>
+          <span>·</span>
+          <span className={styles.listCardVisibility}>
+            {list.visibility === 'private' ? <Lock size={12} /> : <Globe size={12} />}
+            {list.visibility === 'private' ? 'Private' : 'Public'}
+          </span>
+        </div>
+        {list.description && (
+          <p className={styles.listCardDesc}>{list.description}</p>
+        )}
+      </div>
+    </Link>
+  );
+
   const renderContent = () => {
     if (activeTab === 'movies') {
       if (movies === null) return <p className={styles.emptyState}>Loading...</p>;
@@ -296,7 +394,6 @@ export default function ProfileTabs({ userId }) {
       if (shows === null) return <p className={styles.emptyState}>Loading...</p>;
       if (shows.length === 0) return <p className={styles.emptyState}>No shows rated yet.</p>;
 
-      // Group by mediaId, sort each group by best score
       const groupMap = {};
       for (const item of shows) {
         if (!groupMap[item.mediaId]) groupMap[item.mediaId] = [];
@@ -332,12 +429,33 @@ export default function ProfileTabs({ userId }) {
         </>
       );
     }
+
+    if (activeTab === 'lists') {
+      if (lists === null) return <p className={styles.emptyState}>Loading...</p>;
+      return (
+        <>
+          <div className={styles.listsHeader}>
+            <span className={styles.emptyState}>{lists.length} {lists.length === 1 ? 'list' : 'lists'}</span>
+            {isOwner && (
+              <button className={styles.newListBtn} onClick={() => setShowCreateModal(true)}>
+                <i className="fas fa-plus" aria-hidden="true" />New list
+              </button>
+            )}
+          </div>
+          {lists.length === 0
+            ? <p className={styles.emptyState}>No lists yet.</p>
+            : <div className={styles.listsGrid}>{lists.map(renderListCard)}</div>
+          }
+        </>
+      );
+    }
   };
 
   const tabs = [
     { key: 'movies', label: 'Movies' },
     { key: 'shows', label: 'Shows' },
-    { key: 'watchlist', label: 'Watchlist' },
+    { key: 'watchlist', label: 'Want to Watch' },
+    { key: 'lists', label: 'Lists' },
   ];
 
   return (
@@ -356,6 +474,58 @@ export default function ProfileTabs({ userId }) {
       <div className={styles.tabContent}>
         {renderContent()}
       </div>
+
+      {showCreateModal && (
+        <div className={styles.modalBackdrop} onClick={() => setShowCreateModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>New list</h3>
+              <button className={styles.modalCloseBtn} onClick={() => setShowCreateModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <input
+              className={styles.modalInput}
+              placeholder="List name"
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') createList(); if (e.key === 'Escape') setShowCreateModal(false); }}
+              autoFocus
+              spellCheck={false}
+            />
+            <textarea
+              className={styles.modalTextarea}
+              placeholder="Description (optional)"
+              value={newListDesc}
+              onChange={(e) => setNewListDesc(e.target.value)}
+            />
+            <div className={styles.modalVisibility}>
+              <button
+                className={newListVisibility === 'public' ? styles.modalVisibilityBtnActive : styles.modalVisibilityBtn}
+                onClick={() => setNewListVisibility('public')}
+              >
+                <Globe size={14} /> Public
+              </button>
+              <button
+                className={newListVisibility === 'private' ? styles.modalVisibilityBtnActive : styles.modalVisibilityBtn}
+                onClick={() => setNewListVisibility('private')}
+              >
+                <Lock size={14} /> Private
+              </button>
+            </div>
+            <div className={styles.modalButtons}>
+              <button className={styles.modalCancelBtn} onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button
+                className={styles.modalSaveBtn}
+                onClick={createList}
+                disabled={savingList || !newListName.trim()}
+              >
+                {savingList ? 'Creating...' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

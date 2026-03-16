@@ -7,6 +7,7 @@ import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { getRatings, saveRatings } from '../../lib/ratingsFirestore';
 import { fetchMediaDetails, fetchMediaName, getPosterUrl } from '../../lib/tmdb';
+import AddToListModal from '../../components/AddToListModal';
 import styles from './page.module.css';
 
 const SCORE_RANGES = {
@@ -26,8 +27,8 @@ function DetailsContent() {
   const [media, setMedia] = useState(null);
   const [bgGradient, setBgGradient] = useState(null);
 
-  // Watchlist
-  const [inWatchlist, setInWatchlist] = useState(false);
+  // Watchlist / list modal
+  const [showListModal, setShowListModal] = useState(false);
 
   // Rating state machine: 'season' (TV only) | 'initial' | 'comparing' | 'done'
   const [ratingPhase, setRatingPhase] = useState('initial');
@@ -85,12 +86,8 @@ function DetailsContent() {
         if (!snap.exists()) return;
         const data = snap.data();
 
-        // Watchlist
-        const watchlist = data.lists?.watchlist || [];
-        setInWatchlist(watchlist.some((item) => item.mediaId === id));
-
-        // Existing rating (from subcollection)
-        const ratings = await getRatings(user.uid);
+        // Existing rating
+        const ratings = data.ratings || {};
         setUserRatings(ratings);
         refreshShowRatings(ratings);
         if (mediaType === 'movie') {
@@ -159,26 +156,6 @@ function DetailsContent() {
       );
     };
   }, [media?.poster_path]);
-
-  const handleWatchlist = async () => {
-    const user = auth.currentUser;
-    if (!user) { alert('Please log in to use your watchlist.'); return; }
-    const userRef = doc(db, 'users', user.uid);
-    const snap = await getDoc(userRef);
-    const data = snap.exists() ? snap.data() : {};
-    const lists = data.lists || {};
-    const watchlist = lists.watchlist || [];
-
-    if (inWatchlist) {
-      const updated = watchlist.filter((item) => item.mediaId !== id);
-      await setDoc(userRef, { lists: { ...lists, watchlist: updated } }, { merge: true });
-      setInWatchlist(false);
-    } else {
-      const updated = [...watchlist, { mediaId: id, mediaType, timestamp: new Date().toISOString() }];
-      await setDoc(userRef, { lists: { ...lists, watchlist: updated } }, { merge: true });
-      setInWatchlist(true);
-    }
-  };
 
   const handleNext = async () => {
     if (!selectedSentiment) { alert('Please select a rating!'); return; }
@@ -380,6 +357,14 @@ function DetailsContent() {
   const cast = (media.credits?.cast || []).slice(0, 3).map((c) => c.name).join(', ');
 
   return (
+    <>
+    {showListModal && (
+      <AddToListModal
+        mediaId={id}
+        mediaType={mediaType}
+        onClose={() => setShowListModal(false)}
+      />
+    )}
     <div className={styles.mainContent} style={bgGradient ? { background: `${bgGradient}, var(--color-surface-default)` } : {}}>
 
       <div className={styles.content}>
@@ -387,11 +372,11 @@ function DetailsContent() {
           <div className={styles.posterCard}>
             <Image src={posterUrl} alt={currentTitle} className={styles.posterCardImage} width={500} height={750} />
             <button
-              className={`${styles.watchlistIconBtn} ${inWatchlist ? styles.watchlistIconBtnActive : ''}`}
-              onClick={handleWatchlist}
-              data-tooltip={inWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+              className={styles.watchlistIconBtn}
+              onClick={() => setShowListModal(true)}
+              data-tooltip="Add to list"
             >
-              <i className={`fas fa-${inWatchlist ? 'check' : 'plus'}`}></i>
+              <i className="fas fa-plus"></i>
             </button>
           </div>
 
@@ -537,6 +522,7 @@ function DetailsContent() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

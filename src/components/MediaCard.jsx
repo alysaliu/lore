@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { getPosterUrl } from '../lib/tmdb';
@@ -17,7 +19,9 @@ import styles from './MediaCard.module.css';
  *   score        — numeric score (optional, profile tabs only)
  *   rank         — ranking number (optional)
  *   note         — user's note (optional)
- *   variant      — "explore" | "profile" (default "explore")
+ *   variant      — "explore" | "profile" | "grid" (default "explore")
+ *   onAddToList  — () => void, shows + button when provided
+ *   onRemove     — () => void, shows meatball menu when provided
  */
 export default function MediaCard({
   mediaId,
@@ -32,7 +36,8 @@ export default function MediaCard({
   note,
   variant = 'explore',
   inWatchlist = false,
-  onWatchlistToggle,
+  onAddToList,
+  onRemove,
 }) {
   const isProfile = variant === 'profile';
   const isGrid = variant === 'grid';
@@ -47,13 +52,21 @@ export default function MediaCard({
       >
         <div className={styles.posterWrapper}>
           <Image src={posterUrl} alt={title} className={styles.posterGrid} width={342} height={513} />
-          {onWatchlistToggle && (
+          {onAddToList && (
             <button
               className={`${styles.watchlistBtn} ${inWatchlist ? styles.watchlistBtnActive : ''}`}
-              onClick={(e) => { e.preventDefault(); onWatchlistToggle(String(mediaId), mediaType); }}
-              data-tooltip={inWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+              onClick={(e) => { e.preventDefault(); onAddToList(String(mediaId), mediaType); }}
+              data-tooltip="Add to list"
             >
-              <i className={`fas fa-${inWatchlist ? 'check' : 'plus'}`}></i>
+              <i className="fas fa-plus" aria-hidden="true"></i>
+            </button>
+          )}
+          {onRemove && (
+            <button
+              className={styles.removeBtn}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }}
+            >
+              Remove
             </button>
           )}
         </div>
