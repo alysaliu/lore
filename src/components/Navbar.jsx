@@ -24,7 +24,13 @@ export default function Navbar() {
     <nav className={styles.navbar}>
       <div className={styles.navbarContainer}>
         <Link href="/" className={styles.navbarLogo}>
-          <Image src="/images/Rabbit.svg" alt="Lore" width={40} height={40} className={styles.logo} />
+          <img
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/images/Rabbit.svg`}
+            alt="Lore"
+            width={40}
+            height={40}
+            className={styles.logo}
+          />
         </Link>
 
         <div
