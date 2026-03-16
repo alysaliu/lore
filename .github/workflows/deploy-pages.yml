@@ -67,6 +67,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Require Vercel secrets
+        run: |
+          missing=""
+          [ -z "${{ secrets.VERCEL_TOKEN }}" ] && missing="$missing VERCEL_TOKEN"
+          [ -z "${{ secrets.VERCEL_ORG_ID }}" ] && missing="$missing VERCEL_ORG_ID"
+          [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ] && missing="$missing VERCEL_PROJECT_ID"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing required secrets:$missing"
+            echo "Add them in repo Settings → Secrets and variables → Actions."
+            echo "Get a token at https://vercel.com/account/tokens; org/project IDs from Vercel project Settings → General."
+            exit 1
+          fi
+
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
