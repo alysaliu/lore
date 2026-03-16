@@ -570,6 +570,66 @@
   background-color: var(--color-surface-hovered);
 }
 
+/* ── Delete rating modal ───────────────────── */
+.deleteModalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.deleteModal {
+  background: var(--color-surface-default);
+  border-radius: 12px;
+  padding: var(--space-4);
+  max-width: 360px;
+  width: 90%;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.deleteModalTitle {
+  margin: 0 0 var(--space-2);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-default);
+}
+
+.deleteModalText {
+  margin: 0 0 var(--space-4);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.deleteModalButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.deleteCancelBtn {
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-default);
+  color: var(--color-text-default);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.deleteConfirmBtn {
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--color-surface-inverse);
+  color: var(--color-text-inverse);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
 /* ── Season dropdown ─────────────────────────── */
 .seasonDropdownRow {
   font-size: 18px;

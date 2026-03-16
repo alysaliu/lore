@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { getRatings, saveRatings } from '../../lib/ratingsFirestore';
@@ -52,6 +52,8 @@ function DetailsContent() {
   const [showRatingForm, setShowRatingForm] = useState(false);
   const [friendsRatings, setFriendsRatings] = useState(null); // null = not loaded yet
   const [friendsError, setFriendsError] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const refreshShowRatings = useCallback((ratings) => {
     const all = [];
@@ -83,10 +85,7 @@ function DetailsContent() {
 
   // Load current user's ratings and friends' ratings when page is loaded
   useEffect(() => {
-    if (!authUser || !id || !mediaType) {
-      setFriendsRatings([]);
-      return;
-    }
+    if (!authUser || !id || !mediaType) return;
 
     (async () => {
       try {
@@ -434,6 +433,76 @@ function DetailsContent() {
     setIsReranking(true);
   };
 
+  const handleDeleteRatingClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    const user = auth.currentUser;
+    if (!user || !mediaType || !id) return;
+    setDeleting(true);
+    try {
+      let ratings = await getRatings(user.uid);
+      if (!ratings[mediaType]) {
+        ratings[mediaType] = {};
+      }
+
+      let removed = false;
+      for (const sentiment of Object.keys(ratings[mediaType])) {
+        const before = ratings[mediaType][sentiment] || [];
+        const after = before.filter(
+          (item) => String(item.mediaId) !== String(id) || (mediaType === 'tv' && item.season != null)
+        );
+        if (after.length !== before.length) {
+          ratings[mediaType][sentiment] = after;
+          removed = true;
+        }
+      }
+
+      if (removed) {
+        await saveRatings(user.uid, ratings);
+
+        // Also remove from mediaRatings index for this movie
+        if (mediaType === 'movie') {
+          const mediaKey = `movie_${id}`;
+          const ratingDocId = `${user.uid}_show`;
+          try {
+            await deleteDoc(doc(db, 'mediaRatings', mediaKey, 'userRatings', ratingDocId));
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error('Failed to delete mediaRatings doc', e);
+          }
+        }
+        // Decrement ratingCount
+        const userRef = doc(db, 'users', user.uid);
+        const snap = await getDoc(userRef);
+        const current =
+          snap.exists() && typeof snap.data().ratingCount === 'number'
+            ? snap.data().ratingCount
+            : 0;
+        const next = current > 0 ? current - 1 : 0;
+        await updateDoc(userRef, { ratingCount: next });
+
+        setUserRatings(ratings);
+        refreshShowRatings(ratings);
+        setFinalScore(null);
+        setExistingSentiment(null);
+        setRatingPhase('initial');
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to delete rating', e);
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    if (deleting) return;
+    setShowDeleteConfirm(false);
+  };
+
   const incrementRatingCount = async (uid) => {
     const userRef = doc(db, 'users', uid);
     const snap = await getDoc(userRef);
@@ -537,7 +606,12 @@ function DetailsContent() {
               <div className={styles.ratingColumn}>
                 <div className="eyebrow">Your rating{selectedSeason != null ? ` · Season ${selectedSeason}` : ''}</div>
                 <div className={styles.ratingColumnScore}>{finalScore}</div>
-                <button className={styles.rerankBtn} onClick={handleRerank}>Re-rank</button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button className={styles.rerankBtn} onClick={handleRerank}>Re-rank</button>
+                  <button className={styles.rerankBtn} onClick={handleDeleteRatingClick}>
+                    Remove rating
+                  </button>
+                </div>
               </div>
             </div>
           ) : ratingPhase === 'comparing' ? (
@@ -699,6 +773,36 @@ function DetailsContent() {
           </div>
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div className={styles.deleteModalBackdrop} onClick={handleCancelDelete}>
+          <div
+            className={styles.deleteModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className={styles.deleteModalTitle}>Are you sure?</h3>
+            <p className={styles.deleteModalText}>
+              This action is permanent.
+            </p>
+            <div className={styles.deleteModalButtons}>
+              <button
+                className={styles.deleteCancelBtn}
+                onClick={handleCancelDelete}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.deleteConfirmBtn}
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? 'Removing…' : 'Remove rating'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </>
   );
