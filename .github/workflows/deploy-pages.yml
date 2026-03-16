@@ -1,5 +1,9 @@
 # Build with npm and deploy the static export to GitHub Pages.
+# Also deploys to Vercel (https://lore-chi.vercel.app) when VERCEL_* secrets are set.
 # In repo Settings → Pages → Build and deployment → Source: GitHub Actions.
+#
+# For Vercel: add secrets VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+# (create token at vercel.com/account/tokens; org/project IDs from project Settings → General).
 
 name: Deploy to GitHub Pages
 
@@ -56,3 +60,18 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
+
+  deploy-vercel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
