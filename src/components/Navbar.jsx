@@ -57,6 +57,7 @@ export default function Navbar() {
                   aria-haspopup="true"
                   aria-expanded={userMenuOpen}
                   aria-label="User menu"
+                  onClick={() => router.push('/profile')}
                 >
                   {photoURL
                     ? <Image src={photoURL} alt="Profile" className={styles.profileCircleImg} width={36} height={36} />
