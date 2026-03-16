@@ -162,7 +162,7 @@ function DetailsContent() {
 
           const friendsArray = Array.from(byFriend.values());
 
-          // Enrich with user display data
+          // Enrich with user display data (name, username, photo)
           const enriched = await Promise.all(
             friendsArray.map(async (friend) => {
               try {
@@ -174,6 +174,7 @@ function DetailsContent() {
                   ...friend,
                   displayName: fullName || null,
                   username: uData.username || null,
+                  photoURL: uData.photoURL || null,
                 };
               } catch {
                 return friend;
@@ -655,15 +656,25 @@ function DetailsContent() {
                           className={styles.friendProfileLink}
                         >
                           <div className={styles.friendAvatarCircle}>
-                            <span className={styles.friendAvatarInitials}>
-                              {displayName
-                                .replace(/^@/, '')
-                                .split(' ')
-                                .map((part) => part[0])
-                                .join('')
-                                .slice(0, 2)
-                                .toUpperCase()}
-                            </span>
+                            {friend.photoURL ? (
+                              <Image
+                                src={friend.photoURL}
+                                alt={displayName}
+                                width={32}
+                                height={32}
+                                className={styles.friendAvatarImg}
+                              />
+                            ) : (
+                              <span className={styles.friendAvatarInitials}>
+                                {displayName
+                                  .replace(/^@/, '')
+                                  .split(' ')
+                                  .map((part) => part[0])
+                                  .join('')
+                                  .slice(0, 2)
+                                  .toUpperCase()}
+                              </span>
+                            )}
                           </div>
                           <div className={styles.friendReviewText}>
                             <span className={styles.existingRatingLabel}>
