@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { getRatings } from '../lib/ratingsFirestore';
 import { fetchMediaDetails, getPosterUrl } from '../lib/tmdb';
 import styles from './ProfileTabs.module.css';
 
@@ -23,8 +24,7 @@ export default function ProfileTabs({ userId }) {
   const [expandedShows, setExpandedShows] = useState({});
 
   const loadMovies = async (uid) => {
-    const userDoc = await getDoc(doc(db, 'users', uid));
-    const data = userDoc.exists() ? userDoc.data().ratings || {} : {};
+    const data = await getRatings(uid);
 
     const seen = new Map();
     for (const sentiment in data.movie || {}) {
@@ -58,8 +58,7 @@ export default function ProfileTabs({ userId }) {
   };
 
   const loadShows = async (uid) => {
-    const userDoc = await getDoc(doc(db, 'users', uid));
-    const data = userDoc.exists() ? userDoc.data().ratings || {} : {};
+    const data = await getRatings(uid);
 
     const seen = new Map();
     for (const sentiment in data.tv || {}) {

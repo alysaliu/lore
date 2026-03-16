@@ -10,15 +10,22 @@
  */
 const mockDoc = jest.fn();
 const mockGetDoc = jest.fn();
-const mockSetDoc = jest.fn();
+const mockUpdateDoc = jest.fn();
+const mockGetRatings = jest.fn();
+const mockSaveRatings = jest.fn();
 
 jest.mock('firebase/firestore', () => ({
   doc: (...args) => mockDoc(...args),
   getDoc: (...args) => mockGetDoc(...args),
-  setDoc: (...args) => mockSetDoc(...args),
+  updateDoc: (...args) => mockUpdateDoc(...args),
 }));
 
 jest.mock('../firebase', () => ({ db: {} }));
+
+jest.mock('../ratingsFirestore', () => ({
+  getRatings: (...args) => mockGetRatings(...args),
+  saveRatings: (...args) => mockSaveRatings(...args),
+}));
 
 const mockSearchMovies = jest.fn();
 jest.mock('../tmdb', () => ({
@@ -147,27 +154,32 @@ describe('importLetterboxdRatings', () => {
   beforeEach(() => {
     mockDoc.mockReset();
     mockGetDoc.mockReset();
-    mockSetDoc.mockReset();
+    mockUpdateDoc.mockReset();
+    mockGetRatings.mockReset();
+    mockSaveRatings.mockReset();
     mockSearchMovies.mockReset();
     mockDoc.mockReturnValue('mock-doc-ref');
     mockGetDoc.mockResolvedValue({
       exists: () => true,
-      data: () => ({ ratings: {}, ratingCount: 0 }),
+      data: () => ({ ratingCount: 0 }),
     });
-    mockSetDoc.mockResolvedValue(undefined);
+    mockGetRatings.mockResolvedValue({ movie: {} });
+    mockSaveRatings.mockResolvedValue(undefined);
+    mockUpdateDoc.mockResolvedValue(undefined);
   });
 
-  it('loads user doc from Firestore: doc(users, userId) and getDoc(that ref)', async () => {
+  it('loads user doc and ratings: getDoc(userRef) and getRatings(userId)', async () => {
     mockSearchMovies.mockResolvedValue([]);
     await importLetterboxdRatings(userId, []);
     expect(mockDoc).toHaveBeenCalledWith({}, 'users', userId);
     expect(mockGetDoc).toHaveBeenCalledWith('mock-doc-ref');
+    expect(mockGetRatings).toHaveBeenCalledWith(userId);
   });
 
-  it('returns { successful: 0, skipped: 0, failed: 0, details: [] } and does not call setDoc when rows is empty', async () => {
+  it('returns { successful: 0, skipped: 0, failed: 0, details: [] } and does not call saveRatings when rows is empty', async () => {
     const result = await importLetterboxdRatings(userId, []);
     expect(result).toEqual({ successful: 0, skipped: 0, failed: 0, details: [] });
-    expect(mockSetDoc).not.toHaveBeenCalled();
+    expect(mockSaveRatings).not.toHaveBeenCalled();
   });
 
   it('counts row as failed with reason "Not found on TMDB" and does not write when TMDB returns no match', async () => {
@@ -179,28 +191,20 @@ describe('importLetterboxdRatings', () => {
     expect(result.details).toEqual([
       { title: 'Unknown Film (1999)', status: 'failed', reason: 'Not found on TMDB' },
     ]);
-    expect(mockSetDoc).not.toHaveBeenCalled();
+    expect(mockSaveRatings).not.toHaveBeenCalled();
   });
 
-  it('counts row as success, merges rating into ratings.movie[sentiment], and calls setDoc with ratings + ratingCount', async () => {
+  it('counts row as success, merges rating into ratings.movie[sentiment], and calls saveRatings + updateDoc with ratingCount', async () => {
     mockSearchMovies.mockResolvedValue([{ id: 27205 }]);
     const rows = [{ name: 'Inception', year: '2010', rating: '4' }];
     const result = await importLetterboxdRatings(userId, rows);
     expect(result.successful).toBe(1);
     expect(result.failed).toBe(0);
     expect(result.details).toEqual([{ title: 'Inception (2010)', status: 'success' }]);
-    expect(mockSetDoc).toHaveBeenCalledWith(
-      'mock-doc-ref',
-      expect.objectContaining({
-        ratings: expect.objectContaining({
-          movie: expect.any(Object),
-        }),
-        ratingCount: 1,
-      }),
-      { merge: true }
-    );
-    const setDocCall = mockSetDoc.mock.calls[0];
-    const ratings = setDocCall[1].ratings;
+    expect(mockSaveRatings).toHaveBeenCalledWith(userId, expect.objectContaining({
+      movie: expect.any(Object),
+    }));
+    const ratings = mockSaveRatings.mock.calls[0][1];
     expect(ratings.movie).toBeDefined();
     const sentimentKeys = Object.keys(ratings.movie);
     expect(sentimentKeys.length).toBeGreaterThan(0);
@@ -214,19 +218,14 @@ describe('importLetterboxdRatings', () => {
     expect(entries[0].score).toBeGreaterThanOrEqual(1);
     expect(entries[0].score).toBeLessThanOrEqual(10);
     expect(entries[0].timestamp).toBeDefined();
+    expect(mockUpdateDoc).toHaveBeenCalledWith('mock-doc-ref', { ratingCount: 1 });
   });
 
-  it('counts row as skipped with reason "Already in your ratings" when movie id exists in user ratings and does not call setDoc', async () => {
-    mockGetDoc.mockResolvedValue({
-      exists: () => true,
-      data: () => ({
-        ratings: {
-          movie: {
-            okay: [{ mediaId: 27205, mediaType: 'movie', score: 8, note: null, timestamp: 'x' }],
-          },
-        },
-        ratingCount: 1,
-      }),
+  it('counts row as skipped with reason "Already in your ratings" when movie id exists in user ratings and does not call saveRatings', async () => {
+    mockGetRatings.mockResolvedValue({
+      movie: {
+        okay: [{ mediaId: 27205, mediaType: 'movie', score: 8, note: null, timestamp: 'x' }],
+      },
     });
     mockSearchMovies.mockResolvedValue([{ id: 27205 }]);
     const rows = [{ name: 'Inception', year: '2010', rating: '4' }];
@@ -236,7 +235,7 @@ describe('importLetterboxdRatings', () => {
     expect(result.details).toEqual([
       { title: 'Inception (2010)', status: 'skipped', reason: 'Already in your ratings' },
     ]);
-    expect(mockSetDoc).not.toHaveBeenCalled();
+    expect(mockSaveRatings).not.toHaveBeenCalled();
   });
 
   it('uses title without year when year is empty', async () => {
@@ -249,15 +248,12 @@ describe('importLetterboxdRatings', () => {
   it('increments ratingCount from existing user doc when writing new ratings (e.g. 10 → 11)', async () => {
     mockGetDoc.mockResolvedValue({
       exists: () => true,
-      data: () => ({ ratings: { movie: {} }, ratingCount: 10 }),
+      data: () => ({ ratingCount: 10 }),
     });
+    mockGetRatings.mockResolvedValue({ movie: {} });
     mockSearchMovies.mockResolvedValue([{ id: 99 }]);
     const rows = [{ name: 'New Movie', year: '2020', rating: '5' }];
     await importLetterboxdRatings(userId, rows);
-    expect(mockSetDoc).toHaveBeenCalledWith(
-      'mock-doc-ref',
-      expect.objectContaining({ ratingCount: 11 }),
-      { merge: true }
-    );
+    expect(mockUpdateDoc).toHaveBeenCalledWith('mock-doc-ref', { ratingCount: 11 });
   });
 });
