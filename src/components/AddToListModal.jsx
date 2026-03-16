@@ -3,18 +3,28 @@
 import { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { X } from 'lucide-react';
+import { X, Globe, Lock } from 'lucide-react';
 import styles from './AddToListModal.module.css';
 
 export default function AddToListModal({ mediaId, mediaType, onClose }) {
   const [loading, setLoading] = useState(true);
-  const [inWatchlist, setInWatchlist] = useState(false);
-  const [customLists, setCustomLists] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  // Original state loaded from Firestore (never mutated after load)
+  const [origWatchlist, setOrigWatchlist] = useState(false);
+  const [origLists, setOrigLists] = useState([]);
+
+  // Draft state — what the user has selected but not yet saved
+  const [draftWatchlist, setDraftWatchlist] = useState(false);
+  const [draftLists, setDraftLists] = useState([]);
+
+  // New lists staged locally (not yet in Firestore)
+  const [pendingNewLists, setPendingNewLists] = useState([]);
+
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newVisibility, setNewVisibility] = useState('public');
-  const [saving, setSaving] = useState(false);
 
   const user = auth.currentUser;
 
@@ -24,68 +34,82 @@ export default function AddToListModal({ mediaId, mediaType, onClose }) {
       const snap = await getDoc(doc(db, 'users', user.uid));
       const data = snap.exists() ? snap.data() : {};
       const watchlist = data.lists?.watchlist || [];
-      setInWatchlist(watchlist.some((w) => w.mediaId === String(mediaId)));
+      const inWatchlist = watchlist.some((w) => w.mediaId === String(mediaId));
+      setOrigWatchlist(inWatchlist);
+      setDraftWatchlist(inWatchlist);
 
       const listsSnap = await getDocs(
         query(collection(db, 'users', user.uid, 'customLists'), orderBy('createdAt', 'asc'))
       );
-      setCustomLists(
-        listsSnap.docs.map((d) => {
-          const items = d.data().items || [];
-          return { id: d.id, name: d.data().name, isAdded: items.some((i) => i.mediaId === String(mediaId)) };
-        })
-      );
+      const lists = listsSnap.docs.map((d) => {
+        const items = d.data().items || [];
+        return { id: d.id, name: d.data().name, isAdded: items.some((i) => i.mediaId === String(mediaId)) };
+      });
+      setOrigLists(lists);
+      setDraftLists(lists);
       setLoading(false);
     };
     load();
   }, [user, mediaId]);
 
-  const toggleWatchlist = async () => {
-    if (!user) return;
-    const userRef = doc(db, 'users', user.uid);
-    const snap = await getDoc(userRef);
-    const data = snap.exists() ? snap.data() : {};
-    const lists = data.lists || {};
-    const current = lists.watchlist || [];
-    const updated = inWatchlist
-      ? current.filter((i) => i.mediaId !== String(mediaId))
-      : [...current, { mediaId: String(mediaId), mediaType, timestamp: new Date().toISOString() }];
-    await setDoc(userRef, { lists: { ...lists, watchlist: updated } }, { merge: true });
-    setInWatchlist(!inWatchlist);
+  const stageNewList = () => {
+    if (!newName.trim()) return;
+    setPendingNewLists((prev) => [
+      ...prev,
+      { tempId: Date.now(), name: newName.trim(), desc: newDesc.trim(), visibility: newVisibility, isAdded: true },
+    ]);
+    setNewName('');
+    setNewDesc('');
+    setNewVisibility('public');
+    setShowCreate(false);
   };
 
-  const toggleCustomList = async (listId, currentlyAdded) => {
+  const handleSave = async () => {
     if (!user) return;
-    const listRef = doc(db, 'users', user.uid, 'customLists', listId);
-    const snap = await getDoc(listRef);
-    const items = snap.exists() ? snap.data().items || [] : [];
-    const updated = currentlyAdded
-      ? items.filter((i) => i.mediaId !== String(mediaId))
-      : [...items, { mediaId: String(mediaId), mediaType, timestamp: new Date().toISOString() }];
-    await updateDoc(listRef, { items: updated });
-    setCustomLists((prev) =>
-      prev.map((l) => l.id === listId ? { ...l, isAdded: !currentlyAdded } : l)
-    );
-  };
-
-  const createList = async () => {
-    if (!newName.trim() || !user) return;
     setSaving(true);
     try {
-      const docRef = await addDoc(collection(db, 'users', user.uid, 'customLists'), {
-        name: newName.trim(),
-        description: newDesc.trim(),
-        visibility: newVisibility,
-        items: [{ mediaId: String(mediaId), mediaType, timestamp: new Date().toISOString() }],
-        createdAt: serverTimestamp(),
-      });
-      setCustomLists((prev) => [...prev, { id: docRef.id, name: newName.trim(), isAdded: true }]);
-      setNewName('');
-      setNewDesc('');
-      setNewVisibility('public');
-      setShowCreate(false);
+      // Watchlist
+      if (draftWatchlist !== origWatchlist) {
+        const userRef = doc(db, 'users', user.uid);
+        const snap = await getDoc(userRef);
+        const data = snap.exists() ? snap.data() : {};
+        const lists = data.lists || {};
+        const current = lists.watchlist || [];
+        const updated = draftWatchlist
+          ? [...current, { mediaId: String(mediaId), mediaType, timestamp: new Date().toISOString() }]
+          : current.filter((i) => i.mediaId !== String(mediaId));
+        await setDoc(userRef, { lists: { ...lists, watchlist: updated } }, { merge: true });
+      }
+
+      // Changed custom lists
+      for (const list of draftLists) {
+        const orig = origLists.find((l) => l.id === list.id);
+        if (orig && orig.isAdded !== list.isAdded) {
+          const listRef = doc(db, 'users', user.uid, 'customLists', list.id);
+          const snap = await getDoc(listRef);
+          const items = snap.exists() ? snap.data().items || [] : [];
+          const updated = list.isAdded
+            ? [...items, { mediaId: String(mediaId), mediaType, timestamp: new Date().toISOString() }]
+            : items.filter((i) => i.mediaId !== String(mediaId));
+          await updateDoc(listRef, { items: updated });
+        }
+      }
+
+      // New lists
+      for (const pending of pendingNewLists) {
+        if (!pending.isAdded) continue;
+        await addDoc(collection(db, 'users', user.uid, 'customLists'), {
+          name: pending.name,
+          description: pending.desc,
+          visibility: pending.visibility,
+          items: [{ mediaId: String(mediaId), mediaType, timestamp: new Date().toISOString() }],
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      onClose();
     } catch (err) {
-      console.error('Failed to create list:', err);
+      console.error('Failed to save list changes:', err);
     } finally {
       setSaving(false);
     }
@@ -106,17 +130,33 @@ export default function AddToListModal({ mediaId, mediaType, onClose }) {
         ) : (
           <>
             <div className={styles.listRows}>
-              <button className={styles.listRow} onClick={toggleWatchlist}>
-                <div className={`${styles.check} ${inWatchlist ? styles.checkActive : ''}`}>
-                  {inWatchlist && <i className="fas fa-check" />}
+              <button className={styles.listRow} onClick={() => setDraftWatchlist((v) => !v)}>
+                <div className={`${styles.check} ${draftWatchlist ? styles.checkActive : ''}`}>
+                  {draftWatchlist && <i className="fas fa-check" />}
                 </div>
                 <span className={styles.listName}>Want to Watch</span>
               </button>
-              {customLists.map((list) => (
+              {draftLists.map((list) => (
                 <button
                   key={list.id}
                   className={styles.listRow}
-                  onClick={() => toggleCustomList(list.id, list.isAdded)}
+                  onClick={() => setDraftLists((prev) =>
+                    prev.map((l) => l.id === list.id ? { ...l, isAdded: !l.isAdded } : l)
+                  )}
+                >
+                  <div className={`${styles.check} ${list.isAdded ? styles.checkActive : ''}`}>
+                    {list.isAdded && <i className="fas fa-check" />}
+                  </div>
+                  <span className={styles.listName}>{list.name}</span>
+                </button>
+              ))}
+              {pendingNewLists.map((list) => (
+                <button
+                  key={list.tempId}
+                  className={styles.listRow}
+                  onClick={() => setPendingNewLists((prev) =>
+                    prev.map((l) => l.tempId === list.tempId ? { ...l, isAdded: !l.isAdded } : l)
+                  )}
                 >
                   <div className={`${styles.check} ${list.isAdded ? styles.checkActive : ''}`}>
                     {list.isAdded && <i className="fas fa-check" />}
@@ -148,23 +188,23 @@ export default function AddToListModal({ mediaId, mediaType, onClose }) {
                     className={newVisibility === 'public' ? styles.visibilityBtnActive : styles.visibilityBtn}
                     onClick={() => setNewVisibility('public')}
                   >
-                    <i className="fas fa-globe" aria-hidden="true" /> Public
+                    <Globe size={14} /> Public
                   </button>
                   <button
                     className={newVisibility === 'private' ? styles.visibilityBtnActive : styles.visibilityBtn}
                     onClick={() => setNewVisibility('private')}
                   >
-                    <i className="fas fa-lock" aria-hidden="true" /> Private
+                    <Lock size={14} /> Private
                   </button>
                 </div>
                 <div className={styles.formButtons}>
                   <button className={styles.cancelBtn} onClick={() => setShowCreate(false)}>Cancel</button>
                   <button
                     className={styles.saveBtn}
-                    onClick={createList}
-                    disabled={!newName.trim() || saving}
+                    onClick={stageNewList}
+                    disabled={!newName.trim()}
                   >
-                    {saving ? 'Creating...' : 'Create'}
+                    Create
                   </button>
                 </div>
               </div>
@@ -173,6 +213,15 @@ export default function AddToListModal({ mediaId, mediaType, onClose }) {
                 <i className="fas fa-plus" aria-hidden="true" /> New list
               </button>
             )}
+
+            <div className={styles.divider} />
+
+            <div className={styles.modalButtons}>
+              <button className={styles.cancelBtn} onClick={onClose}>Cancel</button>
+              <button className={styles.saveBtn} onClick={handleSave} disabled={saving}>
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
           </>
         )}
       </div>

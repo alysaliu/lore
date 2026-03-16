@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { getPosterUrl } from '../lib/tmdb';
@@ -17,7 +19,9 @@ import styles from './MediaCard.module.css';
  *   score        — numeric score (optional, profile tabs only)
  *   rank         — ranking number (optional)
  *   note         — user's note (optional)
- *   variant      — "explore" | "profile" (default "explore")
+ *   variant      — "explore" | "profile" | "grid" (default "explore")
+ *   onAddToList  — () => void, shows + button when provided
+ *   onRemove     — () => void, shows meatball menu when provided
  */
 export default function MediaCard({
   mediaId,
@@ -33,6 +37,7 @@ export default function MediaCard({
   variant = 'explore',
   inWatchlist = false,
   onAddToList,
+  onRemove,
 }) {
   const isProfile = variant === 'profile';
   const isGrid = variant === 'grid';
@@ -53,7 +58,15 @@ export default function MediaCard({
               onClick={(e) => { e.preventDefault(); onAddToList(String(mediaId), mediaType); }}
               data-tooltip="Add to list"
             >
-              <i className="fas fa-plus"></i>
+              <i className="fas fa-plus" aria-hidden="true"></i>
+            </button>
+          )}
+          {onRemove && (
+            <button
+              className={styles.removeBtn}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }}
+            >
+              Remove
             </button>
           )}
         </div>

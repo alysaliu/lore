@@ -194,6 +194,10 @@
   justify-content: flex-end;
 }
 
+.modalButtons {
+  composes: formButtons;
+}
+
 .cancelBtn {
   display: flex;
   align-items: center;

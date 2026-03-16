@@ -97,14 +97,15 @@
   text-decoration: none;
   cursor: pointer;
   border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-default);
   overflow: hidden;
-  background-color: var(--color-surface-contrast);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .cardGrid:hover {
   transform: translateY(-4px);
+}
+
+.cardGrid:hover .posterWrapper {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
@@ -112,6 +113,8 @@
   position: relative;
   flex: 1;
   min-height: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 .posterWrapper::after {
@@ -161,7 +164,6 @@
 }
 
 .watchlistBtnActive {
-  opacity: 1;
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.3);
 }
@@ -190,11 +192,43 @@
   opacity: 1;
 }
 
+/* ── Remove button (list page) ───────────────── */
+.removeBtn {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  height: 30px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.posterWrapper:hover .removeBtn {
+  opacity: 1;
+}
+
+.removeBtn:hover {
+  background: rgba(0, 0, 0, 0.75);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 .gridInfo {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-3);
+  padding: var(--space-3) 0;
 }
 
 .gridTitle {

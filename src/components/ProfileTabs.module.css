@@ -290,7 +290,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-4) 0 var(--space-6);
+  padding: var(--space-2) 0 var(--space-3);
 }
 
 .newListBtn {
@@ -361,13 +361,17 @@
   padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .listCardTitle {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--color-text-default);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .listCardMeta {
@@ -376,6 +380,12 @@
   gap: var(--space-2);
   font-size: 13px;
   color: var(--color-text-secondary);
+}
+
+.listCardVisibility {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .listCardDesc {

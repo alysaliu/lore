@@ -7,7 +7,7 @@ import { doc, getDoc, collection, getDocs, addDoc, query, orderBy, serverTimesta
 import { db } from '../lib/firebase';
 import { fetchMediaDetails, getPosterUrl } from '../lib/tmdb';
 import { useAuth } from '../contexts/AuthContext';
-import { X } from 'lucide-react';
+import { X, Globe, Lock } from 'lucide-react';
 import styles from './ProfileTabs.module.css';
 
 /**
@@ -372,11 +372,10 @@ export default function ProfileTabs({ userId }) {
         <div className={styles.listCardMeta}>
           <span>{getListItemLabel(list.items)}</span>
           <span>·</span>
-          <i
-            className={`fas ${list.visibility === 'private' ? 'fa-lock' : 'fa-globe'}`}
-            aria-hidden="true"
-          />
-          <span>{list.visibility === 'private' ? 'Private' : 'Public'}</span>
+          <span className={styles.listCardVisibility}>
+            {list.visibility === 'private' ? <Lock size={12} /> : <Globe size={12} />}
+            {list.visibility === 'private' ? 'Private' : 'Public'}
+          </span>
         </div>
         {list.description && (
           <p className={styles.listCardDesc}>{list.description}</p>
@@ -506,13 +505,13 @@ export default function ProfileTabs({ userId }) {
                 className={newListVisibility === 'public' ? styles.modalVisibilityBtnActive : styles.modalVisibilityBtn}
                 onClick={() => setNewListVisibility('public')}
               >
-                <i className="fas fa-globe" aria-hidden="true" /> Public
+                <Globe size={14} /> Public
               </button>
               <button
                 className={newListVisibility === 'private' ? styles.modalVisibilityBtnActive : styles.modalVisibilityBtn}
                 onClick={() => setNewListVisibility('private')}
               >
-                <i className="fas fa-lock" aria-hidden="true" /> Private
+                <Lock size={14} /> Private
               </button>
             </div>
             <div className={styles.modalButtons}>
