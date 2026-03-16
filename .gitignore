@@ -9,6 +9,10 @@ out/
 .env.local
 .env.*.local
 
+# Firebase service account key (Admin SDK — never commit)
+service-account.json
+*-firebase-adminsdk-*.json
+
 # Misc
 .DS_Store
 *.pem

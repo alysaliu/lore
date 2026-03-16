@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { doc, getDoc, collection, getDocs, addDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { getRatings } from '../lib/ratingsFirestore';
 import { fetchMediaDetails, getPosterUrl } from '../lib/tmdb';
 import { useAuth } from '../contexts/AuthContext';
 import { X, Globe, Lock } from 'lucide-react';
@@ -35,8 +36,7 @@ export default function ProfileTabs({ userId }) {
   const [savingList, setSavingList] = useState(false);
 
   const loadMovies = async (uid) => {
-    const userDoc = await getDoc(doc(db, 'users', uid));
-    const data = userDoc.exists() ? userDoc.data().ratings || {} : {};
+    const data = await getRatings(uid);
 
     const seen = new Map();
     for (const sentiment in data.movie || {}) {
@@ -70,8 +70,7 @@ export default function ProfileTabs({ userId }) {
   };
 
   const loadShows = async (uid) => {
-    const userDoc = await getDoc(doc(db, 'users', uid));
-    const data = userDoc.exists() ? userDoc.data().ratings || {} : {};
+    const data = await getRatings(uid);
 
     const seen = new Map();
     for (const sentiment in data.tv || {}) {
