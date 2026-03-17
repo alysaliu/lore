@@ -75,8 +75,9 @@ export default function AddToListModal({ mediaId, mediaType, onClose }) {
         const data = snap.exists() ? snap.data() : {};
         const lists = data.lists || {};
         const current = lists.watchlist || [];
+        const alreadyInWatchlist = current.some((w) => w.mediaId === String(mediaId));
         const updated = draftWatchlist
-          ? [...current, { mediaId: String(mediaId), mediaType, timestamp: new Date().toISOString() }]
+          ? alreadyInWatchlist ? current : [...current, { mediaId: String(mediaId), mediaType, timestamp: new Date().toISOString() }]
           : current.filter((i) => i.mediaId !== String(mediaId));
         await setDoc(userRef, { lists: { ...lists, watchlist: updated } }, { merge: true });
       }
@@ -88,8 +89,9 @@ export default function AddToListModal({ mediaId, mediaType, onClose }) {
           const listRef = doc(db, 'users', user.uid, 'customLists', list.id);
           const snap = await getDoc(listRef);
           const items = snap.exists() ? snap.data().items || [] : [];
+          const alreadyInList = items.some((i) => i.mediaId === String(mediaId));
           const updated = list.isAdded
-            ? [...items, { mediaId: String(mediaId), mediaType, timestamp: new Date().toISOString() }]
+            ? alreadyInList ? items : [...items, { mediaId: String(mediaId), mediaType, timestamp: new Date().toISOString() }]
             : items.filter((i) => i.mediaId !== String(mediaId));
           await updateDoc(listRef, { items: updated });
         }
