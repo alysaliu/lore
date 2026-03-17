@@ -248,6 +248,26 @@
   cursor: default;
 }
 
+/* ── Overall average (community) ───────────── */
+.overallAverage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.overallAverageScore {
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--color-text-default);
+}
+
+.overallAverageCount {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
 /* ── Rating box ───────────────────────────── */
 .ratingBox {
   display: flex;
