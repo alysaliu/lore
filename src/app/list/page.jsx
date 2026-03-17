@@ -7,7 +7,7 @@ import { db } from '../../lib/firebase';
 import { fetchMediaDetails, getPosterUrl } from '../../lib/tmdb';
 import { useAuth } from '../../contexts/AuthContext';
 import MediaCard from '../../components/MediaCard';
-import { Globe, Lock, X } from 'lucide-react';
+import { Globe, Lock, X, Pencil, Trash2 } from 'lucide-react';
 import styles from './page.module.css';
 
 function ListContent() {
@@ -124,42 +124,29 @@ function ListContent() {
   return (
     <div className={styles.listSection}>
       <div className={styles.listContainer}>
-        <div className={styles.listHeader}>
-          <button className={styles.backBtn} onClick={() => router.push(backHref)}>
-            <i className="fas fa-arrow-left" aria-hidden="true" />
-          </button>
-          <nav className={styles.breadcrumb} aria-label="breadcrumb">
-            <button className={styles.breadcrumbLink} onClick={() => router.push(backHref)}>
-              {ownerName || 'Profile'}
-            </button>
-            <span className={styles.breadcrumbSep}>/</span>
-            <span className={styles.breadcrumbLink} onClick={() => router.push(`${backHref}#lists`)}>
-              Lists
-            </span>
-            <span className={styles.breadcrumbSep}>/</span>
-            <span className={styles.breadcrumbCurrent}>
-              {listData?.name || '…'}
-            </span>
-          </nav>
-        </div>
-
         {listData && (
           <div className={styles.listMeta}>
             <div className={styles.listTitleRow}>
-              <h1 className={styles.listTitle}>{listData.name}</h1>
+              <div className={styles.listTitleGroup}>
+                <button className={styles.backBtn} onClick={() => router.push(backHref)}>
+                  <i className="fas fa-arrow-left" aria-hidden="true" />
+                </button>
+                <h1 className={styles.listTitle}>{listData.name}</h1>
+              </div>
               <div className={styles.listActions}>
                 {isOwner && (
                   <>
-                    <button className={styles.shareBtn} onClick={openEditModal}>
-                      Edit
+                    <button className={styles.iconBtn} onClick={openEditModal} aria-label="Edit list">
+                      <Pencil size={16} />
                     </button>
-                    <button className={styles.deletBtn} onClick={() => setConfirmDelete(true)}>
-                      Delete
+                    <button className={styles.iconBtnDanger} onClick={() => setConfirmDelete(true)} aria-label="Delete list">
+                      <Trash2 size={16} />
                     </button>
                   </>
                 )}
                 <button
-                  className={styles.shareBtn}
+                  className={styles.iconBtn}
+                  aria-label="Share list"
                   onClick={() => {
                     const url = window.location.href;
                     navigator.clipboard.writeText(url)
@@ -168,7 +155,6 @@ function ListContent() {
                   }}
                 >
                   <i className="fas fa-link" aria-hidden="true" />
-                  Share
                 </button>
               </div>
             </div>

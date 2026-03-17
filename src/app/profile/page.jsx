@@ -210,7 +210,7 @@ export default function ProfilePage() {
           </div>
           <div className={styles.buttons}>
             <button className={styles.btn} onClick={handleShare}>
-              <i className="fas fa-link" aria-hidden="true"></i>Share profile
+              <i className="fas fa-link" aria-hidden="true"></i>Share
             </button>
           </div>
         </div>

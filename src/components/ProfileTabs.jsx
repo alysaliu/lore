@@ -8,7 +8,8 @@ import { db } from '../lib/firebase';
 import { getRatings } from '../lib/ratingsFirestore';
 import { fetchMediaDetails, getPosterUrl } from '../lib/tmdb';
 import { useAuth } from '../contexts/AuthContext';
-import { X, Globe, Lock } from 'lucide-react';
+import { Globe, Lock } from 'lucide-react';
+import Modal from './Modal';
 import styles from './ProfileTabs.module.css';
 
 /**
@@ -21,7 +22,7 @@ export default function ProfileTabs({ userId }) {
   const { user } = useAuth();
   const isOwner = user?.uid === userId;
 
-  const [activeTab, setActiveTab] = useState('movies');
+  const [activeTab, setActiveTab] = useState('lists');
   const [movies, setMovies] = useState(null);
   const [shows, setShows] = useState(null);
   const [watchlist, setWatchlist] = useState(null);
@@ -155,7 +156,7 @@ export default function ProfileTabs({ userId }) {
 
   useEffect(() => {
     if (!userId) return;
-    const timer = setTimeout(() => loadMovies(userId), 0);
+    const timer = setTimeout(() => loadLists(userId), 0);
     return () => clearTimeout(timer);
   }, [userId]);
 
@@ -452,10 +453,10 @@ export default function ProfileTabs({ userId }) {
   };
 
   const tabs = [
+    { key: 'lists', label: 'Lists' },
     { key: 'movies', label: 'Movies' },
     { key: 'shows', label: 'Shows' },
     { key: 'watchlist', label: 'Want to Watch' },
-    { key: 'lists', label: 'Lists' },
   ];
 
   return (
@@ -476,55 +477,44 @@ export default function ProfileTabs({ userId }) {
       </div>
 
       {showCreateModal && (
-        <div className={styles.modalBackdrop} onClick={() => setShowCreateModal(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>New list</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setShowCreateModal(false)}>
-                <X size={16} />
-              </button>
-            </div>
-            <input
-              className={styles.modalInput}
-              placeholder="List name"
-              value={newListName}
-              onChange={(e) => setNewListName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') createList(); if (e.key === 'Escape') setShowCreateModal(false); }}
-              autoFocus
-              spellCheck={false}
-            />
-            <textarea
-              className={styles.modalTextarea}
-              placeholder="Description (optional)"
-              value={newListDesc}
-              onChange={(e) => setNewListDesc(e.target.value)}
-            />
-            <div className={styles.modalVisibility}>
-              <button
-                className={newListVisibility === 'public' ? styles.modalVisibilityBtnActive : styles.modalVisibilityBtn}
-                onClick={() => setNewListVisibility('public')}
-              >
-                <Globe size={14} /> Public
-              </button>
-              <button
-                className={newListVisibility === 'private' ? styles.modalVisibilityBtnActive : styles.modalVisibilityBtn}
-                onClick={() => setNewListVisibility('private')}
-              >
-                <Lock size={14} /> Private
-              </button>
-            </div>
-            <div className={styles.modalButtons}>
-              <button className={styles.modalCancelBtn} onClick={() => setShowCreateModal(false)}>Cancel</button>
-              <button
-                className={styles.modalSaveBtn}
-                onClick={createList}
-                disabled={savingList || !newListName.trim()}
-              >
-                {savingList ? 'Creating...' : 'Create'}
-              </button>
-            </div>
+        <Modal
+          title="New list"
+          onClose={() => setShowCreateModal(false)}
+          actions={[
+            { label: 'Cancel', onClick: () => setShowCreateModal(false), variant: 'secondary' },
+            { label: savingList ? 'Creating...' : 'Create', onClick: createList, disabled: savingList || !newListName.trim() },
+          ]}
+        >
+          <input
+            className={styles.modalInput}
+            placeholder="List name"
+            value={newListName}
+            onChange={(e) => setNewListName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') createList(); if (e.key === 'Escape') setShowCreateModal(false); }}
+            autoFocus
+            spellCheck={false}
+          />
+          <textarea
+            className={styles.modalTextarea}
+            placeholder="Description (optional)"
+            value={newListDesc}
+            onChange={(e) => setNewListDesc(e.target.value)}
+          />
+          <div className={styles.modalVisibility}>
+            <button
+              className={newListVisibility === 'public' ? styles.modalVisibilityBtnActive : styles.modalVisibilityBtn}
+              onClick={() => setNewListVisibility('public')}
+            >
+              <Globe size={14} /> Public
+            </button>
+            <button
+              className={newListVisibility === 'private' ? styles.modalVisibilityBtnActive : styles.modalVisibilityBtn}
+              onClick={() => setNewListVisibility('private')}
+            >
+              <Lock size={14} /> Private
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
     </>
   );
