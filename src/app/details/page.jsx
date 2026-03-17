@@ -4,10 +4,10 @@ import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { getRatings, saveRatings } from '../../lib/ratingsFirestore';
+import { getRatings, saveRatings, getMediaAverageRating } from '../../lib/ratingsFirestore';
 import { fetchMediaDetails, fetchMediaName, getPosterUrl } from '../../lib/tmdb';
 import AddToListModal from '../../components/AddToListModal';
 import styles from './page.module.css';
@@ -54,6 +54,7 @@ function DetailsContent() {
   const [friendsError, setFriendsError] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [overallAverage, setOverallAverage] = useState(null); // { average, count } | null
 
   const refreshShowRatings = useCallback((ratings) => {
     const all = [];
@@ -81,6 +82,13 @@ function DetailsContent() {
       setLoading(false);
     }, 2000);
     return () => clearTimeout(timer);
+  }, [id, mediaType]);
+
+  // Load overall average rating for this title (from mediaRatings aggregate)
+  useEffect(() => {
+    if (!id || !mediaType) return;
+    const mediaKey = mediaType === 'tv' ? `tv_${id}` : `movie_${id}`;
+    getMediaAverageRating(mediaKey).then(setOverallAverage).catch(() => setOverallAverage(null));
   }, [id, mediaType]);
 
   // Load current user's ratings and friends' ratings when page is loaded
@@ -462,15 +470,15 @@ function DetailsContent() {
       if (removed) {
         await saveRatings(user.uid, ratings);
 
-        // Also remove from mediaRatings index for this movie
+        // saveRatings already updates mediaRatings and aggregate via deleteMediaRatingEntry.
+        // Refresh the displayed overall average for movie.
         if (mediaType === 'movie') {
           const mediaKey = `movie_${id}`;
-          const ratingDocId = `${user.uid}_show`;
           try {
-            await deleteDoc(doc(db, 'mediaRatings', mediaKey, 'userRatings', ratingDocId));
-          } catch (e) {
-            // eslint-disable-next-line no-console
-            console.error('Failed to delete mediaRatings doc', e);
+            const updated = await getMediaAverageRating(mediaKey);
+            setOverallAverage(updated);
+          } catch {
+            setOverallAverage(null);
           }
         }
         // Decrement ratingCount
@@ -575,6 +583,14 @@ function DetailsContent() {
             )}
 
             <hr className={styles.divider} />
+
+            {overallAverage && (
+              <div className={styles.overallAverage}>
+                <span className="eyebrow">Community average</span>
+                <span className={styles.overallAverageScore}>{overallAverage.average}</span>
+                <span className={styles.overallAverageCount}>({overallAverage.count} {overallAverage.count === 1 ? 'rating' : 'ratings'})</span>
+              </div>
+            )}
 
             {/* Rating box */}
             <div className={styles.ratingBox}>

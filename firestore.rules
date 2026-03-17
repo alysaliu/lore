@@ -7,7 +7,12 @@ service cloud.firestore {
     // authenticated user, writable only by the owner.
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // Owner can create/update/delete. Others can only update followerlist (for follow/unfollow).
+      allow create, delete: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && (
+        request.auth.uid == userId ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followerlist'])
+      );
 
       // Ratings subcollection
       match /ratings/{ratingId} {
@@ -23,10 +28,9 @@ service cloud.firestore {
     }
 
     // Per-media ratings index for social features.
-    // mediaRatings/{mediaKey}/userRatings/{docId}
-    // For now, any authenticated user can read/write; the app ensures users only
-    // modify their own docs. This can be tightened later with uid checks.
+    // mediaRatings/{mediaKey} holds aggregate (ratingCount, sumScores); userRatings subcollection holds per-user ratings.
     match /mediaRatings/{mediaKey} {
+      allow read, write: if request.auth != null;
       match /userRatings/{ratingDocId} {
         allow read, write: if request.auth != null;
       }
