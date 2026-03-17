@@ -1,0 +1,145 @@
+.backBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  align-self: flex-start;
+  margin-bottom: var(--space-4);
+  transition: color 0.15s ease;
+}
+
+.backBtn:hover {
+  color: var(--color-text-default);
+}
+
+.appIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--color-surface-selected);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+  flex-shrink: 0;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.stepNumber {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-surface-selected);
+  color: var(--color-text-default);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stepLabel {
+  color: var(--color-text-default);
+}
+
+.stepLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 600;
+  color: var(--color-text-default);
+  text-decoration: none;
+}
+
+.stepLink:hover {
+  text-decoration: underline;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  border: 1.5px dashed var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-align: center;
+}
+
+.dropzone:hover,
+.dropzoneOver {
+  border-color: var(--color-border-selected);
+  background: var(--color-surface-selected);
+}
+
+.dropzoneFilled {
+  border-style: solid;
+  border-color: var(--color-border-selected);
+  background: var(--color-surface-selected);
+}
+
+.dropzoneIcon {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.dropzoneLabel {
+  font-size: 14px;
+  color: var(--color-text-default);
+  font-family: var(--font-sans);
+}
+
+.dropzoneHint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+}
+
+.dropzoneFolderName {
+  font-size: 14px;
+  color: var(--color-text-default);
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
+
+.stepper {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-9);
+}
+
+.stepActive {
+  width: 24px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-text-default);
+}
+
+.stepInactive {
+  width: 24px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-border-default);
+}
