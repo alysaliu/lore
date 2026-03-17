@@ -24,12 +24,6 @@
   box-shadow: var(--shadow-card);
 }
 
-/* ── Header: back button + breadcrumb ────────── */
-.listHeader {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
 
 .backBtn {
   display: flex;
@@ -97,6 +91,12 @@
   gap: var(--space-4);
 }
 
+.listTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .listActions {
   display: flex;
   gap: var(--space-2);
@@ -105,7 +105,7 @@
 
 .listTitle {
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 590;
   color: var(--color-text-default);
 }
 
@@ -132,27 +132,31 @@
   background-color: var(--color-surface-hovered);
 }
 
-.deletBtn {
+.iconBtn {
   display: flex;
-  flex-direction: row;
-  justify-content: center;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-5);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-default);
-  background: var(--color-surface-contrast);
-  color: #c00f0c;
-  font-size: 14px;
-  font-weight: 400;
+  justify-content: center;
+  padding: var(--space-2);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-family: var(--font-sans);
-  transition: var(--transition-fast);
-  width: fit-content;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
-.deletBtn:hover {
-  background-color: var(--color-surface-hovered);
+.iconBtn:hover {
+  color: var(--color-text-default);
+  background: var(--color-surface-hovered);
+}
+
+.iconBtnDanger {
+  composes: iconBtn;
+}
+
+.iconBtnDanger:hover {
+  color: #c00f0c;
+  background: var(--color-surface-hovered);
 }
 
 .deleteConfirmText {

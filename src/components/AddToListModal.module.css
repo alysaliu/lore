@@ -1,179 +1,230 @@
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: var(--color-surface-contrast);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  padding: var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  width: 100%;
-  max-width: 340px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.title {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--color-text-default);
-}
-
-.closeBtn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  transition: color 0.15s ease;
-}
-
-.closeBtn:hover {
-  color: var(--color-text-default);
-}
-
 .empty {
   font-size: 14px;
   color: var(--color-text-secondary);
   padding: var(--space-2) 0;
 }
 
+/* Search */
+.searchWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 40px 10px 12px;
+  font-size: 16px;
+  font-weight: 300;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-sizing: border-box;
+  outline: none;
+  box-shadow: none;
+  background-color: var(--color-surface-default);
+  appearance: none;
+  color: var(--color-text-default);
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.searchWrapper:focus-within .searchInput {
+  border-color: var(--color-border-selected);
+}
+
+.searchWrapper:focus-within .searchIcon {
+  color: var(--color-icon-default);
+}
+
+.searchIcon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-icon-tertiary);
+  pointer-events: none;
+  transition: var(--transition-fast);
+}
+
+/* List rows */
 .listRows {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  margin: 0 calc(-1 * var(--space-5));
+  height: 300px;
+  overflow-y: auto;
 }
 
 .listRow {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-2);
+  padding: 10px var(--space-5);
   border: none;
+  border-top: 1px solid #2c2c2e;
   background: transparent;
-  border-radius: var(--radius-sm);
   cursor: pointer;
   text-align: left;
   font-family: var(--font-sans);
   transition: background 0.12s ease;
+  width: 100%;
+}
+
+.listRow:first-child {
+  border-top: none;
 }
 
 .listRow:hover {
-  background: var(--color-surface-hovered);
+  background: var(--color-surface-selected);
 }
 
-.check {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  border: 1px solid var(--color-border-default);
+.listRowSelected {
+  background: var(--color-surface-selected);
+}
+
+/* Poster grid */
+.posterGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.posterCell {
+  position: relative;
+  overflow: hidden;
+}
+
+.posterImg {
+  object-fit: cover;
+}
+
+.posterEmpty {
+  width: 100%;
+  height: 100%;
+  background: var(--color-surface-default);
+}
+
+/* List info */
+.listInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  margin-right: 100px;
+}
+
+.listName {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-default);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.listMeta {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* Checkbox */
+.checkbox {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1.5px solid #48484a;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 10px;
-  color: var(--color-text-default);
+  font-size: 11px;
+  color: transparent;
   transition: background 0.12s ease, border-color 0.12s ease;
 }
 
-.checkActive {
-  background: var(--color-surface-inverse);
-  border-color: var(--color-surface-inverse);
-  color: var(--color-text-inverse);
-}
-
-.listName {
-  font-size: 14px;
-  color: var(--color-text-default);
-  font-weight: 300;
+.checkboxChecked {
+  background: #fff;
+  border-color: #fff;
+  color: #000;
 }
 
 .divider {
   height: 1px;
-  background: var(--color-border-default);
+  background: #2c2c2e;
   margin: 0 calc(-1 * var(--space-5));
 }
 
+/* New list button */
 .newListBtn {
   display: flex;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
-  padding: var(--space-2);
-  border: none;
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border-default);
   background: transparent;
-  color: var(--color-text-secondary);
+  color: var(--color-text-default);
   font-size: 14px;
+  font-weight: 400;
   font-family: var(--font-sans);
   cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition: color 0.12s ease, background 0.12s ease;
+  width: 100%;
+  transition: var(--transition-fast);
 }
 
 .newListBtn:hover {
-  color: var(--color-text-default);
   background: var(--color-surface-hovered);
 }
 
-/* Create form */
-.createForm {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.input {
-  background: var(--color-surface-hovered);
+/* Create step form fields — matches ProfileTabs modal styles */
+.createInput {
+  background: var(--color-surface-default);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
   color: var(--color-text-default);
   font-size: 14px;
+  font-weight: 300;
   font-family: var(--font-sans);
   width: 100%;
   box-sizing: border-box;
-}
-
-.input:focus {
   outline: none;
-  border-color: var(--color-text-secondary);
+  appearance: none;
+  transition: var(--transition-fast);
 }
 
-.textarea {
-  composes: input;
-  resize: vertical;
-  min-height: 64px;
+.createInput:focus {
+  border-color: var(--color-border-selected);
 }
 
-.visibility {
+.createTextarea {
+  composes: createInput;
+  resize: none;
+  min-height: 80px;
+}
+
+.createVisibility {
   display: flex;
   gap: var(--space-2);
 }
 
-.visibilityBtn {
+.createVisibilityBtn {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   padding: var(--space-2);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-border-default);
-  background: transparent;
+  background: var(--color-surface-contrast);
   color: var(--color-text-secondary);
   font-size: 13px;
   cursor: pointer;
@@ -181,60 +232,14 @@
   transition: var(--transition-fast);
 }
 
-.visibilityBtnActive {
-  composes: visibilityBtn;
-  background: var(--color-surface-selected);
+.createVisibilityBtn:hover {
+  background: var(--color-surface-hovered);
+}
+
+.createVisibilityBtnActive {
+  composes: createVisibilityBtn;
   border-color: var(--color-border-selected);
+  background: var(--color-surface-selected);
   color: var(--color-text-default);
 }
 
-.formButtons {
-  display: flex;
-  gap: var(--space-2);
-  justify-content: flex-end;
-}
-
-.modalButtons {
-  composes: formButtons;
-}
-
-.cancelBtn {
-  display: flex;
-  align-items: center;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  border: none;
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  cursor: pointer;
-  font-family: var(--font-sans);
-  transition: var(--transition-fast);
-}
-
-.cancelBtn:hover {
-  color: var(--color-text-default);
-}
-
-.saveBtn {
-  display: flex;
-  align-items: center;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  border: none;
-  background: var(--color-surface-inverse);
-  color: var(--color-text-inverse);
-  font-size: 14px;
-  cursor: pointer;
-  font-family: var(--font-sans);
-  transition: var(--transition-fast);
-}
-
-.saveBtn:hover:not(:disabled) {
-  background: var(--color-action-hovered);
-}
-
-.saveBtn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
