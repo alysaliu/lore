@@ -9,7 +9,7 @@ import styles from './Navbar.module.css';
 
 export default function Navbar() {
   const router = useRouter();
-  const { user, initials, photoURL, signOut } = useAuth();
+  const { user, initials, photoURL, signOut, loading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -51,7 +51,9 @@ export default function Navbar() {
             <Link href="/explore" className={styles.navbarLinks}>Search</Link>
           </li>
           <div className={styles.navRight}>
-            {user ? (
+            {loading ? (
+              <span className={styles.authPending} aria-hidden />
+            ) : user ? (
               <div
                 className={styles.userMenuWrapper}
                 onMouseEnter={() => setUserMenuOpen(true)}
