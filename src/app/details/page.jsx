@@ -10,6 +10,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getRatings, saveRatings, getMediaAverageRating } from '../../lib/ratingsFirestore';
 import { fetchMediaDetails, fetchMediaName, getPosterUrl } from '../../lib/tmdb';
 import AddToListModal from '../../components/AddToListModal';
+import { Trash2, ChevronDown } from 'lucide-react';
 import styles from './page.module.css';
 
 const SCORE_RANGES = {
@@ -52,6 +53,7 @@ function DetailsContent() {
   const [showRatingForm, setShowRatingForm] = useState(false);
   const [friendsRatings, setFriendsRatings] = useState(null); // null = not loaded yet
   const [friendsError, setFriendsError] = useState(null);
+  const [showFriendsDropdown, setShowFriendsDropdown] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [overallAverage, setOverallAverage] = useState(null); // { average, count } | null
@@ -441,6 +443,11 @@ function DetailsContent() {
     setIsReranking(true);
   };
 
+  const scoredFriends = friendsRatings ? friendsRatings.filter(f => f.primaryScore > 0) : [];
+  const friendsAvg = scoredFriends.length > 0
+    ? Math.round((scoredFriends.reduce((sum, f) => sum + f.primaryScore, 0) / scoredFriends.length) * 10) / 10
+    : null;
+
   const handleDeleteRatingClick = () => {
     setShowDeleteConfirm(true);
   };
@@ -584,14 +591,6 @@ function DetailsContent() {
 
             <hr className={styles.divider} />
 
-            {overallAverage && (
-              <div className={styles.overallAverage}>
-                <span className="eyebrow">Community average</span>
-                <span className={styles.overallAverageScore}>{overallAverage.average}</span>
-                <span className={styles.overallAverageCount}>({overallAverage.count} {overallAverage.count === 1 ? 'rating' : 'ratings'})</span>
-              </div>
-            )}
-
             {/* Rating box */}
             <div className={styles.ratingBox}>
           {mediaType === 'tv' && existingShowRatings.length > 0 && (
@@ -622,13 +621,75 @@ function DetailsContent() {
               <div className={styles.ratingColumn}>
                 <div className="eyebrow">Your rating{selectedSeason != null ? ` · Season ${selectedSeason}` : ''}</div>
                 <div className={styles.ratingColumnScore}>{finalScore}</div>
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div className={styles.ratingColumnBottom}>
                   <button className={styles.rerankBtn} onClick={handleRerank}>Re-rank</button>
-                  <button className={styles.rerankBtn} onClick={handleDeleteRatingClick}>
-                    Remove rating
+                  <button className={styles.deleteRatingBtn} onClick={handleDeleteRatingClick} aria-label="Remove rating" data-tooltip="Remove rating">
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>
+              <div className={styles.ratingColumnDivider} />
+              <div className={styles.ratingColumn}>
+                <div className="eyebrow">Friends</div>
+                {friendsRatings === null && !friendsError && (
+                  <p className={styles.ratingColumnSentiment}>Loading…</p>
+                )}
+                {friendsError && (
+                  <p className={styles.ratingColumnSentiment}>{friendsError}</p>
+                )}
+                {friendsRatings !== null && !friendsError && scoredFriends.length === 0 && (
+                  <p className={styles.ratingColumnSentiment}>No friends have rated this.</p>
+                )}
+                {friendsAvg != null && (
+                  <>
+                    <div className={styles.ratingColumnScore}>{friendsAvg}</div>
+                    <div className={styles.friendsPopoverAnchor}>
+                      <button
+                        className={styles.friendsDropdownToggle}
+                        onClick={() => setShowFriendsDropdown(v => !v)}
+                      >
+                        <span>{scoredFriends.length} {scoredFriends.length === 1 ? 'rating' : 'ratings'}</span>
+                        <ChevronDown size={12} className={showFriendsDropdown ? styles.chevronOpen : styles.chevronClosed} />
+                      </button>
+                      {showFriendsDropdown && (
+                        <>
+                          <div className={styles.friendsPopoverBackdrop} onClick={() => setShowFriendsDropdown(false)} />
+                          <div className={styles.friendsPopover}>
+                            {scoredFriends.map((friend) => {
+                              const displayName = friend.displayName || (friend.username ? `@${friend.username}` : 'Friend');
+                              return (
+                                <Link key={friend.uid} href={`/user?uid=${friend.uid}`} className={styles.friendsListRow}>
+                                  <div className={styles.friendAvatarCircle}>
+                                    {friend.photoURL ? (
+                                      <Image src={friend.photoURL} alt={displayName} width={32} height={32} className={styles.friendAvatarImg} />
+                                    ) : (
+                                      <span className={styles.friendAvatarInitials}>
+                                        {displayName.replace(/^@/, '').split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase()}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className={styles.existingRatingLabel}>{displayName}</span>
+                                  <span className={styles.existingRatingScore}>{friend.primaryScore}</span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+              {overallAverage && (
+                <>
+                  <div className={styles.ratingColumnDivider} />
+                  <div className={`${styles.ratingColumn} ${styles.ratingColumnGrow}`}>
+                    <div className="eyebrow">Community avg</div>
+                    <div className={styles.ratingColumnScore}>{overallAverage.average}</div>
+                    <div className={styles.ratingColumnSentiment}>{overallAverage.count} {overallAverage.count === 1 ? 'rating' : 'ratings'}</div>
+                  </div>
+                </>
+              )}
             </div>
           ) : ratingPhase === 'comparing' ? (
             <>
@@ -690,12 +751,12 @@ function DetailsContent() {
                   </button>
                 ))}
               </div>
-              <input
-                type="text"
+              <textarea
                 placeholder="Leave an optional note for your review"
                 className={styles.noteInput}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
+                rows={3}
               />
               <div className={styles.buttonRow}>
                 {mediaType === 'tv' && existingShowRatings.length > 0 && (
@@ -715,77 +776,6 @@ function DetailsContent() {
           )}
             </div>
 
-            {/* Friends' ratings section */}
-            <div className={styles.existingRatings}>
-              <span className="eyebrow">What your friends think</span>
-              {friendsRatings === null && !friendsError && (
-                <p className={styles.resultText}>Loading friends&apos; ratings…</p>
-              )}
-              {friendsError && (
-                <p className={styles.resultText}>{friendsError}</p>
-              )}
-              {friendsRatings && friendsRatings.length === 0 && !friendsError && (
-                <p className={styles.resultText}>
-                  None of the people you follow have rated this yet.
-                </p>
-              )}
-              {friendsRatings && friendsRatings.length > 0 && (
-                <div>
-                  {friendsRatings.map((friend) => {
-                    const displayName =
-                      friend.displayName ||
-                      (friend.username ? `@${friend.username}` : 'Friend');
-                    const reviewNote =
-                      friend.wholeShow?.note ||
-                      (friend.seasons.find((s) => s.note)?.note ?? '');
-
-                    return (
-                      <div key={friend.uid} className={styles.existingRatingRow}>
-                        <Link
-                          href={`/user?uid=${friend.uid}`}
-                          className={styles.friendProfileLink}
-                        >
-                          <div className={styles.friendAvatarCircle}>
-                            {friend.photoURL ? (
-                              <Image
-                                src={friend.photoURL}
-                                alt={displayName}
-                                width={32}
-                                height={32}
-                                className={styles.friendAvatarImg}
-                              />
-                            ) : (
-                              <span className={styles.friendAvatarInitials}>
-                                {displayName
-                                  .replace(/^@/, '')
-                                  .split(' ')
-                                  .map((part) => part[0])
-                                  .join('')
-                                  .slice(0, 2)
-                                  .toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-                          <div className={styles.friendReviewText}>
-                            <span className={styles.existingRatingLabel}>
-                              {displayName}
-                            </span>
-                            {reviewNote && (
-                              <span className={styles.friendReviewNote}>
-                                {reviewNote}
-                              </span>
-                            )}
-                          </div>
-                        </Link>
-                        <span className={styles.existingRatingScore}>
-                          {friend.primaryScore != null ? friend.primaryScore : '–'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </div>
