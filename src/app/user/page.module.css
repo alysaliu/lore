@@ -62,6 +62,10 @@
   gap: var(--space-1);
 }
 
+.profileHeaderPending {
+  visibility: hidden;
+}
+
 .username {
   color: var(--color-text-secondary);
   font-size: 20px;
@@ -125,10 +129,25 @@
   opacity: 0.85;
 }
 
+.statItemButton:disabled {
+  cursor: default;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.statItemButton:disabled:hover {
+  opacity: 1;
+}
+
 .statNumber {
   font-weight: 590;
   font-size: 20px;
   color: var(--color-text-default);
+  min-height: 1.25em;
+}
+
+.statNumberPending {
+  visibility: hidden;
 }
 
 .buttons {

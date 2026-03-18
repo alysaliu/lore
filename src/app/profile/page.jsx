@@ -18,6 +18,8 @@ export default function ProfilePage() {
   const router = useRouter();
   const { user, loading, photoURL, setPhotoURL } = useAuth();
   const [userData, setUserData] = useState(null);
+  /** false until Firestore users/{uid} fetch finishes (avoids Unnamed / @set username flash). */
+  const [profileReady, setProfileReady] = useState(false);
   const [tipHidden, setTipHidden] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [editingUsername, setEditingUsername] = useState(false);
@@ -44,9 +46,17 @@ export default function ProfilePage() {
     }
     if (!user) return;
 
+    setProfileReady(false);
+    setUserData(null);
     (async () => {
-      const snap = await getDoc(doc(db, 'users', user.uid));
-      if (snap.exists()) setUserData(snap.data());
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        setUserData(snap.exists() ? snap.data() : {});
+      } catch {
+        setUserData({});
+      } finally {
+        setProfileReady(true);
+      }
     })();
   }, [user, loading, router]);
 
@@ -155,6 +165,8 @@ export default function ProfilePage() {
   const fullName = userData
     ? `${userData.firstname || ''} ${userData.lastname || ''}`.trim()
     : '';
+  const displayName = profileReady ? (fullName || 'Unnamed') : '';
+  const displayUsername = profileReady ? (userData?.username ? `@${userData.username}` : '@set username') : '';
   const ratingCount = userData?.ratingCount || 0;
   const followersCount = userData?.followerlist?.length || 0;
   const followingCount = userData?.followinglist?.length || 0;
@@ -169,41 +181,55 @@ export default function ProfilePage() {
                 <button className={styles.avatarBtn} onClick={handleAvatarClick} disabled={uploading} aria-label="Change profile picture">
                   {photoURL
                     ? <Image src={photoURL} alt="Profile" className={styles.avatarImg} width={96} height={96} />
-                    : <span className={styles.avatarInitials}>{fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
+                    : <span className={styles.avatarInitials}>{profileReady ? (fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?') : '\u00a0'}</span>
                   }
                   <span className={styles.avatarOverlay}>{uploading ? '...' : <i className="fas fa-camera" aria-hidden="true" />}</span>
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
                 <div className={styles.nameBlock}>
-                  <h2>{fullName || 'Unnamed'}</h2>
-                  <button className={styles.usernameBtn} onClick={startEditUsername}>
-                    <span>@{userData?.username || 'set username'}</span>
-                    <Pencil size={16} className={styles.usernamePencil} />
-                  </button>
+                  <h2 className={!profileReady ? styles.profileHeaderPending : undefined}>
+                    {profileReady ? displayName : '\u00a0'}
+                  </h2>
+                  {profileReady ? (
+                    <button type="button" className={styles.usernameBtn} onClick={startEditUsername}>
+                      <span>{displayUsername}</span>
+                      <Pencil size={16} className={styles.usernamePencil} />
+                    </button>
+                  ) : (
+                    <div className={styles.usernameRowPending} aria-hidden />
+                  )}
                 </div>
               </div>
               <div className={styles.statsSection}>
                 <div className={styles.statItem}>
                   <span className="eyebrow">Ratings</span>
-                  <span className={styles.statNumber}>{ratingCount}</span>
+                  <span className={`${styles.statNumber} ${!profileReady ? styles.statNumberPending : ''}`}>
+                    {profileReady ? ratingCount : '\u00a0'}
+                  </span>
                 </div>
                 <button
                   type="button"
                   className={styles.statItemButton}
                   onClick={() => openListModal('followers')}
                   aria-label="View followers"
+                  disabled={!profileReady}
                 >
                   <span className="eyebrow">Followers</span>
-                  <span className={styles.statNumber}>{followersCount}</span>
+                  <span className={`${styles.statNumber} ${!profileReady ? styles.statNumberPending : ''}`}>
+                    {profileReady ? followersCount : '\u00a0'}
+                  </span>
                 </button>
                 <button
                   type="button"
                   className={styles.statItemButton}
                   onClick={() => openListModal('following')}
                   aria-label="View following"
+                  disabled={!profileReady}
                 >
                   <span className="eyebrow">Following</span>
-                  <span className={styles.statNumber}>{followingCount}</span>
+                  <span className={`${styles.statNumber} ${!profileReady ? styles.statNumberPending : ''}`}>
+                    {profileReady ? followingCount : '\u00a0'}
+                  </span>
                 </button>
               </div>
             </div>

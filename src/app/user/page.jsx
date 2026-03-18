@@ -17,6 +17,7 @@ function UserContent() {
   const { user } = useAuth();
 
   const [targetUserData, setTargetUserData] = useState(null);
+  const [profileReady, setProfileReady] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [listModalType, setListModalType] = useState(null); // 'followers' | 'following'
   const [listUsers, setListUsers] = useState([]);
@@ -39,9 +40,21 @@ function UserContent() {
   useEffect(() => {
     if (!selectedUserId) return;
     let cancelled = false;
-    getDoc(doc(db, 'users', selectedUserId)).then((snap) => {
-      if (!cancelled && snap.exists()) setTargetUserData(snap.data());
-    });
+    setProfileReady(false);
+    setTargetUserData(null);
+    getDoc(doc(db, 'users', selectedUserId))
+      .then((snap) => {
+        if (cancelled) return;
+        if (snap.exists()) setTargetUserData(snap.data());
+        else setTargetUserData(null);
+        setProfileReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTargetUserData(null);
+          setProfileReady(true);
+        }
+      });
     return () => { cancelled = true; };
   }, [selectedUserId]);
 
@@ -112,6 +125,7 @@ function UserContent() {
   const fullName = targetUserData
     ? `${targetUserData.firstname || ''} ${targetUserData.lastname || ''}`.trim()
     : '';
+  const displayName = profileReady ? (fullName || 'Unnamed') : '';
   const ratingCount = targetUserData?.ratingCount || 0;
   const followersCount = targetUserData?.followerlist?.length || 0;
   const followingCount = targetUserData?.followinglist?.length || 0;
@@ -124,14 +138,21 @@ function UserContent() {
             <div className={styles.userInfoRow}>
               <div className={styles.identifierSection}>
                 <div className={styles.avatarCircle}>
-                  {targetUserData?.photoURL
+                  {profileReady && targetUserData?.photoURL
                     ? <Image src={targetUserData.photoURL} alt="Profile" className={styles.avatarImg} width={96} height={96} />
-                    : <span className={styles.avatarInitials}>{fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
-                  }
+                    : (
+                      <span className={styles.avatarInitials}>
+                        {profileReady
+                          ? (fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?')
+                          : '\u00a0'}
+                      </span>
+                    )}
                 </div>
                 <div className={styles.nameBlock}>
-                  <h2>{fullName || 'Unnamed'}</h2>
-                  {targetUserData?.username && (
+                  <h2 className={!profileReady ? styles.profileHeaderPending : undefined}>
+                    {profileReady ? displayName : '\u00a0'}
+                  </h2>
+                  {profileReady && targetUserData?.username && (
                     <p className={styles.username}>@{targetUserData.username}</p>
                   )}
                 </div>
@@ -139,25 +160,33 @@ function UserContent() {
               <div className={styles.statsSection}>
                 <div className={styles.statItem}>
                   <span className="eyebrow">Ratings</span>
-                  <span className={styles.statNumber}>{ratingCount}</span>
+                  <span className={`${styles.statNumber} ${!profileReady ? styles.statNumberPending : ''}`}>
+                    {profileReady ? ratingCount : '\u00a0'}
+                  </span>
                 </div>
                 <button
                   type="button"
                   className={styles.statItemButton}
                   onClick={() => openListModal('followers')}
                   aria-label="View followers"
+                  disabled={!profileReady}
                 >
                   <span className="eyebrow">Followers</span>
-                  <span className={styles.statNumber}>{followersCount}</span>
+                  <span className={`${styles.statNumber} ${!profileReady ? styles.statNumberPending : ''}`}>
+                    {profileReady ? followersCount : '\u00a0'}
+                  </span>
                 </button>
                 <button
                   type="button"
                   className={styles.statItemButton}
                   onClick={() => openListModal('following')}
                   aria-label="View following"
+                  disabled={!profileReady}
                 >
                   <span className="eyebrow">Following</span>
-                  <span className={styles.statNumber}>{followingCount}</span>
+                  <span className={`${styles.statNumber} ${!profileReady ? styles.statNumberPending : ''}`}>
+                    {profileReady ? followingCount : '\u00a0'}
+                  </span>
                 </button>
               </div>
             </div>

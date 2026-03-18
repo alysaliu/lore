@@ -386,13 +386,13 @@ export default function ProfileTabs({ userId }) {
 
   const renderContent = () => {
     if (activeTab === 'movies') {
-      if (movies === null) return <p className={styles.emptyState}>Loading...</p>;
+      if (movies === null) return null;
       if (movies.length === 0) return <p className={styles.emptyState}>No movies rated yet.</p>;
       return movies.map((item) => renderRatedRow(item, item.mediaType || 'movie'));
     }
 
     if (activeTab === 'shows') {
-      if (shows === null) return <p className={styles.emptyState}>Loading...</p>;
+      if (shows === null) return null;
       if (shows.length === 0) return <p className={styles.emptyState}>No shows rated yet.</p>;
 
       const groupMap = {};
@@ -407,7 +407,7 @@ export default function ProfileTabs({ userId }) {
     }
 
     if (activeTab === 'watchlist') {
-      if (watchlist === null) return <p className={styles.emptyState}>Loading...</p>;
+      if (watchlist === null) return null;
       if (watchlist.length === 0) return <p className={styles.emptyState}>No movies or shows added to your watchlist yet.</p>;
       const filtered = watchlistFilter === 'all' ? watchlist : watchlist.filter((item) => item.mediaType === watchlistFilter);
       return (
@@ -432,7 +432,7 @@ export default function ProfileTabs({ userId }) {
     }
 
     if (activeTab === 'lists') {
-      if (lists === null) return <p className={styles.emptyState}>Loading...</p>;
+      if (lists === null) return null;
       return (
         <>
           <div className={styles.listsHeader}>
@@ -443,10 +443,9 @@ export default function ProfileTabs({ userId }) {
               </button>
             )}
           </div>
-          {lists.length === 0
-            ? <p className={styles.emptyState}>No lists yet.</p>
-            : <div className={styles.listsGrid}>{lists.map(renderListCard)}</div>
-          }
+          {lists.length > 0 && (
+            <div className={styles.listsGrid}>{lists.map(renderListCard)}</div>
+          )}
         </>
       );
     }
