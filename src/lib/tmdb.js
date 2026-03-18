@@ -7,7 +7,9 @@ export async function searchMedia(query) {
     `${BASE_URL}/search/multi?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1&include_adult=false`
   );
   const data = await res.json();
-  return data.results || [];
+  const results = data.results || [];
+  // Multi search includes people (actors); we only want movies and TV.
+  return results.filter((item) => item.media_type === 'movie' || item.media_type === 'tv');
 }
 
 /**
