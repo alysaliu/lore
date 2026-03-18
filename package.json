@@ -8,8 +8,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "preview": "npm run build && npx serve out",
+    "start": "npx serve@latest out",
+    "preview": "npm run build && npx serve@latest out",
     "lint": "eslint src",
     "test": "jest",
     "ci": "npm run test && npm run lint && npm run build"

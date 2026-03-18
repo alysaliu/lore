@@ -14,12 +14,24 @@ import { Pencil, X } from 'lucide-react';
 import styles from './page.module.css';
 import inputStyles from '../login/page.module.css';
 
+/** Survives Strict Mode remount on refresh so the profile doesn’t flash away then back. */
+let cachedProfileUid = null;
+let cachedProfileUserData = null;
+
+function initialProfileStateFromCache() {
+  const u = auth?.currentUser?.uid;
+  if (u && cachedProfileUid === u && cachedProfileUserData != null) {
+    return { userData: cachedProfileUserData, profileReady: true };
+  }
+  return { userData: null, profileReady: false };
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const { user, loading, photoURL, setPhotoURL } = useAuth();
-  const [userData, setUserData] = useState(null);
-  /** false until Firestore users/{uid} fetch finishes (avoids Unnamed / @set username flash). */
-  const [profileReady, setProfileReady] = useState(false);
+  const uid = user?.uid;
+  const [userData, setUserData] = useState(() => initialProfileStateFromCache().userData);
+  const [profileReady, setProfileReady] = useState(() => initialProfileStateFromCache().profileReady);
   /** true until localStorage is read (useLayoutEffect, before first paint). */
   const [tipHidden, setTipHidden] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -44,24 +56,43 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!loading && !user) {
+      cachedProfileUid = null;
+      cachedProfileUserData = null;
       router.push('/login');
       return;
     }
-    if (!user) return;
+    if (!uid || !db) return;
 
-    setProfileReady(false);
-    setUserData(null);
+    let cancelled = false;
+    const sameAsCache = cachedProfileUid === uid;
+
+    if (!sameAsCache) {
+      setProfileReady(false);
+      setUserData(null);
+    }
+
     (async () => {
       try {
-        const snap = await getDoc(doc(db, 'users', user.uid));
-        setUserData(snap.exists() ? snap.data() : {});
+        const snap = await getDoc(doc(db, 'users', uid));
+        if (cancelled) return;
+        const data = snap.exists() ? snap.data() : {};
+        cachedProfileUid = uid;
+        cachedProfileUserData = data;
+        setUserData(data);
+        setProfileReady(true);
       } catch {
+        if (cancelled) return;
+        cachedProfileUid = uid;
+        cachedProfileUserData = {};
         setUserData({});
-      } finally {
         setProfileReady(true);
       }
     })();
-  }, [user, loading, router]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, loading, user, router]);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -88,6 +119,11 @@ export default function ProfilePage() {
       const url = await getDownloadURL(storageRef);
       await updateDoc(doc(db, 'users', user.uid), { photoURL: url });
       setPhotoURL(url);
+      setUserData((prev) => {
+        const next = { ...prev, photoURL: url };
+        if (cachedProfileUid === user.uid) cachedProfileUserData = next;
+        return next;
+      });
     } catch (err) {
       console.error('Upload failed:', err);
     } finally {
@@ -125,7 +161,11 @@ export default function ProfilePage() {
       }
       await setDoc(usernameRef, { uid: user.uid, isDeveloper });
       await updateDoc(doc(db, 'users', user.uid), { username: trimmed });
-      setUserData((prev) => ({ ...prev, username: trimmed }));
+      setUserData((prev) => {
+        const next = { ...prev, username: trimmed };
+        if (cachedProfileUid === user.uid) cachedProfileUserData = next;
+        return next;
+      });
       setEditingUsername(false);
     } catch {
       setUsernameError('Something went wrong.');
@@ -164,12 +204,14 @@ export default function ProfilePage() {
   };
 
   if (loading) return null;
+  if (!user) return null;
+  if (!profileReady) return null;
 
   const fullName = userData
     ? `${userData.firstname || ''} ${userData.lastname || ''}`.trim()
     : '';
-  const displayName = profileReady ? (fullName || 'Unnamed') : '';
-  const displayUsername = profileReady ? (userData?.username ? `@${userData.username}` : '@set username') : '';
+  const displayName = fullName || 'Unnamed';
+  const displayUsername = userData?.username ? `@${userData.username}` : '@set username';
   const ratingCount = userData?.ratingCount || 0;
   const followersCount = userData?.followerlist?.length || 0;
   const followingCount = userData?.followinglist?.length || 0;
@@ -184,55 +226,41 @@ export default function ProfilePage() {
                 <button className={styles.avatarBtn} onClick={handleAvatarClick} disabled={uploading} aria-label="Change profile picture">
                   {photoURL
                     ? <Image src={photoURL} alt="Profile" className={styles.avatarImg} width={96} height={96} />
-                    : <span className={styles.avatarInitials}>{profileReady ? (fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?') : '\u00a0'}</span>
+                    : <span className={styles.avatarInitials}>{fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
                   }
                   <span className={styles.avatarOverlay}>{uploading ? '...' : <i className="fas fa-camera" aria-hidden="true" />}</span>
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
                 <div className={styles.nameBlock}>
-                  <h2 className={!profileReady ? styles.profileHeaderPending : undefined}>
-                    {profileReady ? displayName : '\u00a0'}
-                  </h2>
-                  {profileReady ? (
-                    <button type="button" className={styles.usernameBtn} onClick={startEditUsername}>
-                      <span>{displayUsername}</span>
-                      <Pencil size={16} className={styles.usernamePencil} />
-                    </button>
-                  ) : (
-                    <div className={styles.usernameRowPending} aria-hidden />
-                  )}
+                  <h2>{displayName}</h2>
+                  <button type="button" className={styles.usernameBtn} onClick={startEditUsername}>
+                    <span>{displayUsername}</span>
+                    <Pencil size={16} className={styles.usernamePencil} />
+                  </button>
                 </div>
               </div>
               <div className={styles.statsSection}>
                 <div className={styles.statItem}>
                   <span className="eyebrow">Ratings</span>
-                  <span className={`${styles.statNumber} ${!profileReady ? styles.statNumberPending : ''}`}>
-                    {profileReady ? ratingCount : '\u00a0'}
-                  </span>
+                  <span className={styles.statNumber}>{ratingCount}</span>
                 </div>
                 <button
                   type="button"
                   className={styles.statItemButton}
                   onClick={() => openListModal('followers')}
                   aria-label="View followers"
-                  disabled={!profileReady}
                 >
                   <span className="eyebrow">Followers</span>
-                  <span className={`${styles.statNumber} ${!profileReady ? styles.statNumberPending : ''}`}>
-                    {profileReady ? followersCount : '\u00a0'}
-                  </span>
+                  <span className={styles.statNumber}>{followersCount}</span>
                 </button>
                 <button
                   type="button"
                   className={styles.statItemButton}
                   onClick={() => openListModal('following')}
                   aria-label="View following"
-                  disabled={!profileReady}
                 >
                   <span className="eyebrow">Following</span>
-                  <span className={`${styles.statNumber} ${!profileReady ? styles.statNumberPending : ''}`}>
-                    {profileReady ? followingCount : '\u00a0'}
-                  </span>
+                  <span className={styles.statNumber}>{followingCount}</span>
                 </button>
               </div>
             </div>

@@ -6,7 +6,10 @@ const nextConfig = {
   output: 'export',
   images: {
     unoptimized: true,
-    domains: ['image.tmdb.org', 'firebasestorage.googleapis.com'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'image.tmdb.org', pathname: '/**' },
+      { protocol: 'https', hostname: 'firebasestorage.googleapis.com', pathname: '/**' },
+    ],
   },
 };
 
