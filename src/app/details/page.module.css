@@ -41,7 +41,7 @@
 .content {
   position: relative;
   margin: 0 auto;
-  padding-top: 100px;
+  padding-top: 64px;
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
@@ -356,6 +356,7 @@
   color: var(--color-text-default);
   font-family: var(--font-sans);
   transition: var(--transition-fast);
+  resize: none;
 }
 
 .noteInput:focus {
@@ -457,6 +458,15 @@
 .ratingDone {
   display: flex;
   gap: 0;
+  align-items: stretch;
+}
+
+.ratingColumnDivider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--color-border-secondary);
+  margin: 0 var(--space-8);
+  flex-shrink: 0;
 }
 
 .ratingColumn {
@@ -477,10 +487,21 @@
   font-size: 15px;
   font-weight: 300;
   color: var(--color-text-secondary);
+  margin-top: auto;
+}
+
+.ratingColumnBottom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.ratingColumnGrow {
+  flex: 1;
 }
 
 .rerankBtn {
-  margin-top: var(--space-1);
   padding: 0;
   border: none;
   background: transparent;
@@ -496,6 +517,45 @@
 
 .rerankBtn:hover {
   color: var(--color-text-default);
+}
+
+.deleteRatingBtn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: color 0.15s ease;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.deleteRatingBtn:hover {
+  color: #c00f0c;
+}
+
+.deleteRatingBtn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.deleteRatingBtn[data-tooltip]:hover::after {
+  opacity: 1;
 }
 
 /* ── Existing show ratings list ──────────────── */
@@ -523,6 +583,76 @@
   font-size: 16px;
   font-weight: 600;
   color: var(--color-text-default);
+  height: 100%;
+}
+
+.friendsDropdownToggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  font-weight: 300;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.friendsDropdownToggle:hover {
+  color: var(--color-text-default);
+}
+
+.chevronClosed {
+  transition: transform 0.15s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+  transition: transform 0.15s ease;
+}
+
+.friendsPopoverAnchor {
+  position: relative;
+}
+
+.friendsPopoverBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.friendsPopover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 100;
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 200px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.friendsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.friendsListRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: inherit;
 }
 
 /* Friends' ratings styling */
