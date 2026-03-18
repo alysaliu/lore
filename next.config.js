@@ -6,7 +6,7 @@ const nextConfig = {
   output: 'export',
   images: {
     unoptimized: true,
-    domains: ['image.tmdb.org', 'firebasestorage.googleapis.com'],
+    domains: ['image.tmdb.org', 'firebasestorage.googleapis.com', 'lh3.googleusercontent.com'],
   },
 };
 

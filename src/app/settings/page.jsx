@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { FolderOpen } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { deleteAllRatings } from '../../lib/ratingsFirestore';
 import {
@@ -11,9 +12,12 @@ import {
   importLetterboxdRatings,
 } from '../../lib/letterboxdImport';
 import styles from './page.module.css';
+import EmptyState from '../../components/EmptyState';
+import Toast from '../../components/Toast';
 
 const SECTIONS = [
   { id: 'account', label: 'Account' },
+  { id: 'data', label: 'Data' },
   { id: 'dev', label: '[Dev-Only]' },
 ];
 
@@ -30,6 +34,10 @@ export default function SettingsPage() {
     failed: true,
   });
   const [isDeveloper, setIsDeveloper] = useState(false);
+  const [lastImport, setLastImport] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [dropFolderName, setDropFolderName] = useState(null);
+  const [toast, setToast] = useState(null);
   const [showDeleteRatingsConfirm, setShowDeleteRatingsConfirm] = useState(false);
   const [deletingRatings, setDeletingRatings] = useState(false);
   const fileInputRef = useRef(null);
@@ -48,7 +56,13 @@ export default function SettingsPage() {
     if (!user) return;
     (async () => {
       const userSnap = await getDoc(doc(db, 'users', user.uid));
-      setIsDeveloper(Boolean(userSnap.exists() && userSnap.data().isDeveloper));
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        setIsDeveloper(Boolean(data.isDeveloper));
+        if (data.lastImport) {
+          setLastImport({ ...data.lastImport, importedAt: data.lastImport.importedAt?.toDate() ?? null });
+        }
+      }
     })();
   }, [user]);
 
@@ -81,6 +95,21 @@ export default function SettingsPage() {
       }
       const result = await importLetterboxdRatings(user.uid, rows);
       setImportResult(result);
+      if (!result.error) {
+        const importedAt = new Date();
+        await updateDoc(doc(db, 'users', user.uid), {
+          lastImport: {
+            importedAt: serverTimestamp(),
+            successful: result.successful,
+            skipped: result.skipped,
+            failed: result.failed,
+            details: result.details,
+          },
+        });
+        setLastImport({ importedAt, successful: result.successful, skipped: result.skipped, failed: result.failed, details: result.details });
+        console.log('[Toast] firing success toast:', `Import complete · ${result.successful} imported`);
+        setToast({ type: 'success', message: `Import complete · ${result.successful} imported` });
+      }
     } catch (err) {
       setImportResult({
         successful: 0,
@@ -89,9 +118,26 @@ export default function SettingsPage() {
         details: [],
         error: err?.message || 'Import failed',
       });
+      console.log('[Toast] firing error toast:', err?.message || 'Import failed.');
+      setToast({ type: 'error', message: err?.message || 'Import failed.' });
     } finally {
       setImporting(false);
     }
+  };
+
+  const handleDropFiles = async (files) => {
+    if (!files?.length) return;
+    const folderName = files[0].webkitRelativePath?.split('/')[0] || files[0].name;
+    setDropFolderName(folderName);
+    const ratingsFile = Array.from(files).find(
+      (f) => f.name === 'ratings.csv' || f.webkitRelativePath?.endsWith('/ratings.csv')
+    );
+    if (!ratingsFile) {
+      setImportResult({ successful: 0, skipped: 0, failed: 0, details: [], error: 'ratings.csv not found in the dropped folder.' });
+      return;
+    }
+    const csvText = await ratingsFile.text();
+    await runImport(csvText);
   };
 
   const handleImportClick = async () => {
@@ -101,6 +147,7 @@ export default function SettingsPage() {
     if ('showDirectoryPicker' in window) {
       try {
         const dirHandle = await window.showDirectoryPicker();
+        setDropFolderName(dirHandle.name);
         const csvText = await readFileFromDirectory(dirHandle, 'ratings.csv');
         if (!csvText) {
           setImportResult({
@@ -136,6 +183,7 @@ export default function SettingsPage() {
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setDropFolderName(file.name);
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const text = ev.target?.result;
@@ -162,14 +210,20 @@ export default function SettingsPage() {
   if (loading) return null;
   if (!user) return null;
 
-  const hasResult = importResult && !importResult.error;
   const hasError = importResult?.error;
+  const shownImport = lastImport;
+  const formatImportDate = (date) => {
+    if (!date) return '';
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) +
+      ' at ' + date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  };
 
   return (
     <div className={styles.settingsSection}>
       <div className={styles.settingsContainer}>
         <nav className={styles.sidebar} aria-label="Settings sections">
           <ul className={styles.sidebarList}>
+            <li className={styles.sidebarEyebrow}><span className="eyebrow">Settings</span></li>
             {SECTIONS.filter(({ id }) => id !== 'dev' || isDeveloper).map(({ id, label }) => (
               <li key={id}>
                 <button
@@ -192,60 +246,103 @@ export default function SettingsPage() {
               <p className={styles.panelDescription}>
                 Manage your account and sign-in options.
               </p>
-              <div className={styles.panelBody}>
-                <div className={styles.settingBlock}>
-                  <h3 className={styles.settingBlockTitle}>Import</h3>
-                  <p className={styles.settingBlockDescription}>
-                    Bring your ratings and watch history from Letterboxd. Choose the folder that contains your Letterboxd export (it should include ratings.csv).
-                  </p>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv"
-                    className={styles.hiddenFileInput}
-                    aria-hidden="true"
-                    tabIndex={-1}
-                    onChange={handleFileSelect}
-                  />
-                  <button
-                    type="button"
-                    className={styles.primaryBtn}
-                    onClick={handleImportClick}
-                    disabled={importing}
-                  >
-                    {importing ? 'Importing…' : 'Import from Letterboxd'}
-                  </button>
+              <EmptyState
+                title="Nothing to see yet!"
+                subtitle="More options coming soon."
+              />
+            </section>
+          )}
+          {activeSection === 'data' && (
+            <section className={styles.panel} aria-labelledby="data-heading">
+              <h2 id="data-heading" className={styles.panelTitle}>Data</h2>
+              <p className={styles.panelDescription}>
+                Import and manage your data.
+              </p>
+              <div className={styles.sectionHeader}>
+                <h3 className={styles.sectionHeaderTitle}>Import from Letterboxd</h3>
+              </div>
+              <p className={styles.settingBlockDescription}>
+                Bring your ratings and watch history from Letterboxd. Choose the folder that contains your Letterboxd export (it should include ratings.csv).
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                className={styles.hiddenFileInput}
+                aria-hidden="true"
+                tabIndex={-1}
+                onChange={handleFileSelect}
+              />
+              {(!shownImport || importing) && (
+                <div
+                  className={`${styles.dropzone} ${dragOver ? styles.dropzoneOver : ''} ${dropFolderName ? styles.dropzoneFilled : ''}`}
+                  onClick={!importing ? handleImportClick : undefined}
+                  onDragOver={(e) => { e.preventDefault(); if (!importing) setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    if (!importing) handleDropFiles(e.dataTransfer.files);
+                  }}
+                  style={importing ? { cursor: 'default' } : undefined}
+                >
+                  <FolderOpen size={20} className={styles.dropzoneIcon} />
+                  {dropFolderName
+                    ? <>
+                        <span className={styles.dropzoneFolderName}>{dropFolderName}</span>
+                        {importing && <span className={styles.dropzoneHint}>Importing…</span>}
+                      </>
+                    : <>
+                        <span className={styles.dropzoneLabel}>Drop your Letterboxd export folder</span>
+                        <span className={styles.dropzoneHint}>or click to browse</span>
+                      </>
+                  }
+                </div>
+              )}
 
-                  {hasError && (
-                    <div className={styles.importError} role="alert">
-                      {importResult.error}
-                    </div>
+              {hasError && (
+                <div className={styles.importError} role="alert">
+                  {importResult.error}
+                </div>
+              )}
+
+              {shownImport && (
+                <div className={styles.importSummary}>
+                  <p className={styles.importSummaryTitle}>Import complete</p>
+                  {shownImport.importedAt && (
+                    <p className={styles.importTimestamp}>{formatImportDate(shownImport.importedAt)}</p>
                   )}
-
-                  {hasResult && (
-                    <div className={styles.importSummary}>
-                      <p className={styles.importSummaryTitle}>Import complete</p>
-                      <p className={styles.importSummaryCounts}>
-                        <span className={styles.importCountSuccess}>{importResult.successful} successful</span>
-                        {' · '}
-                        <span className={styles.importCountSkipped}>{importResult.skipped} skipped</span>
-                        {' · '}
-                        <span className={styles.importCountFailed}>{importResult.failed} failed</span>
-                      </p>
+                  <p className={styles.importSummaryCounts}>
+                    <span className={styles.importCountSuccess}>{shownImport.successful} successful</span>
+                    {' · '}
+                    <span className={styles.importCountSkipped}>{shownImport.skipped} skipped</span>
+                    {' · '}
+                    <span className={styles.importCountFailed}>{shownImport.failed} failed</span>
+                  </p>
+                  <div className={styles.importActions}>
+                    {shownImport?.details?.length > 0 && (
                       <button
                         type="button"
                         className={styles.secondaryBtn}
                         onClick={() => {
-                        setSummarySections({ success: true, skipped: true, failed: true });
-                        setShowDetailsModal(true);
-                      }}
+                          setSummarySections({ success: true, skipped: true, failed: true });
+                          setShowDetailsModal(true);
+                        }}
                       >
                         View import summary
                       </button>
-                    </div>
-                  )}
+                    )}
+                    <button
+                      type="button"
+                      className={styles.reimportLink}
+                      onClick={handleImportClick}
+                      disabled={importing}
+                    >
+                      {importing ? 'Importing…' : 'Re-import'}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </section>
           )}
           {activeSection === 'dev' && isDeveloper && (
@@ -274,10 +371,10 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {showDetailsModal && hasResult && (() => {
-        const successItems = importResult.details.filter((d) => d.status === 'success');
-        const skippedItems = importResult.details.filter((d) => d.status === 'skipped');
-        const failedItems = importResult.details.filter((d) => d.status === 'failed');
+      {showDetailsModal && shownImport?.details && (() => {
+        const successItems = shownImport.details.filter((d) => d.status === 'success');
+        const skippedItems = shownImport.details.filter((d) => d.status === 'skipped');
+        const failedItems = shownImport.details.filter((d) => d.status === 'failed');
         return (
           <div
             className={styles.modalBackdrop}
@@ -460,6 +557,14 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { doc, getDoc, collection, getDocs, addDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
@@ -10,6 +11,7 @@ import { fetchMediaDetails, getPosterUrl } from '../lib/tmdb';
 import { useAuth } from '../contexts/AuthContext';
 import { Globe, Lock } from 'lucide-react';
 import Modal from './Modal';
+import EmptyState from './EmptyState';
 import styles from './ProfileTabs.module.css';
 
 /**
@@ -20,6 +22,7 @@ import styles from './ProfileTabs.module.css';
  */
 export default function ProfileTabs({ userId }) {
   const { user } = useAuth();
+  const router = useRouter();
   const isOwner = user?.uid === userId;
 
   const [activeTab, setActiveTab] = useState('lists');
@@ -387,13 +390,13 @@ export default function ProfileTabs({ userId }) {
   const renderContent = () => {
     if (activeTab === 'movies') {
       if (movies === null) return <p className={styles.emptyState}>Loading...</p>;
-      if (movies.length === 0) return <p className={styles.emptyState}>No movies rated yet.</p>;
+      if (movies.length === 0) return <EmptyState title="Nothing to show here yet." subtitle="Rate movies from the Search page." action={{ label: 'Search for movies', onClick: () => router.push('/explore') }} secondaryAction={{ label: 'Or, Import from Letterboxd', onClick: () => router.push('/settings') }} />;
       return movies.map((item) => renderRatedRow(item, item.mediaType || 'movie'));
     }
 
     if (activeTab === 'shows') {
       if (shows === null) return <p className={styles.emptyState}>Loading...</p>;
-      if (shows.length === 0) return <p className={styles.emptyState}>No shows rated yet.</p>;
+      if (shows.length === 0) return <EmptyState title="Nothing to show here yet." subtitle="Rate shows from the Search page." action={{ label: 'Search for shows', onClick: () => router.push('/explore') }} />;
 
       const groupMap = {};
       for (const item of shows) {
@@ -408,7 +411,7 @@ export default function ProfileTabs({ userId }) {
 
     if (activeTab === 'watchlist') {
       if (watchlist === null) return <p className={styles.emptyState}>Loading...</p>;
-      if (watchlist.length === 0) return <p className={styles.emptyState}>No movies or shows added to your watchlist yet.</p>;
+      if (watchlist.length === 0) return <EmptyState title="Your watchlist is empty." subtitle="Add anything you want to watch from the Search page." action={{ label: 'Search for something to watch', onClick: () => router.push('/explore') }} />;
       const filtered = watchlistFilter === 'all' ? watchlist : watchlist.filter((item) => item.mediaType === watchlistFilter);
       return (
         <>
@@ -424,7 +427,7 @@ export default function ProfileTabs({ userId }) {
             ))}
           </div>
           {filtered.length === 0
-            ? <p className={styles.emptyState}>No {watchlistFilter === 'movie' ? 'movies' : 'TV shows'} in your watchlist.</p>
+            ? <EmptyState title={`No ${watchlistFilter === 'movie' ? 'movies' : 'TV shows'} in your watchlist.`} action={{ label: `Search for ${watchlistFilter === 'movie' ? 'movies' : 'TV shows'}`, onClick: () => router.push('/explore') }} />
             : filtered.map((item) => renderWatchlistRow(item))
           }
         </>
@@ -433,6 +436,13 @@ export default function ProfileTabs({ userId }) {
 
     if (activeTab === 'lists') {
       if (lists === null) return <p className={styles.emptyState}>Loading...</p>;
+      if (lists.length === 0) return (
+        <EmptyState
+          title="No lists yet."
+          subtitle="Create a list to organize your films."
+          action={isOwner ? { label: 'Create a list', onClick: () => setShowCreateModal(true) } : undefined}
+        />
+      );
       return (
         <>
           <div className={styles.listsHeader}>
@@ -443,10 +453,7 @@ export default function ProfileTabs({ userId }) {
               </button>
             )}
           </div>
-          {lists.length === 0
-            ? <p className={styles.emptyState}>No lists yet.</p>
-            : <div className={styles.listsGrid}>{lists.map(renderListCard)}</div>
-          }
+          <div className={styles.listsGrid}>{lists.map(renderListCard)}</div>
         </>
       );
     }
