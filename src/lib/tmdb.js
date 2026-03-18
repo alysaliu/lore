@@ -1,3 +1,5 @@
+import { publicAssetPath } from './publicPath';
+
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
@@ -47,7 +49,7 @@ export async function fetchMediaName(id, mediaType) {
 }
 
 export function getPosterUrl(posterPath, size = 'w185') {
-  if (!posterPath) return '/images/placeholder.png';
+  if (!posterPath) return publicAssetPath('/images/placeholder.png');
   return `${TMDB_IMAGE_BASE}/${size}${posterPath}`;
 }
 

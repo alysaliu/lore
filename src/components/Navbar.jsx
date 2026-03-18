@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
+import { publicAssetPath } from '../lib/publicPath';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
@@ -25,7 +26,7 @@ export default function Navbar() {
       <div className={styles.navbarContainer}>
         <Link href="/" className={styles.navbarLogo}>
           <img
-            src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/images/Rabbit.svg`}
+            src={publicAssetPath('/images/Rabbit.svg')}
             alt="Lore"
             width={40}
             height={40}

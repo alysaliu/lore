@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { publicAssetPath } from '../lib/publicPath';
 import styles from './page.module.css';
 
 const slides = [
-  { image: '/images/Littlewomen.svg' },
-  { image: '/images/Moonlightkingdom.svg' },
-  { image: '/images/Severance.svg' },
+  { image: publicAssetPath('/images/Littlewomen.svg') },
+  { image: publicAssetPath('/images/Moonlightkingdom.svg') },
+  { image: publicAssetPath('/images/Severance.svg') },
 ];
 
 export default function HomePage() {

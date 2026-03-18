@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -20,7 +20,8 @@ export default function ProfilePage() {
   const [userData, setUserData] = useState(null);
   /** false until Firestore users/{uid} fetch finishes (avoids Unnamed / @set username flash). */
   const [profileReady, setProfileReady] = useState(false);
-  const [tipHidden, setTipHidden] = useState(false);
+  /** true until localStorage is read (useLayoutEffect, before first paint). */
+  const [tipHidden, setTipHidden] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [editingUsername, setEditingUsername] = useState(false);
   const [usernameInput, setUsernameInput] = useState('');
@@ -33,9 +34,11 @@ export default function ProfilePage() {
 
   const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
+  useLayoutEffect(() => {
+    try {
       setTipHidden(localStorage.getItem('dismissedTip') === 'true');
+    } catch {
+      setTipHidden(false);
     }
   }, []);
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { publicAssetPath } from '../../lib/publicPath';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from '../login/page.module.css';
 
@@ -76,7 +77,7 @@ export default function OnboardingPage() {
         <h3>This is how others will find you on Lore</h3>
       </div>
 
-      <Image src="/images/Rabbit.svg" alt="Lore" width={60} height={60} className={styles.logo} />
+      <Image src={publicAssetPath('/images/Rabbit.svg')} alt="Lore" width={60} height={60} className={styles.logo} />
 
       <form className={styles.form} onSubmit={handleSubmit}>
         {error && <p className={styles.error}>{error}</p>}

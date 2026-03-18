@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { signInWithPopup } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../../lib/firebase';
+import { publicAssetPath } from '../../lib/publicPath';
 import styles from './page.module.css';
 
 export default function LoginPage() {
@@ -53,7 +54,7 @@ export default function LoginPage() {
       </div>
 
       <Image
-        src="/images/Rabbit.svg"
+        src={publicAssetPath('/images/Rabbit.svg')}
         alt="Lore"
         width={60}
         height={60}

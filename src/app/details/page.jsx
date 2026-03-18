@@ -9,6 +9,7 @@ import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { getRatings, saveRatings, getMediaAverageRating } from '../../lib/ratingsFirestore';
 import { fetchMediaDetails, fetchMediaName, getPosterUrl } from '../../lib/tmdb';
+import { publicAssetPath } from '../../lib/publicPath';
 import AddToListModal from '../../components/AddToListModal';
 import styles from './page.module.css';
 
@@ -521,7 +522,7 @@ function DetailsContent() {
   if (loading) {
     return (
       <div className={styles.loading}>
-        <Image src="/images/jumpingin.gif" alt="Loading" width={300} height={300} unoptimized />
+        <Image src={publicAssetPath('/images/jumpingin.gif')} alt="Loading" width={300} height={300} unoptimized />
         Hold tight, we&apos;re sniffing around for the right content...
       </div>
     );
