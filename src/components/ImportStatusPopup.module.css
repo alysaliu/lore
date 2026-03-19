@@ -1,0 +1,177 @@
+.wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 16px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1100;
+}
+
+.card {
+  width: min(720px, calc(100vw - 24px));
+  background: var(--color-surface-contrast);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-profile);
+  padding: 14px 14px 12px 14px;
+  pointer-events: auto;
+  animation: slideInFromBottom 0.3s ease both;
+}
+
+.wrapClosing .card {
+  animation: slideOutToBottom 0.3s ease both;
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutToBottom {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.headerRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.titleBlock {
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--color-text-default);
+}
+
+.subtitle {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.pill,
+.pillDone,
+.pillError {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-default);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.pillDone {
+  color: var(--color-text-default);
+}
+
+.pillError {
+  color: var(--color-text-default);
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  line-height: 1;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+}
+
+.closeBtn:hover:not(:disabled) {
+  color: var(--color-text-default);
+  background: var(--color-surface-hovered);
+}
+
+.closeBtn:disabled {
+  cursor: default;
+}
+
+.bodyRow {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-default);
+  padding: 10px;
+}
+
+.metricLabel {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.metricValue {
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-default);
+}
+
+.lastLine {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lastTitle {
+  color: var(--color-text-default);
+  font-weight: 600;
+}
+
+.errorLine {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--color-text-default);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-default);
+  border-radius: var(--radius-md);
+  padding: 10px;
+}
+
+.flowLine {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 520px) {
+  .bodyRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+

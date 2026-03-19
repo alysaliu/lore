@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft, FolderOpen, ExternalLink, Smile, Upload } from 'lucide-react';
-import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useImportStatus } from '../../contexts/ImportStatusContext';
 import { parseRatingsCsv, importLetterboxdRatings } from '../../lib/letterboxdImport';
 import Toast from '../../components/Toast';
 import styles from '../login/page.module.css';
@@ -44,6 +44,7 @@ export default function OnboardingPage() {
   const [username, setUsername] = useState('');
   const [savedUsername, setSavedUsername] = useState('');
   const [importFolder, setImportFolder] = useState(null);
+  const [ratingsFile, setRatingsFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState('');
   const [avatarFile, setAvatarFile] = useState(null);
@@ -54,8 +55,13 @@ export default function OnboardingPage() {
   const [importing, setImporting] = useState(false);
   const [toast, setToast] = useState(null);
   const [importFiles, setImportFiles] = useState(null);
-
   const firstName = user?.displayName?.split(' ')[0] || '';
+  const {
+    startLetterboxdImport,
+    updateLetterboxdImport,
+    finishLetterboxdImport,
+    failLetterboxdImport,
+  } = useImportStatus();
 
   useEffect(() => {
     if (!loading && !user) router.push('/login');
@@ -142,10 +148,28 @@ export default function OnboardingPage() {
       const csvText = await ratingsFile.text();
       const rows = parseRatingsCsv(csvText);
       if (rows.length === 0) {
+        failLetterboxdImport('No valid rows found in ratings.csv.');
         setToast({ type: 'error', message: 'No valid rows found in ratings.csv.' });
         return;
       }
-      const result = await importLetterboxdRatings(user.uid, rows);
+      startLetterboxdImport({ total: rows.length });
+      const result = await importLetterboxdRatings(user.uid, rows, {
+        onProgress: (p) => {
+          updateLetterboxdImport({
+            processed: p.processed,
+            successful: p.successful,
+            skipped: p.skipped,
+            failed: p.failed,
+            total: p.total,
+            lastTitle: p.lastTitle || '',
+          });
+        },
+      });
+      finishLetterboxdImport({
+        successful: result.successful,
+        skipped: result.skipped,
+        failed: result.failed,
+      });
       await updateDoc(doc(db, 'users', user.uid), {
         lastImport: {
           importedAt: serverTimestamp(),
@@ -161,6 +185,7 @@ export default function OnboardingPage() {
         action: { label: 'View in Settings', onClick: () => router.push('/settings?tab=data') },
       });
     } catch (err) {
+      failLetterboxdImport(err?.message || 'Import failed.');
       setToast({ type: 'error', message: err?.message || 'Import failed.' });
     } finally {
       setImporting(false);

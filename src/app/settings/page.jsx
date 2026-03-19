@@ -4,13 +4,14 @@ import { useEffect, useState, useRef } from 'react';
 import { FolderOpen } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { deleteAllRatings } from '../../lib/ratingsFirestore';
 import {
   parseRatingsCsv,
   importLetterboxdRatings,
 } from '../../lib/letterboxdImport';
+import { useImportStatus } from '../../contexts/ImportStatusContext';
 import styles from './page.module.css';
 import EmptyState from '../../components/EmptyState';
 import Toast from '../../components/Toast';
@@ -23,7 +24,13 @@ const SECTIONS = [
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const {
+    startLetterboxdImport,
+    updateLetterboxdImport,
+    finishLetterboxdImport,
+    failLetterboxdImport,
+  } = useImportStatus();
   const [activeSection, setActiveSection] = useState('account');
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
@@ -40,6 +47,8 @@ export default function SettingsPage() {
   const [toast, setToast] = useState(null);
   const [showDeleteRatingsConfirm, setShowDeleteRatingsConfirm] = useState(false);
   const [deletingRatings, setDeletingRatings] = useState(false);
+  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const fileInputRef = useRef(null);
 
   const toggleSummarySection = (key) => {
@@ -93,7 +102,24 @@ export default function SettingsPage() {
         setImporting(false);
         return;
       }
-      const result = await importLetterboxdRatings(user.uid, rows);
+      startLetterboxdImport({ total: rows.length });
+      const result = await importLetterboxdRatings(user.uid, rows, {
+        onProgress: (p) => {
+          updateLetterboxdImport({
+            processed: p.processed,
+            successful: p.successful,
+            skipped: p.skipped,
+            failed: p.failed,
+            total: p.total,
+            lastTitle: p.lastTitle || '',
+          });
+        },
+      });
+      finishLetterboxdImport({
+        successful: result.successful,
+        skipped: result.skipped,
+        failed: result.failed,
+      });
       setImportResult(result);
       if (!result.error) {
         const importedAt = new Date();
@@ -111,6 +137,7 @@ export default function SettingsPage() {
         setToast({ type: 'success', message: `Import complete · ${result.successful} imported` });
       }
     } catch (err) {
+      failLetterboxdImport(err?.message || 'Import failed');
       setImportResult({
         successful: 0,
         skipped: 0,
@@ -204,6 +231,24 @@ export default function SettingsPage() {
       console.error('Failed to delete ratings', err);
     } finally {
       setDeletingRatings(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setDeletingAccount(true);
+    try {
+      const userSnap = await getDoc(doc(db, 'users', user.uid));
+      const username = userSnap.exists() ? (userSnap.data().username || '').trim().toLowerCase() : '';
+      await deleteAllRatings(user.uid);
+      await deleteDoc(doc(db, 'users', user.uid));
+      if (username) await deleteDoc(doc(db, 'usernames', username));
+      await signOut();
+      router.push('/login');
+    } catch (err) {
+      console.error('Failed to delete account', err);
+    } finally {
+      setDeletingAccount(false);
     }
   };
 
@@ -363,6 +408,19 @@ export default function SettingsPage() {
                     onClick={() => setShowDeleteRatingsConfirm(true)}
                   >
                     Delete all ratings
+                  </button>
+                </div>
+                <div className={styles.settingBlock}>
+                  <h3 className={styles.settingBlockTitle}>Delete account</h3>
+                  <p className={styles.settingBlockDescription}>
+                    Permanently delete your account: removes your user document and username from the database. You will be signed out. This cannot be undone.
+                  </p>
+                  <button
+                    type="button"
+                    className={styles.dangerBtn}
+                    onClick={() => setShowDeleteAccountConfirm(true)}
+                  >
+                    Delete account
                   </button>
                 </div>
               </div>
@@ -565,6 +623,59 @@ export default function SettingsPage() {
           type={toast.type}
           onClose={() => setToast(null)}
         />
+      )}
+
+      {showDeleteAccountConfirm && (
+        <div
+          className={styles.modalBackdrop}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-account-confirm-title"
+          onClick={() => !deletingAccount && setShowDeleteAccountConfirm(false)}
+        >
+          <div
+            className={styles.confirmModalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h2 id="delete-account-confirm-title" className={styles.modalTitle}>
+                Delete account?
+              </h2>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => !deletingAccount && setShowDeleteAccountConfirm(false)}
+                aria-label="Close"
+                disabled={deletingAccount}
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <p className={styles.confirmModalDescription}>
+                This will permanently delete your account from the user and username collections. You will be signed out. This cannot be undone.
+              </p>
+              <div className={styles.confirmModalActions}>
+                <button
+                  type="button"
+                  className={styles.secondaryBtn}
+                  onClick={() => setShowDeleteAccountConfirm(false)}
+                  disabled={deletingAccount}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={styles.dangerBtn}
+                  onClick={handleDeleteAccount}
+                  disabled={deletingAccount}
+                >
+                  {deletingAccount ? 'Deleting…' : 'Delete account'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
