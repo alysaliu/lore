@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft, FolderOpen, ExternalLink, Smile, Upload } from 'lucide-react';
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { parseRatingsCsv, importLetterboxdRatings } from '../../lib/letterboxdImport';
@@ -82,6 +83,10 @@ export default function OnboardingPage() {
         return;
       }
 
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      const previousUsername = (userSnap.exists() ? (userSnap.data()?.username || '') : '').trim().toLowerCase();
+
       const nameParts = (user.displayName || '').split(' ');
       const firstname = nameParts[0] || '';
       const lastname = nameParts.slice(1).join(' ') || '';
@@ -90,17 +95,28 @@ export default function OnboardingPage() {
         await deleteDoc(doc(db, 'usernames', savedUsername));
       }
 
-      await setDoc(usernameRef, { uid: user.uid });
-      await setDoc(doc(db, 'users', user.uid), {
-        firstname,
-        lastname,
-        email: user.email || null,
-        photoURL: user.photoURL || null,
-        username: trimmed,
-        isDeveloper: false,
-        createdAt: serverTimestamp(),
-        lists: { watchlist: [] },
-      });
+      const batch = writeBatch(db);
+      batch.set(usernameRef, { uid: user.uid });
+      if (previousUsername && previousUsername !== trimmed) {
+        batch.delete(doc(db, 'usernames', previousUsername));
+      }
+
+      if (userSnap.exists()) {
+        batch.set(userRef, { username: trimmed }, { merge: true });
+      } else {
+        batch.set(userRef, {
+          firstname,
+          lastname,
+          email: user.email || null,
+          photoURL: user.photoURL || null,
+          username: trimmed,
+          isDeveloper: false,
+          createdAt: serverTimestamp(),
+          lists: { watchlist: [] },
+        });
+      }
+
+      await batch.commit();
 
       setSavedUsername(trimmed);
       setStep(2);
