@@ -57,6 +57,16 @@ function DetailsContent() {
   const [persistingComparison, setPersistingComparison] = useState(false);
   const { ratings: userRatings, setRatings: setUserRatings, refreshRatings, loading: ratingsLoading } = useRatings();
 
+  const isComparableCandidate = useCallback((item) => {
+    if (mediaType !== 'tv') return true;
+    // Season ratings should only compare with seasons of the same show.
+    if (selectedSeason != null) {
+      return item.season != null && String(item.mediaId) === String(id);
+    }
+    // Whole-show ratings should only compare with whole-show ratings.
+    return item.season == null;
+  }, [mediaType, selectedSeason, id]);
+
   // Close friend dropdown when clicking outside
   useEffect(() => {
     if (openFriendDropdownSeason === undefined) return;
@@ -291,7 +301,7 @@ function DetailsContent() {
     const matchesCurrent = (item) => item.mediaId === id && (item.season ?? null) === (selectedSeason ?? null);
 
     const group = (ratings[mediaType][selectedSentiment] || [])
-      .filter(item => !matchesCurrent(item))
+      .filter(item => !matchesCurrent(item) && isComparableCandidate(item))
       .sort(sortRatingsByRank);
 
     if (group.length === 0) {
@@ -390,7 +400,7 @@ function DetailsContent() {
     const ratingRef = doc(db, 'users', user.uid, 'ratings', ratingDocId);
 
     const group = [...(ratings[mediaType][selectedSentiment] || [])]
-      .filter(item => !matchesCurrent(item))
+      .filter(item => !matchesCurrent(item) && isComparableCandidate(item))
       .sort(sortRatingsByRank);
 
     const leftKey = position > 0 ? group[position - 1]?.score ?? group[position - 1]?.scoreV2 ?? null : null;
