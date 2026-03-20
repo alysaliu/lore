@@ -10,6 +10,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getRatings, saveRatings, getMediaAverageRating } from '../../lib/ratingsFirestore';
 import { fetchMediaDetails, fetchMediaName, getPosterUrl } from '../../lib/tmdb';
 import AddToListModal from '../../components/AddToListModal';
+import { Repeat, Trash2, ChevronDown } from 'lucide-react';
 import styles from './page.module.css';
 
 const SCORE_RANGES = {
@@ -52,7 +53,9 @@ function DetailsContent() {
   const [showRatingForm, setShowRatingForm] = useState(false);
   const [friendsRatings, setFriendsRatings] = useState(null); // null = not loaded yet
   const [friendsError, setFriendsError] = useState(null);
+  const [showBreakdown, setShowBreakdown] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [pendingDeleteSeason, setPendingDeleteSeason] = useState(undefined);
   const [deleting, setDeleting] = useState(false);
   const [overallAverage, setOverallAverage] = useState(null); // { average, count } | null
 
@@ -441,7 +444,41 @@ function DetailsContent() {
     setIsReranking(true);
   };
 
+  const scoredFriends = friendsRatings ? friendsRatings.filter(f => f.primaryScore > 0) : [];
+  const friendsAvg = scoredFriends.length > 0
+    ? Math.round((scoredFriends.reduce((sum, f) => sum + f.primaryScore, 0) / scoredFriends.length) * 10) / 10
+    : null;
+  const tvUserOverall = existingShowRatings.length > 0
+    ? Math.round((existingShowRatings.reduce((sum, r) => sum + r.score, 0) / existingShowRatings.length) * 10) / 10
+    : null;
+
+  // Collect all unique seasons across user + friends for the breakdown table
+  const breakdownSeasons = (() => {
+    const seen = new Set();
+    const seasons = [];
+    existingShowRatings.forEach(r => { if (!seen.has(r.season)) { seen.add(r.season); seasons.push(r.season); } });
+    scoredFriends.forEach(f => {
+      if (f.wholeShow?.score != null && !seen.has(null)) { seen.add(null); seasons.push(null); }
+      f.seasons?.forEach(s => { if (s.score != null && !seen.has(s.season)) { seen.add(s.season); seasons.push(s.season); } });
+    });
+    return seasons.sort((a, b) => a === null ? -1 : b === null ? 1 : a - b);
+  })();
+
+  const getFriendsSeasonAvg = (season) => {
+    const scores = scoredFriends
+      .map(f => season === null ? (f.wholeShow?.score ?? null) : (f.seasons?.find(s => s.season === season)?.score ?? null))
+      .filter(s => s != null);
+    if (!scores.length) return null;
+    return Math.round((scores.reduce((sum, s) => sum + s, 0) / scores.length) * 10) / 10;
+  };
+
   const handleDeleteRatingClick = () => {
+    setPendingDeleteSeason(undefined);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteSeasonClick = (season) => {
+    setPendingDeleteSeason(season);
     setShowDeleteConfirm(true);
   };
 
@@ -458,9 +495,15 @@ function DetailsContent() {
       let removed = false;
       for (const sentiment of Object.keys(ratings[mediaType])) {
         const before = ratings[mediaType][sentiment] || [];
-        const after = before.filter(
-          (item) => String(item.mediaId) !== String(id) || (mediaType === 'tv' && item.season != null)
-        );
+        const after = before.filter((item) => {
+          if (String(item.mediaId) !== String(id)) return true;
+          if (pendingDeleteSeason !== undefined) {
+            // Delete specific season (or whole-show entry if season === null)
+            return item.season !== pendingDeleteSeason;
+          }
+          // Delete movie rating (original behaviour)
+          return mediaType === 'tv' && item.season != null;
+        });
         if (after.length !== before.length) {
           ratings[mediaType][sentiment] = after;
           removed = true;
@@ -503,12 +546,14 @@ function DetailsContent() {
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
+      setPendingDeleteSeason(undefined);
     }
   };
 
   const handleCancelDelete = () => {
     if (deleting) return;
     setShowDeleteConfirm(false);
+    setPendingDeleteSeason(undefined);
   };
 
   const incrementRatingCount = async (uid) => {
@@ -567,7 +612,7 @@ function DetailsContent() {
             <div className={styles.title}>{currentTitle}</div>
             <div className={styles.metaRow}>
               {year && <span className={styles.metaItem}>{year}</span>}
-              {runtime && <><span className={styles.metaDot}>·</span><span className={styles.metaItem}>{runtime}</span></>}
+              {runtime && mediaType !== 'tv' && <><span className={styles.metaDot}>·</span><span className={styles.metaItem}>{runtime}</span></>}
               {(media.genres || []).length > 0 && <span className={styles.metaDot}>·</span>}
               {(media.genres || []).map((g) => (
                 <span key={g.id} className={styles.genreBadge}>{g.name}</span>
@@ -584,7 +629,7 @@ function DetailsContent() {
 
             <hr className={styles.divider} />
 
-            {overallAverage && (
+            {overallAverage && mediaType !== 'tv' && (
               <div className={styles.overallAverage}>
                 <span className="eyebrow">Community average</span>
                 <span className={styles.overallAverageScore}>{overallAverage.average}</span>
@@ -595,20 +640,75 @@ function DetailsContent() {
             {/* Rating box */}
             <div className={styles.ratingBox}>
           {mediaType === 'tv' && existingShowRatings.length > 0 && (
-            <div className={styles.existingRatings}>
-              <span className="eyebrow">Your ratings</span>
-              {existingShowRatings.map((r) => (
-                <div key={r.season ?? 'show'} className={styles.existingRatingRow}>
-                  <span className={styles.existingRatingLabel}>
-                    {r.season != null ? `Season ${r.season}` : 'Whole show'}
-                  </span>
-                  <span className={styles.existingRatingScore}>{r.score}</span>
-                  <button className={styles.rerankBtn} onClick={() => handleRerankSeason(r.season)}>
-                    Re-rank
-                  </button>
+            <>
+              <div className={styles.ratingDone}>
+                <div className={styles.ratingColumn}>
+                  <div className="eyebrow">Your avg</div>
+                  <div className={styles.ratingColumnScore}>{tvUserOverall}</div>
+                  <div className={styles.ratingColumnSentiment}>{existingShowRatings.length} {existingShowRatings.length === 1 ? 'rating' : 'ratings'}</div>
                 </div>
-              ))}
-            </div>
+                {friendsAvg != null && (
+                  <>
+                    <div className={styles.ratingColumnDivider} />
+                    <div className={styles.ratingColumn}>
+                      <div className="eyebrow">Friends</div>
+                      <div className={styles.ratingColumnScore}>{friendsAvg}</div>
+                      <div className={styles.ratingColumnSentiment}>{scoredFriends.length} {scoredFriends.length === 1 ? 'rating' : 'ratings'}</div>
+                    </div>
+                  </>
+                )}
+                {overallAverage && (
+                  <>
+                    <div className={styles.ratingColumnDivider} />
+                    <div className={`${styles.ratingColumn} ${styles.ratingColumnGrow}`}>
+                      <div className="eyebrow">Community avg</div>
+                      <div className={styles.ratingColumnScore}>{overallAverage.average}</div>
+                      <div className={styles.ratingColumnSentiment}>{overallAverage.count} {overallAverage.count === 1 ? 'rating' : 'ratings'}</div>
+                    </div>
+                  </>
+                )}
+              </div>
+              <button className={styles.breakdownCollapsible} onClick={() => setShowBreakdown(v => !v)}>
+                <span>Breakdown</span>
+                <ChevronDown size={14} className={showBreakdown ? styles.chevronOpen : styles.chevronClosed} />
+              </button>
+              {showBreakdown && (
+                <div className={styles.breakdownTable}>
+                  <div className={`${styles.breakdownRow} ${styles.breakdownHeader}`}>
+                    <span className={styles.breakdownLabelCell} />
+                    <span className={styles.breakdownCell}>You</span>
+                    <span className={styles.breakdownCell}>Friends</span>
+                    <span className={styles.breakdownCell}>Community</span>
+                  </div>
+                  {breakdownSeasons.map(season => {
+                    const userScore = existingShowRatings.find(r => r.season === season)?.score ?? null;
+                    const friendSeasonAvg = getFriendsSeasonAvg(season);
+                    return (
+                      <div key={season ?? 'whole'} className={styles.breakdownRow}>
+                        <span className={styles.breakdownLabelCell}>
+                          {season != null ? `Season ${season}` : 'Whole show'}
+                        </span>
+                        <span className={styles.breakdownCell}>
+                          {userScore != null ? (
+                            <span className={styles.breakdownScoreCell}>
+                              <span className={styles.breakdownScore}>{userScore}</span>
+                              <button className={styles.iconActionBtn} onClick={() => handleRerankSeason(season)} aria-label="Re-rank" data-tooltip="Re-rank">
+                                <Repeat size={12} />
+                              </button>
+                              <button className={styles.iconActionBtnDanger} onClick={() => handleDeleteSeasonClick(season)} aria-label="Remove rating" data-tooltip="Remove rating">
+                                <Trash2 size={12} />
+                              </button>
+                            </span>
+                          ) : '–'}
+                        </span>
+                        <span className={styles.breakdownCell}>{friendSeasonAvg ?? '–'}</span>
+                        <span className={styles.breakdownCell}>–</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
           {mediaType === 'tv' && existingShowRatings.length > 0 && !showRatingForm && !cancelled && ratingPhase !== 'comparing' && (
             <button className={styles.rateAnotherBtn} onClick={() => setShowRatingForm(true)}>
@@ -622,10 +722,12 @@ function DetailsContent() {
               <div className={styles.ratingColumn}>
                 <div className="eyebrow">Your rating{selectedSeason != null ? ` · Season ${selectedSeason}` : ''}</div>
                 <div className={styles.ratingColumnScore}>{finalScore}</div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button className={styles.rerankBtn} onClick={handleRerank}>Re-rank</button>
-                  <button className={styles.rerankBtn} onClick={handleDeleteRatingClick}>
-                    Remove rating
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <button className={styles.iconActionBtn} onClick={handleRerank} aria-label="Re-rank" data-tooltip="Re-rank">
+                    <Repeat size={14} />
+                  </button>
+                  <button className={styles.iconActionBtnDanger} onClick={handleDeleteRatingClick} aria-label="Remove rating" data-tooltip="Remove rating">
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>
@@ -715,77 +817,6 @@ function DetailsContent() {
           )}
             </div>
 
-            {/* Friends' ratings section */}
-            <div className={styles.existingRatings}>
-              <span className="eyebrow">What your friends think</span>
-              {friendsRatings === null && !friendsError && (
-                <p className={styles.resultText}>Loading friends&apos; ratings…</p>
-              )}
-              {friendsError && (
-                <p className={styles.resultText}>{friendsError}</p>
-              )}
-              {friendsRatings && friendsRatings.length === 0 && !friendsError && (
-                <p className={styles.resultText}>
-                  None of the people you follow have rated this yet.
-                </p>
-              )}
-              {friendsRatings && friendsRatings.length > 0 && (
-                <div>
-                  {friendsRatings.map((friend) => {
-                    const displayName =
-                      friend.displayName ||
-                      (friend.username ? `@${friend.username}` : 'Friend');
-                    const reviewNote =
-                      friend.wholeShow?.note ||
-                      (friend.seasons.find((s) => s.note)?.note ?? '');
-
-                    return (
-                      <div key={friend.uid} className={styles.existingRatingRow}>
-                        <Link
-                          href={`/user?uid=${friend.uid}`}
-                          className={styles.friendProfileLink}
-                        >
-                          <div className={styles.friendAvatarCircle}>
-                            {friend.photoURL ? (
-                              <Image
-                                src={friend.photoURL}
-                                alt={displayName}
-                                width={32}
-                                height={32}
-                                className={styles.friendAvatarImg}
-                              />
-                            ) : (
-                              <span className={styles.friendAvatarInitials}>
-                                {displayName
-                                  .replace(/^@/, '')
-                                  .split(' ')
-                                  .map((part) => part[0])
-                                  .join('')
-                                  .slice(0, 2)
-                                  .toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-                          <div className={styles.friendReviewText}>
-                            <span className={styles.existingRatingLabel}>
-                              {displayName}
-                            </span>
-                            {reviewNote && (
-                              <span className={styles.friendReviewNote}>
-                                {reviewNote}
-                              </span>
-                            )}
-                          </div>
-                        </Link>
-                        <span className={styles.existingRatingScore}>
-                          {friend.primaryScore != null ? friend.primaryScore : '–'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </div>
