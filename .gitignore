@@ -12,6 +12,7 @@ out/
 # Firebase service account key (Admin SDK — never commit)
 service-account.json
 *-firebase-adminsdk-*.json
+lore-*.json
 
 # Misc
 .DS_Store

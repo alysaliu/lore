@@ -42,7 +42,7 @@ export async function getMediaAverageRating(mediaKey) {
 
 /**
  * Fetch all rating docs for a user and return the nested shape:
- * { movie: { [sentiment]: [{ mediaId, mediaType?, mediaName?, note, score, timestamp, season? }] }, tv: { ... } }
+ * { movie: { [sentiment]: [{ id, mediaId, mediaType?, mediaName?, note, score, scoreV2?, timestamp, season? }] }, tv: { ... } }
  */
 export async function getRatings(uid) {
   if (!db) return { movie: {}, tv: {} };
@@ -55,11 +55,13 @@ export async function getRatings(uid) {
     const sentiment = data.sentiment || 'good';
     if (!ratings[mediaType][sentiment]) ratings[mediaType][sentiment] = [];
     ratings[mediaType][sentiment].push({
+      id: d.id,
       mediaId: data.mediaId,
       mediaType: data.mediaType || mediaType,
       mediaName: data.mediaName ?? null,
       note: data.note ?? null,
       score: data.score,
+      scoreV2: data.scoreV2 ?? null,
       timestamp: data.timestamp ?? null,
       ...(data.season != null && { season: data.season }),
     });
@@ -88,6 +90,7 @@ function flattenRatingsToEntries(ratings) {
             mediaName: entry.mediaName ?? null,
             note: entry.note ?? null,
             score: entry.score,
+            scoreV2: entry.scoreV2 ?? null,
             timestamp: entry.timestamp ?? null,
             ...(entry.season != null && { season: entry.season }),
           },
