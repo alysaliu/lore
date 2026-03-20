@@ -8,7 +8,7 @@ import { doc, getDoc, collection, getDocs, addDoc, query, orderBy, serverTimesta
 import { db } from '../lib/firebase';
 import { getRatings } from '../lib/ratingsFirestore';
 import { useRatings } from '../contexts/RatingsContext';
-import { deriveDisplayScoresForGroup } from '../lib/ratingsRanking';
+import { deriveDisplayScoresForGroup, deriveDisplayScoresForTv } from '../lib/ratingsRanking';
 import { fetchMediaDetails, getPosterUrl } from '../lib/tmdb';
 import { useAuth } from '../contexts/AuthContext';
 import { Globe, Lock } from 'lucide-react';
@@ -86,13 +86,11 @@ export default function ProfileTabs({ userId }) {
     const data = await loadRatingsForUser(uid);
 
     const seen = new Map();
-    for (const sentiment in data.tv || {}) {
-      const derived = deriveDisplayScoresForGroup(data.tv[sentiment] || [], sentiment);
-      for (const entry of derived) {
-        const key = `${entry.mediaId}-s${entry.season ?? 'show'}`;
-        if (!seen.has(key) || (entry.displayScore ?? 0) > (seen.get(key).score ?? 0)) {
-          seen.set(key, { ...entry, sentiment, score: entry.displayScore ?? 0 });
-        }
+    const derivedTv = deriveDisplayScoresForTv(data.tv || {});
+    for (const entry of derivedTv) {
+      const key = `${entry.mediaId}-s${entry.season ?? 'show'}`;
+      if (!seen.has(key) || (entry.displayScore ?? 0) > (seen.get(key).score ?? 0)) {
+        seen.set(key, { ...entry, score: entry.displayScore ?? 0 });
       }
     }
     const showRatings = Array.from(seen.values());

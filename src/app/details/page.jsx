@@ -7,11 +7,11 @@ import Image from 'next/image';
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, increment } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { saveRatings, getMediaAverageRating, getRatingDocId } from '../../lib/ratingsFirestore';
+import { deleteSingleRatingEntry, getMediaAverageRating, getRatingDocId } from '../../lib/ratingsFirestore';
 import { useRatings } from '../../contexts/RatingsContext';
 import { fetchMediaDetails, getPosterUrl } from '../../lib/tmdb';
 import { createInitialRankKey, keyBetween, rebalanceRankKeys } from '../../lib/lexorank';
-import { deriveDisplayScoresForGroup, scoreForPosition, sortRatingsByRank } from '../../lib/ratingsRanking';
+import { deriveDisplayScoresForGroup, deriveDisplayScoresForTv, scoreForPosition, sortRatingsByRank } from '../../lib/ratingsRanking';
 import { publicAssetPath } from '../../lib/publicPath';
 import AddToListModal from '../../components/AddToListModal';
 import { Repeat, Trash2, ChevronDown } from 'lucide-react';
@@ -57,6 +57,39 @@ function DetailsContent() {
   const [persistingComparison, setPersistingComparison] = useState(false);
   const { ratings: userRatings, setRatings: setUserRatings, refreshRatings, loading: ratingsLoading } = useRatings();
 
+  const upsertMediaRatingEntry = useCallback(async (uid, entry, { isNew = false } = {}) => {
+    const mediaKey = entry.mediaType === 'tv' ? `tv_${entry.mediaId}` : `movie_${entry.mediaId}`;
+    const aggRef = doc(db, 'mediaRatings', mediaKey);
+    const userRef = doc(db, 'mediaRatings', mediaKey, 'userRatings', uid);
+    const ratingRef = entry.mediaType === 'tv' && entry.season != null
+      ? doc(userRef, 'seasons', String(entry.season))
+      : userRef;
+
+    await setDoc(ratingRef, {
+      uid,
+      mediaType: entry.mediaType === 'tv' ? 'tv' : 'movie',
+      mediaId: entry.mediaId,
+      sentiment: entry.sentiment,
+      mediaName: entry.mediaName ?? null,
+      note: entry.note ?? null,
+      score: entry.score ?? null,
+      timestamp: entry.timestamp ?? null,
+      ...(entry.season != null && { season: entry.season }),
+    }, { merge: true });
+
+    if (isNew) {
+      await setDoc(aggRef, { ratingCount: increment(1) }, { merge: true });
+    }
+  }, []);
+
+  const getUserRatingRef = useCallback((uid, mediaTypeValue, mediaIdValue, seasonValue) => {
+    if (mediaTypeValue === 'movie') {
+      return doc(db, 'users', uid, 'ratings', `movie_${mediaIdValue}`);
+    }
+    const tvParent = doc(db, 'users', uid, 'ratings', `tv_${mediaIdValue}`);
+    return seasonValue == null ? tvParent : doc(tvParent, 'seasons', String(seasonValue));
+  }, []);
+
   const isComparableCandidate = useCallback((item) => {
     if (mediaType !== 'tv') return true;
     // Season ratings should only compare with seasons of the same show.
@@ -77,11 +110,20 @@ function DetailsContent() {
 
   const refreshShowRatings = useCallback((ratings) => {
     const all = [];
-    for (const sentiment in ratings[mediaType] || {}) {
-      const derived = deriveDisplayScoresForGroup(ratings[mediaType][sentiment] || [], sentiment);
-      for (const entry of derived) {
+    if (mediaType === 'tv') {
+      const derivedTv = deriveDisplayScoresForTv(ratings.tv || {});
+      for (const entry of derivedTv) {
         if (String(entry.mediaId) === String(id)) {
           all.push({ season: entry.season ?? null, score: entry.displayScore ?? 0 });
+        }
+      }
+    } else {
+      for (const sentiment in ratings[mediaType] || {}) {
+        const derived = deriveDisplayScoresForGroup(ratings[mediaType][sentiment] || [], sentiment);
+        for (const entry of derived) {
+          if (String(entry.mediaId) === String(id)) {
+            all.push({ season: entry.season ?? null, score: entry.displayScore ?? 0 });
+          }
         }
       }
     }
@@ -148,42 +190,64 @@ function DetailsContent() {
           setFriendsRatings([]);
         } else {
           const mediaKey = mediaType === 'tv' ? `tv_${id}` : `movie_${id}`;
-          const colRef = collection(db, 'mediaRatings', mediaKey, 'userRatings');
-          const snap = await getDocs(colRef);
+          let friendsArray = [];
 
-          // Group ratings by friend uid
-          const byFriend = new Map();
-          snap.forEach((d) => {
-            const data = d.data();
-            const uid = data.uid;
-            if (!uid) return;
-            if (uid === authUser.uid) return; // exclude current user
-            if (!following.includes(uid)) return; // only people I follow
+          if (mediaType === 'tv') {
+            const friendRows = await Promise.all(
+              following
+                .filter((uid) => uid !== authUser.uid)
+                .map(async (uid) => {
+                  const wholeRef = doc(db, 'mediaRatings', mediaKey, 'userRatings', uid);
+                  const seasonsRef = collection(db, 'mediaRatings', mediaKey, 'userRatings', uid, 'seasons');
+                  const [wholeSnap, seasonsSnap] = await Promise.all([getDoc(wholeRef), getDocs(seasonsRef)]);
 
-            if (!byFriend.has(uid)) {
+                  const seasons = [];
+                  seasonsSnap.forEach((seasonDoc) => {
+                    const seasonData = seasonDoc.data();
+                    seasons.push({
+                      season: seasonData.season ?? Number(seasonDoc.id),
+                      score: seasonData.score,
+                      note: seasonData.note ?? null,
+                    });
+                  });
+
+                  const wholeShow = wholeSnap.exists() ? {
+                    score: wholeSnap.data().score,
+                    note: wholeSnap.data().note ?? null,
+                  } : null;
+
+                  if (!wholeShow && seasons.length === 0) return null;
+                  return {
+                    uid,
+                    wholeShow,
+                    seasons,
+                    mediaType: 'tv',
+                  };
+                })
+            );
+            friendsArray = friendRows.filter(Boolean);
+          } else {
+            const colRef = collection(db, 'mediaRatings', mediaKey, 'userRatings');
+            const snap = await getDocs(colRef);
+            const byFriend = new Map();
+            snap.forEach((d) => {
+              const data = d.data();
+              const uid = data.uid;
+              if (!uid) return;
+              if (uid === authUser.uid) return;
+              if (!following.includes(uid)) return;
               byFriend.set(uid, {
                 uid,
-                wholeShow: null,
+                wholeShow: {
+                  score: data.score,
+                  note: data.note ?? null,
+                },
                 seasons: [],
-                mediaType: data.mediaType === 'tv' ? 'tv' : 'movie',
+                mediaType: 'movie',
               });
-            }
-            const entry = byFriend.get(uid);
-            if (data.season != null) {
-              entry.seasons.push({
-                season: data.season,
-                score: data.score,
-                note: data.note ?? null,
-              });
-            } else {
-              entry.wholeShow = {
-                score: data.score,
-                note: data.note ?? null,
-              };
-            }
-          });
-
-          const friendsArray = Array.from(byFriend.values());
+            });
+            friendsArray = Array.from(byFriend.values());
+          }
 
           // Enrich with user display data (name, username, photo)
           const enriched = await Promise.all(
@@ -303,12 +367,14 @@ function DetailsContent() {
     const group = (ratings[mediaType][selectedSentiment] || [])
       .filter(item => !matchesCurrent(item) && isComparableCandidate(item))
       .sort(sortRatingsByRank);
+    const untouchedInSentiment = (ratings[mediaType][selectedSentiment] || [])
+      .filter(item => !matchesCurrent(item) && !isComparableCandidate(item));
 
     if (group.length === 0) {
       const rankKey = createInitialRankKey();
       const max = scoreForPosition(selectedSentiment, 0, 1);
       const ratingDocId = getRatingDocId(mediaType, id, selectedSeason);
-      const ratingRef = doc(db, 'users', user.uid, 'ratings', ratingDocId);
+      const ratingRef = getUserRatingRef(user.uid, mediaType, id, selectedSeason);
       const existedInRatings = Object.keys(ratings[mediaType] || {}).some((sentiment) =>
         (ratings[mediaType][sentiment] || []).some(matchesCurrent)
       );
@@ -323,12 +389,13 @@ function DetailsContent() {
         ...(selectedSeason != null && { season: selectedSeason }),
       };
       await setDoc(ratingRef, newRating, { merge: true });
+      await upsertMediaRatingEntry(user.uid, newRating, { isNew: !existedInRatings && !isReranking });
       if (!existedInRatings && !isReranking) await incrementRatingCount(user.uid);
 
       for (const sentiment of Object.keys(ratings[mediaType])) {
         ratings[mediaType][sentiment] = (ratings[mediaType][sentiment] || []).filter(item => !matchesCurrent(item));
       }
-      ratings[mediaType][selectedSentiment] = [newRating];
+      ratings[mediaType][selectedSentiment] = [...untouchedInSentiment, newRating];
       setUserRatings(ratings);
       refreshShowRatings(ratings);
       if (mediaType === 'tv') {
@@ -397,11 +464,13 @@ function DetailsContent() {
       (ratings[mediaType][sentiment] || []).some(matchesCurrent)
     );
     const ratingDocId = getRatingDocId(mediaType, id, selectedSeason);
-    const ratingRef = doc(db, 'users', user.uid, 'ratings', ratingDocId);
+    const ratingRef = getUserRatingRef(user.uid, mediaType, id, selectedSeason);
 
     const group = [...(ratings[mediaType][selectedSentiment] || [])]
       .filter(item => !matchesCurrent(item) && isComparableCandidate(item))
       .sort(sortRatingsByRank);
+    const untouchedInSentiment = (ratings[mediaType][selectedSentiment] || [])
+      .filter(item => !matchesCurrent(item) && !isComparableCandidate(item));
 
     const leftKey = position > 0 ? group[position - 1]?.score ?? group[position - 1]?.scoreV2 ?? null : null;
     const rightKey = position < group.length ? group[position]?.score ?? group[position]?.scoreV2 ?? null : null;
@@ -440,7 +509,7 @@ function DetailsContent() {
     const optimistic = { ...newEntry, score: nextScore };
     const updatedGroup = rebalancedEntries || [...group];
     if (!rebalancedEntries) updatedGroup.splice(position, 0, optimistic);
-    ratings[mediaType][selectedSentiment] = updatedGroup;
+    ratings[mediaType][selectedSentiment] = [...untouchedInSentiment, ...updatedGroup];
     setUserRatings(ratings);
     refreshShowRatings(ratings);
 
@@ -466,7 +535,7 @@ function DetailsContent() {
         const batch = writeBatch(db);
         rebalancedEntries.forEach((entry) => {
           const entryId = entry.id || getRatingDocId(mediaType, entry.mediaId, entry.season);
-          const ref = doc(db, 'users', user.uid, 'ratings', entryId);
+          const ref = getUserRatingRef(user.uid, entry.mediaType || mediaType, entry.mediaId, entry.season);
           if (entryId === ratingDocId) {
             batch.set(ref, { ...newEntry, score: entry.score }, { merge: true });
           } else {
@@ -474,8 +543,17 @@ function DetailsContent() {
           }
         });
         await batch.commit();
+        await Promise.all(
+          rebalancedEntries.map((entry) => upsertMediaRatingEntry(user.uid, entry, { isNew: false }))
+        );
       } else {
-        await setDoc(ratingRef, { ...newEntry, score: nextScore }, { merge: true });
+        const persisted = { ...newEntry, score: nextScore };
+        await setDoc(ratingRef, persisted, { merge: true });
+        await upsertMediaRatingEntry(
+          user.uid,
+          persisted,
+          { isNew: !existedInRatings && !isReranking }
+        );
       }
 
       if (!existedInRatings && !isReranking) await incrementRatingCount(user.uid);
@@ -577,6 +655,7 @@ function DetailsContent() {
     const user = auth.currentUser;
     if (!user || !mediaType || !id) return;
     setDeleting(true);
+    const targetSeason = pendingDeleteSeason !== undefined ? pendingDeleteSeason : null;
     try {
       let ratings = userRatings || await refreshRatings();
       if (!ratings[mediaType]) {
@@ -602,34 +681,49 @@ function DetailsContent() {
       }
 
       if (removed) {
-        await saveRatings(user.uid, ratings);
-
-        // saveRatings already updates mediaRatings and aggregate via deleteMediaRatingEntry.
-        // Refresh the displayed overall average for movie.
-        if (mediaType === 'movie') {
-          const mediaKey = `movie_${id}`;
-          try {
-            const updated = await getMediaAverageRating(mediaKey);
-            setOverallAverage(updated);
-          } catch {
-            setOverallAverage(null);
-          }
-        }
-        // Decrement ratingCount
-        const userRef = doc(db, 'users', user.uid);
-        const snap = await getDoc(userRef);
-        const current =
-          snap.exists() && typeof snap.data().ratingCount === 'number'
-            ? snap.data().ratingCount
-            : 0;
-        const next = current > 0 ? current - 1 : 0;
-        await updateDoc(userRef, { ratingCount: next });
-
+        // Optimistic UI update first, persist in background.
         setUserRatings(ratings);
         refreshShowRatings(ratings);
         setFinalScore(null);
         setExistingSentiment(null);
         setRatingPhase('initial');
+
+        setDeleting(false);
+        setShowDeleteConfirm(false);
+        setPendingDeleteSeason(undefined);
+
+        (async () => {
+          try {
+            await deleteSingleRatingEntry(user.uid, {
+              mediaType,
+              mediaId: id,
+              season: targetSeason,
+            });
+            await updateDoc(doc(db, 'users', user.uid), { ratingCount: increment(-1) });
+
+            if (mediaType === 'movie') {
+              const mediaKey = `movie_${id}`;
+              try {
+                const updated = await getMediaAverageRating(mediaKey);
+                setOverallAverage(updated);
+              } catch {
+                setOverallAverage(null);
+              }
+            }
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error('Failed to persist delete', e);
+            alert('Could not finish removing rating. Refreshing data.');
+            try {
+              const fresh = await refreshRatings();
+              setUserRatings(fresh);
+              refreshShowRatings(fresh);
+            } catch {
+              // ignore secondary read error
+            }
+          }
+        })();
+        return;
       }
     } catch (e) {
       // eslint-disable-next-line no-console

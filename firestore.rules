@@ -18,6 +18,13 @@ service cloud.firestore {
       match /ratings/{ratingId} {
         allow read: if request.auth != null;
         allow write: if request.auth != null && request.auth.uid == userId;
+
+        // Nested season docs under TV parent rating docs:
+        // users/{userId}/ratings/tv_{mediaId}/seasons/{season}
+        match /{document=**} {
+          allow read: if request.auth != null;
+          allow write: if request.auth != null && request.auth.uid == userId;
+        }
       }
 
       // Custom lists subcollection (list page, profile lists tab)
@@ -33,6 +40,12 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
       match /userRatings/{ratingDocId} {
         allow read, write: if request.auth != null;
+
+        // Nested season docs under per-user media ratings:
+        // mediaRatings/{mediaKey}/userRatings/{uid}/seasons/{season}
+        match /{document=**} {
+          allow read, write: if request.auth != null;
+        }
       }
     }
 

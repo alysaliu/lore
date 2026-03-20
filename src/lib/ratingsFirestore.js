@@ -23,6 +23,27 @@ export function getRatingDocId(mediaType, mediaId, season) {
   return `tv_${mediaId}_${season != null ? season : 'show'}`;
 }
 
+function getUserRatingRef(uid, mediaType, mediaId, season) {
+  if (mediaType === 'movie') {
+    return doc(db, 'users', uid, 'ratings', `movie_${mediaId}`);
+  }
+  const parentRef = doc(db, 'users', uid, 'ratings', `tv_${mediaId}`);
+  return season == null ? parentRef : doc(parentRef, 'seasons', String(season));
+}
+
+function getMediaKey(mediaType, mediaId) {
+  return mediaType === 'tv' ? `tv_${mediaId}` : `movie_${mediaId}`;
+}
+
+function getDenormUserRatingRef(mediaKey, uid, season) {
+  const baseRef = doc(db, 'mediaRatings', mediaKey, 'userRatings', uid);
+  return season == null ? baseRef : doc(baseRef, 'seasons', String(season));
+}
+
+function entryKey(mediaType, mediaId, season) {
+  return `${mediaType}|${mediaId}|${season == null ? 'show' : `s${season}`}`;
+}
+
 /**
  * Get the overall average rating and count from the aggregate doc at mediaRatings/{mediaKey}.
  * @param {string} mediaKey - e.g. movie_123 or tv_456
@@ -49,23 +70,61 @@ export async function getRatings(uid) {
   const colRef = collection(db, 'users', uid, 'ratings');
   const snap = await getDocs(colRef);
   const ratings = { movie: {}, tv: {} };
-  snap.docs.forEach((d) => {
+  for (const d of snap.docs) {
     const data = d.data();
     const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
-    const sentiment = data.sentiment || 'good';
-    if (!ratings[mediaType][sentiment]) ratings[mediaType][sentiment] = [];
-    ratings[mediaType][sentiment].push({
-      id: d.id,
-      mediaId: data.mediaId,
-      mediaType: data.mediaType || mediaType,
+    const mediaId = data.mediaId;
+    const pushRating = (entry) => {
+      const sentiment = entry.sentiment || 'good';
+      if (!ratings[entry.mediaType][sentiment]) ratings[entry.mediaType][sentiment] = [];
+      ratings[entry.mediaType][sentiment].push(entry);
+    };
+
+    if (mediaType === 'movie') {
+      pushRating({
+        id: d.id,
+        mediaId,
+        mediaType: 'movie',
+        mediaName: data.mediaName ?? null,
+        note: data.note ?? null,
+        score: data.score,
+        scoreV2: data.scoreV2 ?? null,
+        timestamp: data.timestamp ?? null,
+        sentiment: data.sentiment || 'good',
+      });
+      continue;
+    }
+
+    pushRating({
+      id: getRatingDocId('tv', mediaId, null),
+      mediaId,
+      mediaType: 'tv',
       mediaName: data.mediaName ?? null,
       note: data.note ?? null,
       score: data.score,
       scoreV2: data.scoreV2 ?? null,
       timestamp: data.timestamp ?? null,
-      ...(data.season != null && { season: data.season }),
+      sentiment: data.sentiment || 'good',
     });
-  });
+
+    const seasonsSnap = await getDocs(collection(d.ref, 'seasons'));
+    seasonsSnap.forEach((seasonDoc) => {
+      const seasonData = seasonDoc.data();
+      const season = seasonData.season ?? Number(seasonDoc.id);
+      pushRating({
+        id: getRatingDocId('tv', mediaId, season),
+        mediaId,
+        mediaType: 'tv',
+        mediaName: seasonData.mediaName ?? data.mediaName ?? null,
+        note: seasonData.note ?? null,
+        score: seasonData.score,
+        scoreV2: seasonData.scoreV2 ?? null,
+        timestamp: seasonData.timestamp ?? null,
+        season,
+        sentiment: seasonData.sentiment || 'good',
+      });
+    });
+  }
   return ratings;
 }
 
@@ -107,47 +166,38 @@ function flattenRatingsToEntries(ratings) {
  */
 export async function saveRatings(uid, ratings) {
   if (!db) return;
-  const colRef = collection(db, 'users', uid, 'ratings');
-  const entries = flattenRatingsToEntries(ratings);
-  const newIds = new Set(entries.map((e) => e.id));
+  const entries = flattenRatingsToEntries(ratings).map(({ data }) => data);
+  const prev = flattenRatingsToEntries(await getRatings(uid)).map(({ data }) => data);
+  const desired = new Map(entries.map((e) => [entryKey(e.mediaType, e.mediaId, e.season), e]));
+  const existing = new Map(prev.map((e) => [entryKey(e.mediaType, e.mediaId, e.season), e]));
 
-  // 1) Sync per-user ratings subcollection
-  for (let i = 0; i < entries.length; i += BATCH_SIZE) {
-    const batch = writeBatch(db);
-    const chunk = entries.slice(i, i + BATCH_SIZE);
-    for (const { id, data } of chunk) {
-      batch.set(doc(colRef, id), data);
-    }
-    await batch.commit();
+  // Upsert desired user docs
+  for (const data of entries) {
+    const ref = getUserRatingRef(uid, data.mediaType, data.mediaId, data.season);
+    await setDoc(ref, {
+      mediaType: data.mediaType === 'tv' ? 'tv' : 'movie',
+      mediaId: data.mediaId,
+      sentiment: data.sentiment,
+      mediaName: data.mediaName ?? null,
+      note: data.note ?? null,
+      score: data.score ?? null,
+      scoreV2: data.scoreV2 ?? null,
+      timestamp: data.timestamp ?? null,
+      ...(data.season != null && { season: data.season }),
+    }, { merge: true });
   }
 
-  const existingSnap = await getDocs(colRef);
-  const toDelete = existingSnap.docs.filter((d) => !newIds.has(d.id));
+  // Delete removed user docs and denorm entries
+  for (const [key, oldEntry] of existing.entries()) {
+    if (desired.has(key)) continue;
+    const ref = getUserRatingRef(uid, oldEntry.mediaType, oldEntry.mediaId, oldEntry.season);
+    await writeBatch(db).delete(ref).commit();
 
-  // Remove from mediaRatings and update aggregates before deleting from user ratings
-  for (const d of toDelete) {
-    const parsed = parseUserRatingDocId(d.id);
-    if (parsed) {
-      const ratingDocId = `${uid}_${parsed.segmentId}`;
-      try {
-        await deleteMediaRatingEntry(parsed.mediaKey, ratingDocId);
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn('deleteMediaRatingEntry failed for', parsed.mediaKey, ratingDocId, e);
-      }
-    }
+    const mediaKey = getMediaKey(oldEntry.mediaType, oldEntry.mediaId);
+    const ratingDocId = `${uid}_${oldEntry.season == null ? 'show' : `s${oldEntry.season}`}`;
+    await deleteMediaRatingEntry(mediaKey, ratingDocId);
   }
 
-  for (let i = 0; i < toDelete.length; i += BATCH_SIZE) {
-    const batch = writeBatch(db);
-    const chunk = toDelete.slice(i, i + BATCH_SIZE);
-    for (const d of chunk) {
-      batch.delete(d.ref);
-    }
-    await batch.commit();
-  }
-
-  // 2) Sync denormalized mediaRatings/{mediaKey}/userRatings docs for this user (and update aggregates)
   await syncMediaRatingsForUser(uid, entries);
 }
 
@@ -160,50 +210,13 @@ export async function saveRatings(uid, ratings) {
  */
 export async function deleteAllRatings(uid) {
   if (!db) return;
-
-  const colRef = collection(db, 'users', uid, 'ratings');
-  const snap = await getDocs(colRef);
-  const denormRefsToDelete = [];
-  const removedCountByMediaKey = new Map();
-
-  // Assumes users/{uid}/ratings and denormalized mediaRatings are kept in sync.
-  for (const d of snap.docs) {
-    const parsed = parseUserRatingDocId(d.id);
-    if (!parsed) continue;
-    const ratingDocId = `${uid}_${parsed.segmentId}`;
-    denormRefsToDelete.push(doc(db, 'mediaRatings', parsed.mediaKey, 'userRatings', ratingDocId));
-    removedCountByMediaKey.set(parsed.mediaKey, (removedCountByMediaKey.get(parsed.mediaKey) || 0) + 1);
-  }
-
-  for (let i = 0; i < denormRefsToDelete.length; i += BATCH_SIZE) {
-    const batch = writeBatch(db);
-    const chunk = denormRefsToDelete.slice(i, i + BATCH_SIZE);
-    for (const ref of chunk) {
-      batch.delete(ref);
-    }
-    await batch.commit();
-  }
-
-  // 2) Lower mediaRatings/{mediaKey}.ratingCount by exactly how many denormalized docs were removed.
-  for (const [mediaKey, removedCount] of removedCountByMediaKey.entries()) {
-    const aggRef = doc(db, 'mediaRatings', mediaKey);
-    await runTransaction(db, async (transaction) => {
-      const aggSnap = await transaction.get(aggRef);
-      const agg = aggSnap.exists() ? aggSnap.data() : AGGREGATE_FIELDS;
-      const current = typeof agg.ratingCount === 'number' ? agg.ratingCount : 0;
-      const next = Math.max(0, current - removedCount);
-      transaction.set(aggRef, { ratingCount: next }, { merge: true });
-    });
-  }
-
-  // 3) Remove per-user ratings docs.
-  for (let i = 0; i < snap.docs.length; i += BATCH_SIZE) {
-    const batch = writeBatch(db);
-    const chunk = snap.docs.slice(i, i + BATCH_SIZE);
-    for (const d of chunk) {
-      batch.delete(d.ref);
-    }
-    await batch.commit();
+  const current = flattenRatingsToEntries(await getRatings(uid)).map(({ data }) => data);
+  for (const entry of current) {
+    const mediaKey = getMediaKey(entry.mediaType, entry.mediaId);
+    const ratingDocId = `${uid}_${entry.season == null ? 'show' : `s${entry.season}`}`;
+    await deleteMediaRatingEntry(mediaKey, ratingDocId);
+    const userRef = getUserRatingRef(uid, entry.mediaType, entry.mediaId, entry.season);
+    await writeBatch(db).delete(userRef).commit();
   }
 }
 
@@ -234,7 +247,9 @@ function parseUserRatingDocId(userRatingDocId) {
 export async function deleteMediaRatingEntry(mediaKey, ratingDocId) {
   if (!db || !mediaKey || !ratingDocId) return;
   const aggRef = doc(db, 'mediaRatings', mediaKey);
-  const userRatingRef = doc(aggRef, 'userRatings', ratingDocId);
+  const parsed = parseUidSegmentDocId(ratingDocId);
+  if (!parsed) return;
+  const userRatingRef = getDenormUserRatingRef(mediaKey, parsed.uid, parsed.season);
 
   await runTransaction(db, async (transaction) => {
     const [ratingSnap, aggSnap] = await Promise.all([
@@ -256,6 +271,22 @@ export async function deleteMediaRatingEntry(mediaKey, ratingDocId) {
 }
 
 /**
+ * O(1) targeted delete for a single user rating.
+ * Removes the rating from users/{uid}/ratings (or nested season doc),
+ * removes the denormalized mediaRatings entry, and keeps media aggregates in sync.
+ */
+export async function deleteSingleRatingEntry(uid, { mediaType, mediaId, season = null }) {
+  if (!db || !uid || mediaId == null) return;
+  const normalizedType = mediaType === 'tv' ? 'tv' : 'movie';
+  const userRef = getUserRatingRef(uid, normalizedType, mediaId, season);
+  const mediaKey = getMediaKey(normalizedType, mediaId);
+  const ratingDocId = `${uid}_${season == null ? 'show' : `s${season}`}`;
+
+  await deleteMediaRatingEntry(mediaKey, ratingDocId);
+  await deleteDoc(userRef);
+}
+
+/**
  * Keep mediaRatings/{mediaKey}/userRatings in sync for a single user, based on
  * the flattened per-user rating entries. Also updates the aggregate (ratingCount, sumScores)
  * on the mediaRatings/{mediaKey} document.
@@ -263,11 +294,11 @@ export async function deleteMediaRatingEntry(mediaKey, ratingDocId) {
 async function syncMediaRatingsForUser(uid, flattenedEntries) {
   if (!db) return;
 
-  // Deduplicate by media + season for this user's ratings in memory
+  // Deduplicate by media + season for this user's ratings in memory.
   const byKey = new Map();
-  for (const { data } of flattenedEntries) {
+  for (const data of flattenedEntries) {
     const mediaType = data.mediaType === 'tv' ? 'tv' : 'movie';
-    const mediaKey = mediaType === 'movie' ? `movie_${data.mediaId}` : `tv_${data.mediaId}`;
+    const mediaKey = getMediaKey(mediaType, data.mediaId);
     const segmentId = data.season != null ? `s${data.season}` : 'show';
     const key = `${mediaKey}|${segmentId}`;
 
@@ -278,9 +309,8 @@ async function syncMediaRatingsForUser(uid, flattenedEntries) {
   }
 
   for (const { mediaKey, segmentId, data } of byKey.values()) {
-    const docId = `${uid}_${segmentId}`;
     const aggRef = doc(db, 'mediaRatings', mediaKey);
-    const userRatingRef = doc(aggRef, 'userRatings', docId);
+    const userRatingRef = getDenormUserRatingRef(mediaKey, uid, data.season);
     const score = typeof data.score === 'number' ? data.score : 0;
 
     await runTransaction(db, async (transaction) => {
@@ -304,12 +334,25 @@ async function syncMediaRatingsForUser(uid, flattenedEntries) {
         mediaType: data.mediaType === 'tv' ? 'tv' : 'movie',
         mediaId: data.mediaId,
         sentiment: data.sentiment,
+        mediaName: data.mediaName ?? null,
         score: data.score,
         note: data.note ?? null,
         timestamp: data.timestamp ?? null,
         ...(data.season != null && { season: data.season }),
       });
-      transaction.set(aggRef, { ratingCount: newCount, sumScores: newSum });
+      transaction.set(aggRef, { ratingCount: newCount, sumScores: newSum }, { merge: true });
     });
   }
+}
+
+function parseUidSegmentDocId(ratingDocId) {
+  if (typeof ratingDocId !== 'string') return null;
+  const m = /^(.+)_(show|s\d+)$/.exec(ratingDocId);
+  if (!m) return null;
+  const uid = m[1];
+  const segment = m[2];
+  if (segment === 'show') return { uid, season: null };
+  const season = Number(segment.slice(1));
+  if (!Number.isInteger(season)) return null;
+  return { uid, season };
 }
