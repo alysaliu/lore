@@ -23,8 +23,8 @@ const SCORE_RANGES = {
 };
 
 const sortByRank = (a, b) => {
-  const aRank = typeof a.scoreV2 === 'string' ? a.scoreV2 : null;
-  const bRank = typeof b.scoreV2 === 'string' ? b.scoreV2 : null;
+  const aRank = typeof a.score === 'string' ? a.score : (typeof a.scoreV2 === 'string' ? a.scoreV2 : null);
+  const bRank = typeof b.score === 'string' ? b.score : (typeof b.scoreV2 === 'string' ? b.scoreV2 : null);
   if (aRank && bRank) {
     if (aRank < bRank) return -1;
     if (aRank > bRank) return 1;
@@ -317,7 +317,7 @@ function DetailsContent() {
       .sort(sortByRank);
 
     if (group.length === 0) {
-      const scoreV2 = createInitialRankKey();
+      const rankKey = createInitialRankKey();
       const max = scoreForPosition(selectedSentiment, 0, 1);
       const ratingDocId = getRatingDocId(mediaType, id, selectedSeason);
       const ratingRef = doc(db, 'users', user.uid, 'ratings', ratingDocId);
@@ -330,8 +330,7 @@ function DetailsContent() {
         sentiment: selectedSentiment,
         mediaName: currentTitle || null,
         note: note || null,
-        score: max,
-        scoreV2,
+        score: rankKey,
         timestamp: new Date().toISOString(),
         ...(selectedSeason != null && { season: selectedSeason }),
       };
@@ -415,9 +414,9 @@ function DetailsContent() {
       .filter(item => !matchesCurrent(item))
       .sort(sortByRank);
 
-    const leftKey = position > 0 ? group[position - 1]?.scoreV2 ?? null : null;
-    const rightKey = position < group.length ? group[position]?.scoreV2 ?? null : null;
-    let nextScoreV2 = keyBetween(leftKey, rightKey);
+    const leftKey = position > 0 ? group[position - 1]?.score ?? group[position - 1]?.scoreV2 ?? null : null;
+    const rightKey = position < group.length ? group[position]?.score ?? group[position]?.scoreV2 ?? null : null;
+    let nextScore = keyBetween(leftKey, rightKey);
     let total = group.length + 1;
     const scoreAtPosition = scoreForPosition(selectedSentiment, position, total);
 
@@ -428,29 +427,28 @@ function DetailsContent() {
       sentiment: selectedSentiment,
       mediaName: currentTitle || null,
       note: note || null,
-      score: scoreAtPosition,
-      scoreV2: null,
+      score: '',
       timestamp: new Date().toISOString(),
       ...(selectedSeason != null && { season: selectedSeason }),
     };
 
     let rebalancedEntries = null;
-    if (nextScoreV2 == null) {
+    if (nextScore == null) {
       // Rare path: no room between neighbor keys. Rebalance only this target group.
       const expanded = [...group];
       expanded.splice(position, 0, newEntry);
       const keys = rebalanceRankKeys(expanded.length);
       rebalancedEntries = expanded.map((entry, idx) => ({
         ...entry,
-        scoreV2: keys[idx],
+        score: keys[idx],
       }));
-      nextScoreV2 = rebalancedEntries[position].scoreV2;
+      nextScore = rebalancedEntries[position].score;
     }
 
     for (const sentiment of Object.keys(ratings[mediaType])) {
       ratings[mediaType][sentiment] = (ratings[mediaType][sentiment] || []).filter(item => !matchesCurrent(item));
     }
-    const optimistic = { ...newEntry, scoreV2: nextScoreV2 };
+    const optimistic = { ...newEntry, score: nextScore };
     const updatedGroup = rebalancedEntries || [...group];
     if (!rebalancedEntries) updatedGroup.splice(position, 0, optimistic);
     ratings[mediaType][selectedSentiment] = updatedGroup;
@@ -481,14 +479,14 @@ function DetailsContent() {
           const entryId = entry.id || getRatingDocId(mediaType, entry.mediaId, entry.season);
           const ref = doc(db, 'users', user.uid, 'ratings', entryId);
           if (entryId === ratingDocId) {
-            batch.set(ref, { ...newEntry, scoreV2: entry.scoreV2 }, { merge: true });
+            batch.set(ref, { ...newEntry, score: entry.score }, { merge: true });
           } else {
-            batch.update(ref, { scoreV2: entry.scoreV2 });
+            batch.update(ref, { score: entry.score });
           }
         });
         await batch.commit();
       } else {
-        await setDoc(ratingRef, { ...newEntry, scoreV2: nextScoreV2 }, { merge: true });
+        await setDoc(ratingRef, { ...newEntry, score: nextScore }, { merge: true });
       }
 
       if (!existedInRatings && !isReranking) await incrementRatingCount(user.uid);
