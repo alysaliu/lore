@@ -27,6 +27,7 @@
   width: 200px;
   border-right: 1px solid var(--color-border-default);
   background: var(--color-surface-default);
+  padding: var(--space-2);
 }
 
 .sidebarList {
@@ -39,10 +40,14 @@
   margin: 0;
 }
 
+.sidebarEyebrow {
+  padding: var(--space-3) var(--space-2) var(--space-2);
+}
+
 .sidebarTab {
   display: block;
   width: 100%;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-2);
   text-align: left;
   font-size: 14px;
   font-weight: 500;
@@ -80,8 +85,8 @@
 
 .panelTitle {
   color: var(--color-text-default);
-  font-weight: 700;
-  font-size: 22px;
+  font-weight: 500;
+  font-size: 20px;
   margin: 0 0 var(--space-2);
 }
 
@@ -89,6 +94,71 @@
   color: var(--color-text-secondary);
   font-size: 14px;
   margin: 0 0 var(--space-6);
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-4);
+  border: 1.5px dashed var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-align: center;
+  margin-top: var(--space-3);
+}
+
+.dropzone:hover,
+.dropzoneOver {
+  border-color: var(--color-border-selected);
+  background: var(--color-surface-selected);
+}
+
+.dropzoneIcon {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.dropzoneLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-default);
+  font-family: var(--font-sans);
+}
+
+.dropzoneHint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+}
+
+.dropzoneFilled {
+  border-style: solid;
+  border-color: var(--color-border-selected);
+  background: var(--color-surface-selected);
+}
+
+.dropzoneFolderName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-default);
+  font-family: var(--font-sans);
+}
+
+.sectionHeader {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-default);
+  margin-bottom: var(--space-6);
+}
+
+.sectionHeaderTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text-default);
+  margin: 0;
 }
 
 .panelBody {
@@ -118,6 +188,7 @@
   color: var(--color-text-secondary);
   font-size: 14px;
   margin: 0 0 var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
 .primaryBtn {
@@ -225,6 +296,44 @@
   font-weight: 600;
   font-size: 15px;
   color: var(--color-text-default);
+  margin: 0 0 var(--space-2);
+}
+
+.importActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.importActions .secondaryBtn {
+  margin-top: 0;
+}
+
+.reimportLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: color 0.15s ease;
+}
+
+.reimportLink:hover:not(:disabled) {
+  color: var(--color-text-default);
+}
+
+.reimportLink:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.importTimestamp {
+  font-size: 12px;
+  color: var(--color-text-secondary);
   margin: 0 0 var(--space-2);
 }
 

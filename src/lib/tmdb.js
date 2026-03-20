@@ -57,3 +57,21 @@ export function getOriginalUrl(posterPath) {
   if (!posterPath) return null;
   return `${TMDB_IMAGE_BASE}/original${posterPath}`;
 }
+
+export async function getPopularMedia() {
+  const [moviesRes, tvRes] = await Promise.all([
+    fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=en-US&page=1`),
+    fetch(`${BASE_URL}/tv/popular?api_key=${API_KEY}&language=en-US&page=1`),
+  ]);
+  const [movies, tv] = await Promise.all([moviesRes.json(), tvRes.json()]);
+  const combined = [
+    ...(movies.results || []).map((m) => ({ ...m, media_type: 'movie' })),
+    ...(tv.results || []).map((t) => ({ ...t, media_type: 'tv' })),
+  ].filter((item) => item.poster_path);
+  // Shuffle
+  for (let i = combined.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [combined[i], combined[j]] = [combined[j], combined[i]];
+  }
+  return combined.slice(0, 20);
+}

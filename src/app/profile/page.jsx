@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -144,7 +144,8 @@ export default function ProfilePage() {
       setUsernameError('3–20 chars, letters, numbers, underscores only.');
       return;
     }
-    if (trimmed === userData?.username) { setEditingUsername(false); return; }
+    const previousUsername = (userData?.username || '').trim().toLowerCase();
+    if (trimmed === previousUsername) { setEditingUsername(false); return; }
 
     setSavingUsername(true);
     setUsernameError('');
@@ -153,19 +154,13 @@ export default function ProfilePage() {
       const snap = await getDoc(usernameRef);
       if (snap.exists()) { setUsernameError('Already taken.'); setSavingUsername(false); return; }
 
-      let isDeveloper = false;
-      if (userData?.username) {
-        const oldSnap = await getDoc(doc(db, 'usernames', userData.username));
-        if (oldSnap.exists()) isDeveloper = Boolean(oldSnap.data().isDeveloper);
-        await deleteDoc(doc(db, 'usernames', userData.username));
-      }
-      await setDoc(usernameRef, { uid: user.uid, isDeveloper });
-      await updateDoc(doc(db, 'users', user.uid), { username: trimmed });
-      setUserData((prev) => {
-        const next = { ...prev, username: trimmed };
-        if (cachedProfileUid === user.uid) cachedProfileUserData = next;
-        return next;
-      });
+      const batch = writeBatch(db);
+      batch.set(usernameRef, { uid: user.uid });
+      batch.set(doc(db, 'users', user.uid), { username: trimmed }, { merge: true });
+      if (previousUsername) batch.delete(doc(db, 'usernames', previousUsername));
+      await batch.commit();
+
+      setUserData((prev) => ({ ...prev, username: trimmed }));
       setEditingUsername(false);
     } catch {
       setUsernameError('Something went wrong.');

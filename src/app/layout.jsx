@@ -1,6 +1,8 @@
 import Script from 'next/script';
 import { AuthProvider } from '../contexts/AuthContext';
+import { ImportStatusProvider } from '../contexts/ImportStatusContext';
 import Navbar from '../components/Navbar';
+import ImportStatusPopup from '../components/ImportStatusPopup';
 import './globals.css';
 
 export const metadata = {
@@ -20,8 +22,11 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <AuthProvider>
-          <Navbar />
-          {children}
+          <ImportStatusProvider>
+            <Navbar />
+            {children}
+            <ImportStatusPopup />
+          </ImportStatusProvider>
         </AuthProvider>
       </body>
     </html>

@@ -481,6 +481,7 @@
   font-weight: 700;
   color: var(--color-text-default);
   line-height: 1;
+  margin-bottom: var(--space-2);
 }
 
 .ratingColumnSentiment {
@@ -501,43 +502,163 @@
   flex: 1;
 }
 
-.rerankBtn {
-  padding: 0;
+.ratingColumnDivider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--color-border-secondary);
+  margin: 0 var(--space-8);
+  flex-shrink: 0;
+}
+
+.ratingColumnGrow {
+  flex: 1;
+}
+
+.breakdownCard {
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  overflow: visible;
+  padding: var(--space-1) var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.breakdownCollapsible {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-3) var(--space-3);
   border: none;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
   font-family: var(--font-sans);
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
   transition: color 0.15s ease;
-  align-self: flex-start;
+  border-radius: var(--radius-md);
 }
 
-.rerankBtn:hover {
+.breakdownCollapsible:hover {
   color: var(--color-text-default);
 }
 
-.deleteRatingBtn {
+.chevronClosed {
+  transition: transform 0.15s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+  transition: transform 0.15s ease;
+}
+
+.breakdownTable {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-default);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.breakdownRow {
+  display: grid;
+  grid-template-columns: 1fr repeat(2, 80px) 110px;
+  align-items: center;
+  padding: var(--space-3) var(--space-3);
+}
+
+.breakdownHeader {
+  background: transparent;
+}
+
+.breakdownLabelCell {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.breakdownCell {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-default);
+  text-align: right;
+}
+
+.breakdownScoreCell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.breakdownScore {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-default);
+}
+
+.breakdownFriendsToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  border: none;
+  color: var(--color-text-default);
+  font-size: 18px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.breakdownFriendsToggle svg {
+  color: var(--color-text-secondary);
+}
+
+.breakdownFriendsToggle:hover {
+  color: var(--color-text-secondary);
+}
+
+.breakdownEmpty {
+  color: var(--color-text-secondary);
+  font-weight: 300;
+}
+
+
+.iconActionBtn {
   padding: 0;
   border: none;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 13px;
-  font-family: var(--font-sans);
   cursor: pointer;
-  transition: color 0.15s ease;
   display: flex;
   align-items: center;
   position: relative;
+  transition: color 0.15s ease;
 }
 
-.deleteRatingBtn:hover {
+.iconActionBtn:hover {
+  color: var(--color-text-default);
+}
+
+.iconActionBtnDanger {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  position: relative;
+  transition: color 0.15s ease;
+}
+
+.iconActionBtnDanger:hover {
   color: #c00f0c;
 }
 
-.deleteRatingBtn[data-tooltip]::after {
+.iconActionBtn[data-tooltip]::after,
+.iconActionBtnDanger[data-tooltip]::after {
   content: attr(data-tooltip);
   position: absolute;
   bottom: calc(100% + 6px);
@@ -554,7 +675,8 @@
   transition: opacity 0.15s ease;
 }
 
-.deleteRatingBtn[data-tooltip]:hover::after {
+.iconActionBtn[data-tooltip]:hover::after,
+.iconActionBtnDanger[data-tooltip]:hover::after {
   opacity: 1;
 }
 
@@ -705,7 +827,10 @@
 
 .rateAnotherBtn {
   width: fit-content;
-  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-default);
   background: var(--color-surface-default);
@@ -714,6 +839,10 @@
   font-family: var(--font-sans);
   cursor: pointer;
   transition: var(--transition-fast);
+}
+
+.rateAnotherBtn i {
+  color: var(--color-text-secondary);
 }
 
 .rateAnotherBtn:hover {
@@ -781,6 +910,66 @@
 }
 
 /* ── Season dropdown ─────────────────────────── */
+
+/* ── Friends count toggle (inline in rating column) ─── */
+.friendsCountToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  font-weight: 300;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.friendsCountToggle:hover {
+  color: var(--color-text-default);
+}
+
+/* ── Friends breakdown list (movie) ─── */
+.friendsBreakdownList {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 300px;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-default);
+  text-align: left;
+}
+
+.friendBreakdownRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+}
+
+.friendBreakdownName {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  text-align: left;
+}
+
+.friendBreakdownScore {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-default);
+}
+
 .seasonDropdownRow {
   font-size: 18px;
   font-weight: 450;

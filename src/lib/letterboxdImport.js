@@ -89,10 +89,12 @@ export async function resolveMovieByNameAndYear(name, year) {
 
 /**
  * Run import for the current user. Expects parsed rows from parseRatingsCsv.
+ * Options: { onProgress({ processed, successful, skipped, failed, lastTitle }) }.
  * Returns { successful, skipped, failed, details } where details is
  * array of { title, status: 'success'|'skipped'|'failed', reason? }.
  */
-export async function importLetterboxdRatings(userId, rows) {
+export async function importLetterboxdRatings(userId, rows, options = {}) {
+  const { onProgress } = options;
   const details = [];
   let successful = 0;
   let skipped = 0;
@@ -110,6 +112,7 @@ export async function importLetterboxdRatings(userId, rows) {
   }
 
   const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+  const total = rows.length;
 
   for (let i = 0; i < rows.length; i++) {
     if (i > 0) await delay(250);
@@ -120,11 +123,13 @@ export async function importLetterboxdRatings(userId, rows) {
       if (!movie) {
         failed++;
         details.push({ title, status: 'failed', reason: 'Not found on TMDB' });
+        if (onProgress) onProgress({ processed: i + 1, successful, skipped, failed, total, lastTitle: title });
         continue;
       }
       if (existingMovieIds.has(movie.id)) {
         skipped++;
         details.push({ title, status: 'skipped', reason: 'Already in your ratings' });
+        if (onProgress) onProgress({ processed: i + 1, successful, skipped, failed, total, lastTitle: title });
         continue;
       }
       const { sentiment, score } = letterboxdRatingToLore(row.rating);
@@ -140,6 +145,7 @@ export async function importLetterboxdRatings(userId, rows) {
       existingMovieIds.add(movie.id);
       successful++;
       details.push({ title, status: 'success' });
+      if (onProgress) onProgress({ processed: i + 1, successful, skipped, failed, total, lastTitle: title });
     } catch (err) {
       failed++;
       details.push({
@@ -147,6 +153,7 @@ export async function importLetterboxdRatings(userId, rows) {
         status: 'failed',
         reason: err?.message || 'Error',
       });
+      if (onProgress) onProgress({ processed: i + 1, successful, skipped, failed, total, lastTitle: title });
     }
   }
 

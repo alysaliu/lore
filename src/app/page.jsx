@@ -2,65 +2,94 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { publicAssetPath } from '../lib/publicPath';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
 import styles from './page.module.css';
+import { getPopularMedia, getPosterUrl } from '../lib/tmdb';
 
-const slides = [
-  { image: publicAssetPath('/images/Littlewomen.svg') },
-  { image: publicAssetPath('/images/Moonlightkingdom.svg') },
-  { image: publicAssetPath('/images/Severance.svg') },
+const INITIAL_POSITIONS = [
+  { x: 60,   y: 300, rotation: -12 },
+  { x: 240,  y: 410, rotation:   8 },
+  { x: 140,  y: 530, rotation: -18 },
+  { x: 380,  y: 340, rotation:   6 },
+  { x: 480,  y: 490, rotation: -9  },
+  { x: 620,  y: 360, rotation:  14 },
+  { x: 700,  y: 520, rotation:  -5 },
+  { x: 840,  y: 310, rotation:  10 },
+  { x: 920,  y: 470, rotation: -15 },
+  { x: 1040, y: 380, rotation:   7 },
+  { x: 1100, y: 540, rotation: -11 },
+  { x: 1180, y: 290, rotation:  16 },
+  { x: 330,  y: 610, rotation:  -7 },
+  { x: 780,  y: 630, rotation:  12 },
 ];
 
 export default function HomePage() {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [posters, setPosters] = useState([]);
+  const [zIndices, setZIndices] = useState(() => INITIAL_POSITIONS.map(() => 2));
+  const [topZ, setTopZ] = useState(2);
   const containerRef = useRef(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 4000);
-    return () => clearInterval(interval);
+    getPopularMedia().then((media) => {
+      setPosters(media.slice(0, 14));
+    });
   }, []);
 
-  return (
-    <main className={styles.main}>
-      <div
-        className={styles.slideshowContainer}
-        style={{ backgroundImage: `url(${slides[currentSlide].image})` }}
-      >
-        <div className={styles.mainContainer}>
-          <div className={styles.mainContent}>
-            <h1>Lore</h1>
-            <p>Experience TV shows and movies with friends</p>
-          </div>
+  function bringToFront(index) {
+    const next = topZ + 1;
+    setTopZ(next);
+    setZIndices((prev) => prev.map((z, i) => (i === index ? next : z)));
+  }
 
-          <div className={styles.services}>
-            <div className={styles.servicesContainer}>
-              <div className={styles.servicesCard}>
-                <h2>📺 Rate movies and shows</h2>
-                <p>All your watching history in one place, stack-ranked against each other</p>
-                <Link href="/login" className={styles.buttonLink}>Sign up</Link>
-              </div>
-              <div className={styles.servicesCard}>
-                <h2>👯‍♀️ Connect with friends</h2>
-                <p>View friends&apos; profiles and see Lore&apos;s out-of-pocket take on their taste</p>
-                <Link href="/login" className={styles.buttonLink}>Sign up</Link>
-              </div>
-              <div className={styles.servicesCard}>
-                <h2>📢 Share your feedback</h2>
-                <p>Have feature ideas or bugs to share? We&apos;d love to hear it!</p>
-                <a
-                  href="https://docs.google.com/forms/d/e/1FAIpQLSeSrXgl4tIrnMrwtHWfDLWmysxrcwl7JYetKZ5gydKJIqbqWw/viewform?usp=header"
-                  className={styles.buttonLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Feedback form
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
+  return (
+    <main className={styles.page}>
+      <div className={styles.heroContent}>
+        <h1 className={styles.heading}>
+          <span>Rank movies and shows with friends.*</span>
+          <span>All in one place.</span>
+          <span>No ads.</span>
+        </h1>
+        <Link href="/signup" className={styles.signupButton}>
+          Sign up now
+        </Link>
+        <p className={styles.footnote}>*and then drag them for their hot takes. Sorry, who said that?</p>
+      </div>
+
+      <div className={styles.backgroundCard} />
+
+      <div className={styles.posterScatter} ref={containerRef}>
+        {posters.map((item, i) => {
+          const pos = INITIAL_POSITIONS[i];
+          if (!pos) return null;
+          return (
+            <motion.div
+              key={item.id}
+              className={styles.posterCard}
+              style={{
+                left: pos.x,
+                top: pos.y,
+                zIndex: zIndices[i],
+              }}
+              initial={{ rotate: pos.rotation }}
+              drag
+              dragConstraints={containerRef}
+              dragElastic={0.05}
+              dragMomentum={false}
+              whileHover={{ scale: 1.05, y: -6 }}
+              whileDrag={{ scale: 1.08, boxShadow: '0 16px 48px rgba(0,0,0,0.7)' }}
+              onDragStart={() => bringToFront(i)}
+            >
+              <Image
+                src={getPosterUrl(item.poster_path, 'w342')}
+                alt={item.title || item.name}
+                width={160}
+                height={240}
+                draggable={false}
+              />
+            </motion.div>
+          );
+        })}
       </div>
     </main>
   );
