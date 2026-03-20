@@ -1,7 +1,9 @@
 import Script from 'next/script';
 import { AuthProvider } from '../contexts/AuthContext';
 import { RatingsProvider } from '../contexts/RatingsContext';
+import { ImportStatusProvider } from '../contexts/ImportStatusContext';
 import Navbar from '../components/Navbar';
+import ImportStatusPopup from '../components/ImportStatusPopup';
 import './globals.css';
 
 export const metadata = {
@@ -22,8 +24,11 @@ export default function RootLayout({ children }) {
       <body>
         <AuthProvider>
           <RatingsProvider>
-            <Navbar />
-            {children}
+            <ImportStatusProvider>
+              <Navbar />
+              {children}
+              <ImportStatusPopup />
+            </ImportStatusProvider>
           </RatingsProvider>
         </AuthProvider>
       </body>

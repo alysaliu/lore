@@ -1,187 +1,112 @@
-/* ── Hero / slideshow ─────────────────────── */
-.main {
-  background-color: var(--color-surface-default);
-}
-
-.slideshowContainer {
-  width: 100%;
-  height: 90vh;
-  background-size: cover;
-  background-position: center;
-  transition: background-image 1s ease-in-out;
-}
-
-.mainContainer {
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-  align-items: center;
-  justify-self: center;
-  margin: 0 auto;
-  height: 90vh;
-  color: #fff;
-  width: 100%;
-  max-width: var(--max-width);
-  padding-right: var(--page-padding);
-  padding-left: var(--page-padding);
+.page {
+  position: relative;
+  min-height: 100vh;
   overflow: hidden;
-  z-index: 2;
+  background: var(--color-surface-default);
 }
 
-.mainContent h1 {
-  font-size: 4rem;
-  font-weight: 600;
-}
-
-.mainContent p {
-  margin-top: 1rem;
-  font-size: 2rem;
-  font-weight: 300;
-}
-
-/* ── Services section ─────────────────────── */
-.services {
+/* ── Hero content ──────────────────────────── */
+.heroContent {
+  position: relative;
+  z-index: 3;
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
   align-items: center;
-  height: 50vh;
-  padding-top: var(--space-12);
-  padding-bottom: var(--space-12);
-  z-index: 100;
+  text-align: center;
+  padding-top: 12vh;
+  padding-bottom: var(--space-8);
 }
 
-.servicesContainer {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: var(--space-6);
-  max-width: var(--max-width);
-}
-
-.servicesCard {
-  backdrop-filter: blur(5px);
-  border: 0.5px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  padding: 22px 24px 28px 28px;
-  display: grid;
-  grid-template-rows: auto;
-  gap: var(--space-2);
-}
-
-.servicesCard h2 {
-  color: var(--color-text-default);
-  font-weight: 400;
-  font-size: 1.2rem;
-}
-
-.servicesCard p {
-  color: var(--color-text-secondary);
-  margin-bottom: 1rem;
-}
-
-.buttonLink {
+.heading {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  text-decoration: none;
-  padding: var(--space-2) var(--space-3);
-  width: 100%;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-family: var(--font-tight);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  color: var(--color-text-default);
+  margin-bottom: var(--space-8);
+  line-height: 1.3;
+}
+
+.signupButton {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
   border: none;
-  outline: none;
-  border-radius: var(--radius-sm);
-  background: var(--color-action-default);
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: var(--color-surface-inverse);
   color: var(--color-text-inverse);
   font-weight: 500;
-  font-size: 14px;
-  transition: var(--transition-base);
-  cursor: pointer;
+  width: fit-content;
+  text-decoration: none;
 }
 
-.buttonLink:hover {
+.signupButton:hover {
   background: var(--color-action-hovered);
   color: var(--color-text-inverse);
 }
 
-/* ── Responsive ───────────────────────────── */
+.footnote {
+  margin-top: var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+/* ── Background card ───────────────────────── */
+.backgroundCard {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 65vh;
+  background: var(--color-surface-contrast);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  z-index: 1;
+}
+
+/* ── Poster scatter ────────────────────────── */
+.posterScatter {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.posterCard {
+  position: absolute;
+  cursor: grab;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  width: 160px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  user-select: none;
+  pointer-events: all;
+}
+
+.posterCard:active {
+  cursor: grabbing;
+}
+
+.posterCard img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ── Mobile ────────────────────────────────── */
 @media screen and (max-width: 960px) {
-  .mainContainer {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-    height: 90vh;
-    padding-right: var(--page-padding-mobile);
-    padding-left: var(--page-padding-mobile);
+  .heroContent {
+    padding-top: 8vh;
   }
 
-  .servicesContainer {
-    padding-left: var(--page-padding-mobile);
-    padding-right: var(--page-padding-mobile);
-    gap: var(--space-3);
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .mainContainer {
-    display: grid;
-    grid-template-columns: auto;
-    align-items: center;
-    width: 100%;
-    margin: 0 auto;
-    height: 90vh;
+  .heading {
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
   }
 
-  .mainContent {
-    text-align: center;
-    margin-bottom: 4rem;
-  }
-
-  .mainContent h1 {
-    font-size: 2.5rem;
-    margin-top: 2rem;
-  }
-
-  .mainContent p {
-    margin-top: 1rem;
-    font-size: 1.5rem;
-  }
-
-  .services {
-    height: 90vh;
-  }
-
-  .servicesContainer {
-    display: grid;
-    grid-template-columns: auto;
-    align-items: center;
-    justify-self: center;
-    width: 100%;
-    margin: 0 auto;
-    height: auto;
-  }
-
-  .servicesCard h2 {
-    text-align: center;
-  }
-
-  .servicesCard p {
-    text-align: center;
-    font-size: 1rem;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .mainContent {
-    text-align: center;
-    margin-bottom: 4rem;
-  }
-
-  .mainContent h1 {
-    font-size: 2rem;
-    margin-top: 3rem;
-  }
-
-  .mainContent p {
-    margin-top: 2rem;
-    font-size: 1.5rem;
+  .posterCard {
+    width: 120px;
   }
 }
