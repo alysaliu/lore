@@ -151,6 +151,30 @@ function rebalanceRankKeys(count: number, options?: LexoRankOptions): string[]
   - if `count` is not a non-negative integer
   - if key space is too small for requested `count`
 
+---
+
+### `rankKeyToScore(key, options?)`
+
+```ts
+function rankKeyToScore(
+  key: string,
+  options?: LexoRankOptions & { minScore?: number; maxScore?: number; precision?: number }
+): number
+```
+
+- **Parameters**
+  - `key`: rank key string
+  - `options.minScore`: default `1`
+  - `options.maxScore`: default `10`
+  - `options.precision`: decimal places for rounding, default `1`
+  - `options.alphabet`, `options.length`: optional key config
+- **Returns**
+  - numeric display score mapped from key position in keyspace
+  - lower key (better rank) maps closer to `maxScore`
+- **Throws**
+  - if key is invalid
+  - if score range/options are invalid
+
 ## Error Semantics
 
 The library throws `Error` for invalid input and configuration constraints.

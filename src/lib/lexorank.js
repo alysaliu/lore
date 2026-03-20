@@ -149,3 +149,31 @@ export function rebalanceRankKeys(count, options = {}) {
   return out;
 }
 
+/**
+ * Map a rank key to a display score range (default 1..10).
+ * Lower rank values are better, so they map closer to maxScore.
+ *
+ * @param {string} key
+ * @param {{ minScore?: number, maxScore?: number, precision?: number, alphabet?: string, length?: number }} options
+ * @returns {number}
+ */
+export function rankKeyToScore(key, options = {}) {
+  const { maxValue } = getConfig(options);
+  const minScore = options.minScore ?? 1;
+  const maxScore = options.maxScore ?? 10;
+  const precision = options.precision ?? 1;
+
+  if (typeof minScore !== 'number' || typeof maxScore !== 'number' || minScore >= maxScore) {
+    throw new Error('minScore and maxScore must be numbers with minScore < maxScore');
+  }
+  if (!Number.isInteger(precision) || precision < 0) {
+    throw new Error('precision must be a non-negative integer');
+  }
+
+  const value = decodeRankKey(key, options);
+  const ratio = Number(value) / Number(maxValue); // 0 (best) -> 1 (worst)
+  const raw = maxScore - (maxScore - minScore) * ratio;
+  const factor = 10 ** precision;
+  return Math.round(raw * factor) / factor;
+}
+

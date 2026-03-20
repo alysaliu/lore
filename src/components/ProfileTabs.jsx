@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { doc, getDoc, collection, getDocs, addDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getRatings } from '../lib/ratingsFirestore';
+import { useRatings } from '../contexts/RatingsContext';
+import { deriveDisplayScoresForGroup } from '../lib/ratingsRanking';
 import { fetchMediaDetails, getPosterUrl } from '../lib/tmdb';
 import { useAuth } from '../contexts/AuthContext';
 import { Globe, Lock } from 'lucide-react';
@@ -20,6 +22,7 @@ import styles from './ProfileTabs.module.css';
  */
 export default function ProfileTabs({ userId }) {
   const { user } = useAuth();
+  const { ratings: cachedRatings } = useRatings();
   const isOwner = user?.uid === userId;
 
   const [activeTab, setActiveTab] = useState('lists');
@@ -36,15 +39,21 @@ export default function ProfileTabs({ userId }) {
   const [newListVisibility, setNewListVisibility] = useState('public');
   const [savingList, setSavingList] = useState(false);
 
+  const loadRatingsForUser = async (uid) => {
+    if (user?.uid === uid && cachedRatings) return cachedRatings;
+    return getRatings(uid);
+  };
+
   const loadMovies = async (uid) => {
-    const data = await getRatings(uid);
+    const data = await loadRatingsForUser(uid);
 
     const seen = new Map();
     for (const sentiment in data.movie || {}) {
-      for (const entry of data.movie[sentiment]) {
+      const derived = deriveDisplayScoresForGroup(data.movie[sentiment] || [], sentiment);
+      for (const entry of derived) {
         const key = String(entry.mediaId);
-        if (!seen.has(key) || entry.score > seen.get(key).score) {
-          seen.set(key, { ...entry, sentiment });
+        if (!seen.has(key) || (entry.displayScore ?? 0) > (seen.get(key).score ?? 0)) {
+          seen.set(key, { ...entry, sentiment, score: entry.displayScore ?? 0 });
         }
       }
     }
@@ -71,14 +80,15 @@ export default function ProfileTabs({ userId }) {
   };
 
   const loadShows = async (uid) => {
-    const data = await getRatings(uid);
+    const data = await loadRatingsForUser(uid);
 
     const seen = new Map();
     for (const sentiment in data.tv || {}) {
-      for (const entry of data.tv[sentiment]) {
+      const derived = deriveDisplayScoresForGroup(data.tv[sentiment] || [], sentiment);
+      for (const entry of derived) {
         const key = `${entry.mediaId}-s${entry.season ?? 'show'}`;
-        if (!seen.has(key) || entry.score > seen.get(key).score) {
-          seen.set(key, { ...entry, sentiment });
+        if (!seen.has(key) || (entry.displayScore ?? 0) > (seen.get(key).score ?? 0)) {
+          seen.set(key, { ...entry, sentiment, score: entry.displayScore ?? 0 });
         }
       }
     }

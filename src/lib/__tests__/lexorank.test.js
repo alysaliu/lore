@@ -8,6 +8,7 @@ const {
   createInitialRankKey,
   keyBetween,
   rebalanceRankKeys,
+  rankKeyToScore,
 } = require('../lexorank');
 
 function assertStrictlyAscending(keys, opts) {
@@ -374,6 +375,36 @@ describe('integration-like ranking flow', () => {
     const unique = new Set(list);
     expect(unique.size).toBe(list.length);
     list.forEach((k) => expect(isValidRankKey(k, opts)).toBe(true));
+  });
+});
+
+describe('rankKeyToScore', () => {
+  test('maps best key to max score and worst key to min score', () => {
+    const opts = { alphabet: '01', length: 4 };
+    const best = encodeRankValue(0n, opts);
+    const worst = encodeRankValue((2n ** 4n) - 1n, opts);
+    expect(rankKeyToScore(best, opts)).toBe(10);
+    expect(rankKeyToScore(worst, opts)).toBe(1);
+  });
+
+  test('maps middle key near center of score range', () => {
+    const opts = { alphabet: '01', length: 8 };
+    const mid = encodeRankValue(((2n ** 8n) - 1n) / 2n, opts);
+    const score = rankKeyToScore(mid, opts);
+    expect(score).toBeGreaterThan(5.4);
+    expect(score).toBeLessThan(5.6);
+  });
+
+  test('supports custom min/max and precision', () => {
+    const opts = { alphabet: '01', length: 8 };
+    const key = encodeRankValue(0n, opts);
+    expect(rankKeyToScore(key, { ...opts, minScore: 0, maxScore: 100, precision: 0 })).toBe(100);
+  });
+
+  test('throws on invalid score range', () => {
+    const opts = { alphabet: '01', length: 8 };
+    const key = encodeRankValue(0n, opts);
+    expect(() => rankKeyToScore(key, { ...opts, minScore: 10, maxScore: 1 })).toThrow(/minScore/);
   });
 });
 

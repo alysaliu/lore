@@ -7,45 +7,15 @@ import Image from 'next/image';
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, increment } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { getRatings, saveRatings, getMediaAverageRating, getRatingDocId } from '../../lib/ratingsFirestore';
+import { saveRatings, getMediaAverageRating, getRatingDocId } from '../../lib/ratingsFirestore';
+import { useRatings } from '../../contexts/RatingsContext';
 import { fetchMediaDetails, getPosterUrl } from '../../lib/tmdb';
 import { createInitialRankKey, keyBetween, rebalanceRankKeys } from '../../lib/lexorank';
+import { deriveDisplayScoresForGroup, scoreForPosition, sortRatingsByRank } from '../../lib/ratingsRanking';
 import { publicAssetPath } from '../../lib/publicPath';
 import AddToListModal from '../../components/AddToListModal';
 import { Trash2, ChevronDown } from 'lucide-react';
 import styles from './page.module.css';
-
-const SCORE_RANGES = {
-  'not-good': [1, 3],
-  'okay': [4, 6],
-  'good': [7, 8],
-  'amazing': [9, 10],
-};
-
-const sortByRank = (a, b) => {
-  const aRank = typeof a.score === 'string' ? a.score : (typeof a.scoreV2 === 'string' ? a.scoreV2 : null);
-  const bRank = typeof b.score === 'string' ? b.score : (typeof b.scoreV2 === 'string' ? b.scoreV2 : null);
-  if (aRank && bRank) {
-    if (aRank < bRank) return -1;
-    if (aRank > bRank) return 1;
-  } else if (aRank && !bRank) {
-    return -1;
-  } else if (!aRank && bRank) {
-    return 1;
-  }
-
-  const aScore = typeof a.score === 'number' ? a.score : Number.NEGATIVE_INFINITY;
-  const bScore = typeof b.score === 'number' ? b.score : Number.NEGATIVE_INFINITY;
-  if (aScore !== bScore) return bScore - aScore;
-  return String(a.id || '').localeCompare(String(b.id || ''));
-};
-
-function scoreForPosition(sentiment, position, totalCount) {
-  const [min, max] = SCORE_RANGES[sentiment] || [1, 10];
-  const ratio = position / (totalCount - 1 || 1);
-  return Math.round((max - (max - min) * ratio) * 10) / 10;
-}
-
 
 function DetailsContent() {
   const searchParams = useSearchParams();
@@ -74,7 +44,6 @@ function DetailsContent() {
   const [existingSentiment, setExistingSentiment] = useState(null);
   const [isReranking, setIsReranking] = useState(false);
   const [cancelled, setCancelled] = useState(false);
-  const [userRatings, setUserRatings] = useState(null);
   const [existingShowRatings, setExistingShowRatings] = useState([]);
   const [showRatingForm, setShowRatingForm] = useState(false);
   const [friendsRatings, setFriendsRatings] = useState(null); // null = not loaded yet
@@ -84,13 +53,15 @@ function DetailsContent() {
   const [deleting, setDeleting] = useState(false);
   const [overallAverage, setOverallAverage] = useState(null); // { average, count } | null
   const [persistingComparison, setPersistingComparison] = useState(false);
+  const { ratings: userRatings, setRatings: setUserRatings, refreshRatings, loading: ratingsLoading } = useRatings();
 
   const refreshShowRatings = useCallback((ratings) => {
     const all = [];
     for (const sentiment in ratings[mediaType] || {}) {
-      for (const entry of ratings[mediaType][sentiment]) {
+      const derived = deriveDisplayScoresForGroup(ratings[mediaType][sentiment] || [], sentiment);
+      for (const entry of derived) {
         if (String(entry.mediaId) === String(id)) {
-          all.push({ season: entry.season ?? null, score: entry.score });
+          all.push({ season: entry.season ?? null, score: entry.displayScore ?? 0 });
         }
       }
     }
@@ -120,38 +91,34 @@ function DetailsContent() {
     getMediaAverageRating(mediaKey).then(setOverallAverage).catch(() => setOverallAverage(null));
   }, [id, mediaType]);
 
-  // Load current user's ratings and friends' ratings when page is loaded
+  // Apply global ratings cache to local details state.
+  useEffect(() => {
+    if (!authUser || !id || !mediaType || !userRatings) return;
+    refreshShowRatings(userRatings);
+    if (mediaType === 'movie') {
+      let found = false;
+      for (const sentiment in userRatings[mediaType] || {}) {
+        const derived = deriveDisplayScoresForGroup(userRatings[mediaType][sentiment] || [], sentiment);
+        for (const entry of derived) {
+          if (String(entry.mediaId) === String(id)) {
+            setExistingRating(entry);
+            setExistingSentiment(sentiment);
+            setRatingPhase('done');
+            setFinalScore(entry.displayScore ?? null);
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+    }
+  }, [authUser, id, mediaType, userRatings, refreshShowRatings]);
+
+  // Load friends' ratings when page is loaded
   useEffect(() => {
     if (!authUser || !id || !mediaType) return;
 
     (async () => {
-      try {
-        // Fetch ratings from the per-user ratings subcollection
-        const ratings = await getRatings(authUser.uid);
-        setUserRatings(ratings);
-        refreshShowRatings(ratings);
-        if (mediaType === 'movie') {
-          let found = false;
-          for (const sentiment in ratings[mediaType] || {}) {
-            for (const entry of ratings[mediaType][sentiment]) {
-              if (String(entry.mediaId) === String(id)) {
-                setExistingRating(entry);
-                setExistingSentiment(sentiment);
-                setRatingPhase('done');
-                setFinalScore(entry.score);
-                found = true;
-                break;
-              }
-            }
-            if (found) break;
-          }
-        }
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
-      }
-
-      // Load friends' ratings for this media
       try {
         const userRef = doc(db, 'users', authUser.uid);
         const userSnap = await getDoc(userRef);
@@ -250,7 +217,7 @@ function DetailsContent() {
         setFriendsRatings([]);
       }
     })();
-  }, [authUser, id, mediaType, refreshShowRatings]);
+  }, [authUser, id, mediaType]);
 
   // Extract dominant colors from poster for background gradient
   useEffect(() => {
@@ -305,7 +272,8 @@ function DetailsContent() {
     const user = auth.currentUser;
     if (!user) { alert('Please log in to rate'); return; }
 
-    let ratings = userRatings || await getRatings(user.uid);
+    if (ratingsLoading || !userRatings) return;
+    let ratings = userRatings;
 
     if (!ratings[mediaType]) ratings[mediaType] = {};
     if (!ratings[mediaType][selectedSentiment]) ratings[mediaType][selectedSentiment] = [];
@@ -314,7 +282,7 @@ function DetailsContent() {
 
     const group = (ratings[mediaType][selectedSentiment] || [])
       .filter(item => !matchesCurrent(item))
-      .sort(sortByRank);
+      .sort(sortRatingsByRank);
 
     if (group.length === 0) {
       const rankKey = createInitialRankKey();
@@ -399,7 +367,8 @@ function DetailsContent() {
 
   const   saveWithInsertion = async (position, background = false) => {
     const user = auth.currentUser;
-    let ratings = userRatings || await getRatings(user.uid);
+    if (ratingsLoading || !userRatings) return;
+    let ratings = userRatings;
 
     if (!ratings[mediaType]) ratings[mediaType] = {};
 
@@ -412,7 +381,7 @@ function DetailsContent() {
 
     const group = [...(ratings[mediaType][selectedSentiment] || [])]
       .filter(item => !matchesCurrent(item))
-      .sort(sortByRank);
+      .sort(sortRatingsByRank);
 
     const leftKey = position > 0 ? group[position - 1]?.score ?? group[position - 1]?.scoreV2 ?? null : null;
     const rightKey = position < group.length ? group[position]?.score ?? group[position]?.scoreV2 ?? null : null;
@@ -499,7 +468,7 @@ function DetailsContent() {
         console.error('Failed to persist rating update', e);
         alert('Could not finish saving your rating. Please try again.');
         try {
-          const fresh = await getRatings(user.uid);
+          const fresh = await refreshRatings();
           setUserRatings(fresh);
           refreshShowRatings(fresh);
         } catch {
@@ -550,7 +519,7 @@ function DetailsContent() {
     if (!user || !mediaType || !id) return;
     setDeleting(true);
     try {
-      let ratings = await getRatings(user.uid);
+      let ratings = userRatings || await refreshRatings();
       if (!ratings[mediaType]) {
         ratings[mediaType] = {};
       }
