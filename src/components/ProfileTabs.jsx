@@ -275,8 +275,10 @@ export default function ProfileTabs({ userId }) {
     const wholeShow = group.find(item => item.season == null);
     if (wholeShow) return wholeShow.score;
     const seasons = group.filter(item => item.season != null);
-    if (!seasons.length) return 0;
-    const avg = seasons.reduce((sum, item) => sum + item.score, 0) / seasons.length;
+    if (!seasons.length) return null;
+    const numericScores = seasons.map(item => item.score).filter(s => typeof s === 'number' && !isNaN(s));
+    if (!numericScores.length) return null;
+    const avg = numericScores.reduce((sum, s) => sum + s, 0) / numericScores.length;
     return Math.round(avg * 10) / 10;
   };
 
@@ -331,7 +333,7 @@ export default function ProfileTabs({ userId }) {
               </div>
             )}
           </div>
-          <div className={styles.rowScore}>{showScore}</div>
+          {showScore != null && <div className={styles.rowScore}>{showScore}</div>}
         </div>
         <div className={isExpanded ? styles.seasonBreakdown : styles.seasonBreakdownHidden}>
           {wholeShow && (
