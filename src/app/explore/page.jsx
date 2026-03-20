@@ -8,7 +8,7 @@ import AddToListModal from '../../components/AddToListModal';
 import { searchMedia } from '../../lib/tmdb';
 import { publicAssetPath } from '../../lib/publicPath';
 import { auth, db } from '../../lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
 import styles from './page.module.css';
 
 const FILTER_OPTIONS = [
@@ -27,6 +27,52 @@ async function searchProfileByUsername(query) {
   const userSnap = await getDoc(doc(db, 'users', uid));
   if (!userSnap.exists()) return null;
   return { type: 'profile', uid: userSnap.id, ...userSnap.data() };
+}
+
+/**
+ * @param {string} searchText
+ * @param {{ minChars?: number }} [options] - default minChars 3 for "All" + profiles; use 1 for Profiles-only.
+ */
+async function searchProfilesByUsernameOrName(searchText, options = {}) {
+  const { minChars = 3 } = options;
+  const trimmed = searchText.trim().toLowerCase();
+  if (trimmed.length < minChars) return [];
+
+  const usersRef = collection(db, 'users');
+  const usernameQ = query(
+    usersRef,
+    orderBy('username'),
+    where('username', '>=', trimmed),
+    where('username', '<=', `${trimmed}\uf8ff`),
+    limit(10)
+  );
+  const fullNameQ = query(
+    usersRef,
+    orderBy('fullNameLower'),
+    where('fullNameLower', '>=', trimmed),
+    where('fullNameLower', '<=', `${trimmed}\uf8ff`),
+    limit(10)
+  );
+
+  const [usernameSnap, fullNameSnap] = await Promise.all([getDocs(usernameQ), getDocs(fullNameQ)]);
+  const byUid = new Map();
+
+  usernameSnap.forEach((userDoc) => {
+    byUid.set(userDoc.id, { type: 'profile', uid: userDoc.id, ...userDoc.data() });
+  });
+  fullNameSnap.forEach((userDoc) => {
+    if (!byUid.has(userDoc.id)) {
+      byUid.set(userDoc.id, { type: 'profile', uid: userDoc.id, ...userDoc.data() });
+    }
+  });
+
+  return Array.from(byUid.values());
+}
+
+/** Hide the current user from profile results so they don't see their own card. */
+function excludeSelfFromProfiles(profiles, selfUid) {
+  if (!selfUid || !profiles?.length) return profiles;
+  return profiles.filter((p) => p.uid !== selfUid);
 }
 
 function debounce(fn, delay) {
@@ -70,17 +116,34 @@ export default function ExplorePage() {
           setResults(null);
           return;
         }
+        const selfUid = auth.currentUser?.uid;
         if (type === 'profiles') {
-          const profile = await searchProfileByUsername(q);
-          setResults(profile ? [profile] : []);
+          const broadMatches = await searchProfilesByUsernameOrName(q, { minChars: 1 });
+          const withoutSelf = excludeSelfFromProfiles(broadMatches, selfUid);
+          if (withoutSelf.length > 0) {
+            setResults(withoutSelf);
+            return;
+          }
+          const exactProfile = await searchProfileByUsername(q);
+          if (exactProfile && exactProfile.uid === selfUid) {
+            setResults([]);
+          } else {
+            setResults(exactProfile ? [exactProfile] : []);
+          }
           return;
         }
         const mediaData = await searchMedia(q);
         const filteredMedia =
           type === 'all' ? mediaData : mediaData.filter((item) => item.media_type === type);
         if (type === 'all') {
-          const profile = await searchProfileByUsername(q);
-          const combined = profile ? [profile, ...filteredMedia] : filteredMedia;
+          const broadMatches = await searchProfilesByUsernameOrName(q);
+          let profiles = broadMatches;
+          if (profiles.length === 0) {
+            const exactProfile = await searchProfileByUsername(q);
+            profiles = exactProfile ? [exactProfile] : [];
+          }
+          profiles = excludeSelfFromProfiles(profiles, selfUid);
+          const combined = [...filteredMedia, ...profiles];
           setResults(combined);
         } else {
           setResults(filteredMedia);

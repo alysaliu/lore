@@ -97,6 +97,7 @@ export default function OnboardingPage() {
       const nameParts = (user.displayName || '').split(' ');
       const firstname = nameParts[0] || '';
       const lastname = nameParts.slice(1).join(' ') || '';
+      const fullNameLower = `${firstname} ${lastname}`.trim().toLowerCase();
 
       if (savedUsername && savedUsername !== trimmed) {
         await deleteDoc(doc(db, 'usernames', savedUsername));
@@ -114,6 +115,7 @@ export default function OnboardingPage() {
         batch.set(userRef, {
           firstname,
           lastname,
+          fullNameLower: fullNameLower || null,
           email: user.email || null,
           photoURL: user.photoURL || null,
           username: trimmed,
