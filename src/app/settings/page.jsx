@@ -318,7 +318,7 @@ export default function SettingsPage() {
                 tabIndex={-1}
                 onChange={handleFileSelect}
               />
-              {(!shownImport || importing) && (
+              {!shownImport && (
                 <div
                   className={`${styles.dropzone} ${dragOver ? styles.dropzoneOver : ''} ${dropFolderName ? styles.dropzoneFilled : ''}`}
                   onClick={!importing ? handleImportClick : undefined}

@@ -179,11 +179,6 @@ export default function OnboardingPage() {
           details: result.details,
         },
       });
-      setToast({
-        type: 'success',
-        message: `Import complete · ${result.successful} imported`,
-        action: { label: 'View in Settings', onClick: () => router.push('/settings?tab=data') },
-      });
     } catch (err) {
       failLetterboxdImport(err?.message || 'Import failed.');
       setToast({ type: 'error', message: err?.message || 'Import failed.' });
@@ -225,11 +220,7 @@ export default function OnboardingPage() {
             </div>
             <ExternalLink size={16} className={onboardStyles.importStepIcon} />
           </a>
-          <div
-            className={onboardStyles.importStep}
-            onClick={() => folderInputRef.current?.click()}
-            style={{ cursor: 'pointer' }}
-          >
+          <div className={onboardStyles.importStep}>
             <span className={onboardStyles.importStepNum}>2</span>
             <div className={onboardStyles.importStepText}>
               <span className={onboardStyles.importStepTitle}>Unzip and upload</span>

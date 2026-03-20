@@ -1,19 +1,16 @@
 .wrap {
   position: fixed;
-  left: 0;
-  right: 0;
+  right: 16px;
   bottom: 16px;
-  display: flex;
-  justify-content: center;
   pointer-events: none;
   z-index: 1100;
 }
 
 .card {
-  width: min(720px, calc(100vw - 24px));
+  width: 320px;
   background: var(--color-surface-contrast);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-profile);
   padding: 14px 14px 12px 14px;
   pointer-events: auto;
@@ -60,22 +57,22 @@
 }
 
 .title {
-  font-size: 14px;
-  font-weight: 650;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--color-text-default);
 }
 
 .subtitle {
   margin-top: 2px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-text-secondary);
 }
 
 .pill,
 .pillDone,
 .pillError {
-  font-size: 11px;
-  padding: 3px 8px;
+  font-size: 12px;
+  padding: 6px 8px;
   border-radius: 999px;
   border: 1px solid var(--color-border-default);
   background: var(--color-surface-default);
@@ -91,32 +88,47 @@
   color: var(--color-text-default);
 }
 
-.closeBtn {
+.btnGroup {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.iconBtn {
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
   color: var(--color-text-secondary);
-  line-height: 1;
   padding: 4px;
   cursor: pointer;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
-.closeBtn:hover:not(:disabled) {
+.iconBtn:hover:not(:disabled) {
   color: var(--color-text-default);
   background: var(--color-surface-hovered);
 }
 
-.closeBtn:disabled {
+.iconBtn:disabled {
   cursor: default;
+}
+
+.exploreNote {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 300;
+  font-family: var(--font-sans);
+  color: var(--color-text-secondary);
 }
 
 .bodyRow {
   margin-top: 10px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -128,7 +140,7 @@
 }
 
 .metricLabel {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--color-text-secondary);
 }
 
@@ -141,7 +153,7 @@
 
 .lastLine {
   margin-top: 10px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -163,15 +175,18 @@
   padding: 10px;
 }
 
-.flowLine {
+.settingsLink {
+  display: inline-block;
   margin-top: 10px;
-  font-size: 11px;
-  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  color: var(--color-text-default);
+  text-decoration: none;
 }
 
-@media (max-width: 520px) {
-  .bodyRow {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.settingsLink:hover {
+  text-decoration: underline;
 }
+
 
