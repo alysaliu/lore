@@ -130,9 +130,9 @@ describe('resolveMovieByNameAndYear', () => {
   });
 
   it('returns { id } of the first TMDB result when search returns one or more movies', async () => {
-    mockSearchMovies.mockResolvedValue([{ id: 27205 }, { id: 999 }]);
+    mockSearchMovies.mockResolvedValue([{ id: 27205, title: 'Inception' }, { id: 999 }]);
     const result = await resolveMovieByNameAndYear('Inception', '2010');
-    expect(result).toEqual({ id: 27205 });
+    expect(result).toEqual({ id: 27205, mediaName: 'Inception' });
     expect(mockSearchMovies).toHaveBeenCalledWith('Inception', '2010');
   });
 

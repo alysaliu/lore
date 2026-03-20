@@ -8,7 +8,7 @@ import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/fi
 import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { getRatings, saveRatings, getMediaAverageRating } from '../../lib/ratingsFirestore';
-import { fetchMediaDetails, fetchMediaName, getPosterUrl } from '../../lib/tmdb';
+import { fetchMediaDetails, getPosterUrl } from '../../lib/tmdb';
 import { publicAssetPath } from '../../lib/publicPath';
 import AddToListModal from '../../components/AddToListModal';
 import { Trash2, ChevronDown } from 'lucide-react';
@@ -289,7 +289,15 @@ function DetailsContent() {
 
     if (group.length === 0) {
       const [, max] = SCORE_RANGES[selectedSentiment];
-      const newRating = { mediaId: id, mediaType, note: note || null, score: max, timestamp: new Date().toISOString(), ...(selectedSeason != null && { season: selectedSeason }) };
+      const newRating = {
+        mediaId: id,
+        mediaType,
+        mediaName: currentTitle || null,
+        note: note || null,
+        score: max,
+        timestamp: new Date().toISOString(),
+        ...(selectedSeason != null && { season: selectedSeason }),
+      };
       // Remove from all other sentiment groups before saving
       for (const sentiment of Object.keys(ratings[mediaType])) {
         if (sentiment === selectedSentiment) continue;
@@ -327,8 +335,8 @@ function DetailsContent() {
     setInsertionState(initState);
 
     const compareEntry0 = group[initState.mid];
-    const compareName0 = await fetchMediaName(compareEntry0.mediaId, compareEntry0.mediaType || mediaType);
-    setCompareTitle(compareEntry0.season != null ? `${compareName0} (Season ${compareEntry0.season})` : (compareName0 || '?'));
+    const baseName0 = compareEntry0.mediaName || String(compareEntry0.mediaId);
+    setCompareTitle(compareEntry0.season != null ? `${baseName0} (Season ${compareEntry0.season})` : baseName0);
     setRatingPhase('comparing');
   };
 
@@ -350,8 +358,8 @@ function DetailsContent() {
       const newMid = Math.floor((newLow + newHigh) / 2);
       setInsertionState({ low: newLow, high: newHigh, mid: newMid });
       const compareEntry = comparisonGroup[newMid];
-      const compareName = await fetchMediaName(compareEntry.mediaId, compareEntry.mediaType || mediaType);
-      setCompareTitle(compareEntry.season != null ? `${compareName} (Season ${compareEntry.season})` : (compareName || '?'));
+      const baseName = compareEntry.mediaName || String(compareEntry.mediaId);
+      setCompareTitle(compareEntry.season != null ? `${baseName} (Season ${compareEntry.season})` : baseName);
     }
   };
 
@@ -388,6 +396,7 @@ function DetailsContent() {
     group.splice(position, 0, {
       mediaId: id,
       mediaType,
+      mediaName: currentTitle || null,
       note: note || null,
       score: 0,
       timestamp: new Date().toISOString(),

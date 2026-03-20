@@ -42,7 +42,7 @@ export async function getMediaAverageRating(mediaKey) {
 
 /**
  * Fetch all rating docs for a user and return the nested shape:
- * { movie: { [sentiment]: [{ mediaId, mediaType?, note, score, timestamp, season? }] }, tv: { ... } }
+ * { movie: { [sentiment]: [{ mediaId, mediaType?, mediaName?, note, score, timestamp, season? }] }, tv: { ... } }
  */
 export async function getRatings(uid) {
   if (!db) return { movie: {}, tv: {} };
@@ -57,6 +57,7 @@ export async function getRatings(uid) {
     ratings[mediaType][sentiment].push({
       mediaId: data.mediaId,
       mediaType: data.mediaType || mediaType,
+      mediaName: data.mediaName ?? null,
       note: data.note ?? null,
       score: data.score,
       timestamp: data.timestamp ?? null,
@@ -84,6 +85,7 @@ function flattenRatingsToEntries(ratings) {
             mediaType: entry.mediaType || mediaType,
             sentiment,
             mediaId: entry.mediaId,
+            mediaName: entry.mediaName ?? null,
             note: entry.note ?? null,
             score: entry.score,
             timestamp: entry.timestamp ?? null,

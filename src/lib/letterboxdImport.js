@@ -80,7 +80,11 @@ function parseCsvLine(line) {
 export async function resolveMovieByNameAndYear(name, year) {
   const results = await searchMovies(name, year || undefined);
   if (!results.length) return null;
-  return { id: results[0].id };
+  const first = results[0] || {};
+  return {
+    id: first.id,
+    mediaName: first.title || first.name || null,
+  };
 }
 
 /**
@@ -128,6 +132,7 @@ export async function importLetterboxdRatings(userId, rows) {
       ratings.movie[sentiment].push({
         mediaId: movie.id,
         mediaType: 'movie',
+        mediaName: movie.mediaName ?? null,
         score,
         note: null,
         timestamp: new Date().toISOString(),
