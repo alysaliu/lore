@@ -54,10 +54,19 @@ function DetailsContent() {
   const [friendsRatings, setFriendsRatings] = useState(null); // null = not loaded yet
   const [friendsError, setFriendsError] = useState(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [openFriendDropdownSeason, setOpenFriendDropdownSeason] = useState(undefined);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [pendingDeleteSeason, setPendingDeleteSeason] = useState(undefined);
   const [deleting, setDeleting] = useState(false);
   const [overallAverage, setOverallAverage] = useState(null); // { average, count } | null
+
+  // Close friend dropdown when clicking outside
+  useEffect(() => {
+    if (openFriendDropdownSeason === undefined) return;
+    const handler = () => setOpenFriendDropdownSeason(undefined);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [openFriendDropdownSeason]);
 
   const refreshShowRatings = useCallback((ratings) => {
     const all = [];
@@ -452,6 +461,16 @@ function DetailsContent() {
     ? Math.round((existingShowRatings.reduce((sum, r) => sum + r.score, 0) / existingShowRatings.length) * 10) / 10
     : null;
 
+  const getFriendsForSeason = (season) =>
+    scoredFriends
+      .map(f => {
+        const score = season === null
+          ? (f.wholeShow?.score ?? null)
+          : (f.seasons?.find(s => s.season === season)?.score ?? null);
+        return score != null ? { ...f, score } : null;
+      })
+      .filter(Boolean);
+
   // Collect all unique seasons across user + friends for the breakdown table
   const breakdownSeasons = (() => {
     const seen = new Set();
@@ -629,14 +648,6 @@ function DetailsContent() {
 
             <hr className={styles.divider} />
 
-            {overallAverage && mediaType !== 'tv' && (
-              <div className={styles.overallAverage}>
-                <span className="eyebrow">Community average</span>
-                <span className={styles.overallAverageScore}>{overallAverage.average}</span>
-                <span className={styles.overallAverageCount}>({overallAverage.count} {overallAverage.count === 1 ? 'rating' : 'ratings'})</span>
-              </div>
-            )}
-
             {/* Rating box */}
             <div className={styles.ratingBox}>
           {mediaType === 'tv' && existingShowRatings.length > 0 && (
@@ -668,6 +679,7 @@ function DetailsContent() {
                   </>
                 )}
               </div>
+              <div className={styles.breakdownCard}>
               <button className={styles.breakdownCollapsible} onClick={() => setShowBreakdown(v => !v)}>
                 <span>Breakdown</span>
                 <ChevronDown size={14} className={showBreakdown ? styles.chevronOpen : styles.chevronClosed} />
@@ -676,13 +688,15 @@ function DetailsContent() {
                 <div className={styles.breakdownTable}>
                   <div className={`${styles.breakdownRow} ${styles.breakdownHeader}`}>
                     <span className={styles.breakdownLabelCell} />
-                    <span className={styles.breakdownCell}>You</span>
-                    <span className={styles.breakdownCell}>Friends</span>
-                    <span className={styles.breakdownCell}>Community</span>
+                    <span className="eyebrow" style={{ textAlign: 'right' }}>You</span>
+                    <span className="eyebrow" style={{ textAlign: 'right' }}>Friends</span>
+                    <span className="eyebrow" style={{ textAlign: 'right' }}>Community</span>
                   </div>
                   {breakdownSeasons.map(season => {
                     const userScore = existingShowRatings.find(r => r.season === season)?.score ?? null;
                     const friendSeasonAvg = getFriendsSeasonAvg(season);
+                    const friendsForSeason = getFriendsForSeason(season);
+                    const isOpen = openFriendDropdownSeason === season;
                     return (
                       <div key={season ?? 'whole'} className={styles.breakdownRow}>
                         <span className={styles.breakdownLabelCell}>
@@ -699,39 +713,117 @@ function DetailsContent() {
                                 <Trash2 size={12} />
                               </button>
                             </span>
-                          ) : '–'}
+                          ) : <span className={styles.breakdownEmpty}>–</span>}
                         </span>
-                        <span className={styles.breakdownCell}>{friendSeasonAvg ?? '–'}</span>
-                        <span className={styles.breakdownCell}>–</span>
+                        <span className={styles.breakdownCell} style={{ position: 'relative' }}>
+                          {friendSeasonAvg != null ? (
+                            <>
+                              <button
+                                className={styles.breakdownFriendsToggle}
+                                onMouseDown={e => e.stopPropagation()}
+                                onClick={() => setOpenFriendDropdownSeason(isOpen ? undefined : season)}
+                              >
+                                {friendSeasonAvg}
+                                <ChevronDown size={14} className={isOpen ? styles.chevronOpen : styles.chevronClosed} />
+                              </button>
+                              {isOpen && friendsForSeason.length > 0 && (
+                                <div className={styles.friendsBreakdownList} onMouseDown={e => e.stopPropagation()}>
+                                  {friendsForSeason.map(friend => (
+                                    <div key={friend.uid} className={styles.friendBreakdownRow}>
+                                      <div className={styles.friendAvatarCircle}>
+                                        {friend.photoURL ? (
+                                          <img src={friend.photoURL} alt={friend.displayName || friend.username || '?'} className={styles.friendAvatarImg} />
+                                        ) : (
+                                          <span className={styles.friendAvatarInitials}>
+                                            {(friend.displayName || friend.username || '?')[0].toUpperCase()}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className={styles.friendBreakdownName}>{friend.displayName || friend.username || 'Unknown'}</span>
+                                      <span className={styles.friendBreakdownScore}>{friend.score}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          ) : <span className={styles.breakdownEmpty}>–</span>}
+                        </span>
+                        <span className={styles.breakdownCell}><span className={styles.breakdownEmpty}>–</span></span>
                       </div>
                     );
                   })}
                 </div>
               )}
+              </div>
             </>
           )}
           {mediaType === 'tv' && existingShowRatings.length > 0 && !showRatingForm && !cancelled && ratingPhase !== 'comparing' && (
             <button className={styles.rateAnotherBtn} onClick={() => setShowRatingForm(true)}>
+              <i className="fas fa-plus" aria-hidden="true" />
               Rate another season
             </button>
           )}
           {cancelled ? (
             <p className={styles.resultText}>Ok! Come back when you&apos;ve watched it.</p>
           ) : ratingPhase === 'done' && mediaType !== 'tv' ? (
-            <div className={styles.ratingDone}>
-              <div className={styles.ratingColumn}>
-                <div className="eyebrow">Your rating{selectedSeason != null ? ` · Season ${selectedSeason}` : ''}</div>
-                <div className={styles.ratingColumnScore}>{finalScore}</div>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <button className={styles.iconActionBtn} onClick={handleRerank} aria-label="Re-rank" data-tooltip="Re-rank">
-                    <Repeat size={14} />
-                  </button>
-                  <button className={styles.iconActionBtnDanger} onClick={handleDeleteRatingClick} aria-label="Remove rating" data-tooltip="Remove rating">
-                    <Trash2 size={14} />
-                  </button>
+            <>
+              <div className={styles.ratingDone}>
+                <div className={styles.ratingColumn}>
+                  <div className="eyebrow">Your rating</div>
+                  <div className={styles.ratingColumnScore}>{finalScore}</div>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <button className={styles.iconActionBtn} onClick={handleRerank} aria-label="Re-rank" data-tooltip="Re-rank">
+                      <Repeat size={14} />
+                    </button>
+                    <button className={styles.iconActionBtnDanger} onClick={handleDeleteRatingClick} aria-label="Remove rating" data-tooltip="Remove rating">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
+                {friendsAvg != null && (
+                  <>
+                    <div className={styles.ratingColumnDivider} />
+                    <div className={styles.ratingColumn} style={{ position: 'relative' }}>
+                      <div className="eyebrow">Friends</div>
+                      <div className={styles.ratingColumnScore}>{friendsAvg}</div>
+                      <button className={styles.friendsCountToggle} onClick={() => setShowBreakdown(v => !v)}>
+                        {scoredFriends.length} {scoredFriends.length === 1 ? 'rating' : 'ratings'}
+                        <ChevronDown size={12} className={showBreakdown ? styles.chevronOpen : styles.chevronClosed} />
+                      </button>
+                      {showBreakdown && (
+                        <div className={styles.friendsBreakdownList}>
+                          {scoredFriends.map(friend => (
+                            <div key={friend.uid} className={styles.friendBreakdownRow}>
+                              <div className={styles.friendAvatarCircle}>
+                                {friend.photoURL ? (
+                                  <img src={friend.photoURL} alt={friend.displayName || friend.username || '?'} className={styles.friendAvatarImg} />
+                                ) : (
+                                  <span className={styles.friendAvatarInitials}>
+                                    {(friend.displayName || friend.username || '?')[0].toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                              <span className={styles.friendBreakdownName}>{friend.displayName || friend.username || 'Unknown'}</span>
+                              <span className={styles.friendBreakdownScore}>{friend.primaryScore}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+                {overallAverage && (
+                  <>
+                    <div className={styles.ratingColumnDivider} />
+                    <div className={`${styles.ratingColumn} ${styles.ratingColumnGrow}`}>
+                      <div className="eyebrow">Community avg</div>
+                      <div className={styles.ratingColumnScore}>{overallAverage.average}</div>
+                      <div className={styles.ratingColumnSentiment}>{overallAverage.count} {overallAverage.count === 1 ? 'rating' : 'ratings'}</div>
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
+            </>
           ) : ratingPhase === 'comparing' ? (
             <>
               <h3>Which did you like more?</h3>

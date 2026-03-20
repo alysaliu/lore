@@ -471,6 +471,7 @@
   font-weight: 700;
   color: var(--color-text-default);
   line-height: 1;
+  margin-bottom: var(--space-2);
 }
 
 .ratingColumnSentiment {
@@ -491,14 +492,22 @@
   flex: 1;
 }
 
+.breakdownCard {
+  background: var(--color-surface-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  overflow: visible;
+  padding: var(--space-1) var(--space-2);
+  margin-top: var(--space-4);
+}
+
 .breakdownCollapsible {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: var(--space-3) 0;
+  padding: var(--space-3) var(--space-3);
   border: none;
-  border-top: 1px solid var(--color-border-secondary);
   background: transparent;
   color: var(--color-text-secondary);
   font-size: 14px;
@@ -506,6 +515,7 @@
   font-family: var(--font-sans);
   cursor: pointer;
   transition: color 0.15s ease;
+  border-radius: var(--radius-md);
 }
 
 .breakdownCollapsible:hover {
@@ -524,33 +534,19 @@
 .breakdownTable {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--color-border-secondary);
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  background: var(--color-surface-default);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
 .breakdownRow {
   display: grid;
-  grid-template-columns: 1fr repeat(3, 80px);
+  grid-template-columns: 1fr repeat(2, 80px) 110px;
   align-items: center;
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--color-border-secondary);
-}
-
-.breakdownRow:last-child {
-  border-bottom: none;
+  padding: var(--space-3) var(--space-3);
 }
 
 .breakdownHeader {
-  background: var(--color-surface-contrast);
-}
-
-.breakdownHeader span {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
+  background: transparent;
 }
 
 .breakdownLabelCell {
@@ -559,8 +555,8 @@
 }
 
 .breakdownCell {
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--color-text-default);
   text-align: right;
 }
@@ -573,10 +569,39 @@
 }
 
 .breakdownScore {
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--color-text-default);
 }
+
+.breakdownFriendsToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  border: none;
+  color: var(--color-text-default);
+  font-size: 18px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.breakdownFriendsToggle svg {
+  color: var(--color-text-secondary);
+}
+
+.breakdownFriendsToggle:hover {
+  color: var(--color-text-secondary);
+}
+
+.breakdownEmpty {
+  color: var(--color-text-secondary);
+  font-weight: 300;
+}
+
 
 .iconActionBtn {
   padding: 0;
@@ -710,7 +735,10 @@
 
 .rateAnotherBtn {
   width: fit-content;
-  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-default);
   background: var(--color-surface-default);
@@ -719,6 +747,10 @@
   font-family: var(--font-sans);
   cursor: pointer;
   transition: var(--transition-fast);
+}
+
+.rateAnotherBtn i {
+  color: var(--color-text-secondary);
 }
 
 .rateAnotherBtn:hover {
@@ -786,6 +818,66 @@
 }
 
 /* ── Season dropdown ─────────────────────────── */
+
+/* ── Friends count toggle (inline in rating column) ─── */
+.friendsCountToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+  font-weight: 300;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.friendsCountToggle:hover {
+  color: var(--color-text-default);
+}
+
+/* ── Friends breakdown list (movie) ─── */
+.friendsBreakdownList {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 300px;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-default);
+  text-align: left;
+}
+
+.friendBreakdownRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+}
+
+.friendBreakdownName {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  text-align: left;
+}
+
+.friendBreakdownScore {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-default);
+}
+
 .seasonDropdownRow {
   font-size: 18px;
   font-weight: 450;
