@@ -76,6 +76,15 @@
   text-align: center;
 }
 
+/* Reserves profile-button-sized space while auth is resolving (no Sign in flash). */
+.authPending {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .signupNavBtn {
   flex: 1;
   padding: 0.6rem 1rem;

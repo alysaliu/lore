@@ -4,11 +4,13 @@ import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, increment } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { getRatings, saveRatings, getMediaAverageRating } from '../../lib/ratingsFirestore';
-import { fetchMediaDetails, fetchMediaName, getPosterUrl } from '../../lib/tmdb';
+import { getRatings, saveRatings, getMediaAverageRating, getRatingDocId } from '../../lib/ratingsFirestore';
+import { fetchMediaDetails, getPosterUrl } from '../../lib/tmdb';
+import { createInitialRankKey, keyBetween, rebalanceRankKeys } from '../../lib/lexorank';
+import { publicAssetPath } from '../../lib/publicPath';
 import AddToListModal from '../../components/AddToListModal';
 import { Repeat, Trash2, ChevronDown } from 'lucide-react';
 import styles from './page.module.css';
@@ -19,6 +21,30 @@ const SCORE_RANGES = {
   'good': [7, 8],
   'amazing': [9, 10],
 };
+
+const sortByRank = (a, b) => {
+  const aRank = typeof a.score === 'string' ? a.score : (typeof a.scoreV2 === 'string' ? a.scoreV2 : null);
+  const bRank = typeof b.score === 'string' ? b.score : (typeof b.scoreV2 === 'string' ? b.scoreV2 : null);
+  if (aRank && bRank) {
+    if (aRank < bRank) return -1;
+    if (aRank > bRank) return 1;
+  } else if (aRank && !bRank) {
+    return -1;
+  } else if (!aRank && bRank) {
+    return 1;
+  }
+
+  const aScore = typeof a.score === 'number' ? a.score : Number.NEGATIVE_INFINITY;
+  const bScore = typeof b.score === 'number' ? b.score : Number.NEGATIVE_INFINITY;
+  if (aScore !== bScore) return bScore - aScore;
+  return String(a.id || '').localeCompare(String(b.id || ''));
+};
+
+function scoreForPosition(sentiment, position, totalCount) {
+  const [min, max] = SCORE_RANGES[sentiment] || [1, 10];
+  const ratio = position / (totalCount - 1 || 1);
+  return Math.round((max - (max - min) * ratio) * 10) / 10;
+}
 
 
 function DetailsContent() {
@@ -59,6 +85,7 @@ function DetailsContent() {
   const [pendingDeleteSeason, setPendingDeleteSeason] = useState(undefined);
   const [deleting, setDeleting] = useState(false);
   const [overallAverage, setOverallAverage] = useState(null); // { average, count } | null
+  const [persistingComparison, setPersistingComparison] = useState(false);
 
   // Close friend dropdown when clicking outside
   useEffect(() => {
@@ -283,38 +310,48 @@ function DetailsContent() {
   }, [media?.poster_path]);
 
   const handleNext = async () => {
+    if (persistingComparison) return;
     if (!selectedSentiment) { alert('Please select a rating!'); return; }
     const user = auth.currentUser;
     if (!user) { alert('Please log in to rate'); return; }
 
-    let ratings = await getRatings(user.uid);
+    let ratings = userRatings || await getRatings(user.uid);
 
     if (!ratings[mediaType]) ratings[mediaType] = {};
     if (!ratings[mediaType][selectedSentiment]) ratings[mediaType][selectedSentiment] = [];
 
     const matchesCurrent = (item) => item.mediaId === id && (item.season ?? null) === (selectedSeason ?? null);
 
-    const group = (ratings[mediaType][selectedSentiment] || []).filter(item => !matchesCurrent(item));
+    const group = (ratings[mediaType][selectedSentiment] || [])
+      .filter(item => !matchesCurrent(item))
+      .sort(sortByRank);
 
     if (group.length === 0) {
-      const [, max] = SCORE_RANGES[selectedSentiment];
-      const newRating = { mediaId: id, mediaType, note: note || null, score: max, timestamp: new Date().toISOString(), ...(selectedSeason != null && { season: selectedSeason }) };
-      // Remove from all other sentiment groups before saving
+      const rankKey = createInitialRankKey();
+      const max = scoreForPosition(selectedSentiment, 0, 1);
+      const ratingDocId = getRatingDocId(mediaType, id, selectedSeason);
+      const ratingRef = doc(db, 'users', user.uid, 'ratings', ratingDocId);
+      const existedInRatings = Object.keys(ratings[mediaType] || {}).some((sentiment) =>
+        (ratings[mediaType][sentiment] || []).some(matchesCurrent)
+      );
+      const newRating = {
+        mediaId: id,
+        mediaType,
+        sentiment: selectedSentiment,
+        mediaName: currentTitle || null,
+        note: note || null,
+        score: rankKey,
+        timestamp: new Date().toISOString(),
+        ...(selectedSeason != null && { season: selectedSeason }),
+      };
+      await setDoc(ratingRef, newRating, { merge: true });
+      if (!existedInRatings && !isReranking) await incrementRatingCount(user.uid);
+
       for (const sentiment of Object.keys(ratings[mediaType])) {
-        if (sentiment === selectedSentiment) continue;
-        const cleaned = (ratings[mediaType][sentiment] || []).filter(item => !matchesCurrent(item));
-        if (cleaned.length !== (ratings[mediaType][sentiment] || []).length) {
-          const [sMin, sMax] = SCORE_RANGES[sentiment] || [1, 10];
-          for (let i = 0; i < cleaned.length; i++) {
-            const ratio = i / (cleaned.length - 1 || 1);
-            cleaned[i].score = Math.round((sMax - (sMax - sMin) * ratio) * 10) / 10;
-          }
-          ratings[mediaType][sentiment] = cleaned;
-        }
+        ratings[mediaType][sentiment] = (ratings[mediaType][sentiment] || []).filter(item => !matchesCurrent(item));
       }
       ratings[mediaType][selectedSentiment] = [newRating];
-      await saveRatings(user.uid, ratings);
-      if (!isReranking) await incrementRatingCount(user.uid);
+      setUserRatings(ratings);
       refreshShowRatings(ratings);
       if (mediaType === 'tv') {
         setSelectedSentiment(null);
@@ -336,12 +373,13 @@ function DetailsContent() {
     setInsertionState(initState);
 
     const compareEntry0 = group[initState.mid];
-    const compareName0 = await fetchMediaName(compareEntry0.mediaId, compareEntry0.mediaType || mediaType);
-    setCompareTitle(compareEntry0.season != null ? `${compareName0} (Season ${compareEntry0.season})` : (compareName0 || '?'));
+    const baseName0 = compareEntry0.mediaName || String(compareEntry0.mediaId);
+    setCompareTitle(compareEntry0.season != null ? `${baseName0} (Season ${compareEntry0.season})` : baseName0);
     setRatingPhase('comparing');
   };
 
   const handleComparison = async (prefersCurrent) => {
+    if (persistingComparison) return;
     const { low, high, mid } = insertionState;
     let newLow = low;
     let newHigh = high;
@@ -354,63 +392,77 @@ function DetailsContent() {
 
     if (newLow > newHigh) {
       // Insert at newLow position
-      await saveWithInsertion(newLow);
+      saveWithInsertion(newLow, true);
     } else {
       const newMid = Math.floor((newLow + newHigh) / 2);
       setInsertionState({ low: newLow, high: newHigh, mid: newMid });
       const compareEntry = comparisonGroup[newMid];
-      const compareName = await fetchMediaName(compareEntry.mediaId, compareEntry.mediaType || mediaType);
-      setCompareTitle(compareEntry.season != null ? `${compareName} (Season ${compareEntry.season})` : (compareName || '?'));
+      const baseName = compareEntry.mediaName || String(compareEntry.mediaId);
+      setCompareTitle(compareEntry.season != null ? `${baseName} (Season ${compareEntry.season})` : baseName);
     }
   };
 
   const handleSkip = async () => {
-    await saveWithInsertion(insertionState?.low ?? comparisonGroup.length);
+    if (persistingComparison) return;
+    saveWithInsertion(insertionState?.low ?? comparisonGroup.length, true);
   };
 
-  const   saveWithInsertion = async (position) => {
+  const   saveWithInsertion = async (position, background = false) => {
     const user = auth.currentUser;
-    let ratings = await getRatings(user.uid);
+    let ratings = userRatings || await getRatings(user.uid);
 
     if (!ratings[mediaType]) ratings[mediaType] = {};
 
     const matchesCurrent = (item) => item.mediaId === id && (item.season ?? null) === (selectedSeason ?? null);
+    const existedInRatings = Object.keys(ratings[mediaType] || {}).some((sentiment) =>
+      (ratings[mediaType][sentiment] || []).some(matchesCurrent)
+    );
+    const ratingDocId = getRatingDocId(mediaType, id, selectedSeason);
+    const ratingRef = doc(db, 'users', user.uid, 'ratings', ratingDocId);
 
-    // Remove current item from every sentiment group and recalculate their scores
-    for (const sentiment of Object.keys(ratings[mediaType])) {
-      if (sentiment === selectedSentiment) continue;
-      const cleaned = (ratings[mediaType][sentiment] || []).filter(item => !matchesCurrent(item));
-      if (cleaned.length !== (ratings[mediaType][sentiment] || []).length) {
-        const [sMin, sMax] = SCORE_RANGES[sentiment] || [1, 10];
-        for (let i = 0; i < cleaned.length; i++) {
-          const ratio = i / (cleaned.length - 1 || 1);
-          cleaned[i].score = Math.round((sMax - (sMax - sMin) * ratio) * 10) / 10;
-        }
-        ratings[mediaType][sentiment] = cleaned;
-      }
-    }
+    const group = [...(ratings[mediaType][selectedSentiment] || [])]
+      .filter(item => !matchesCurrent(item))
+      .sort(sortByRank);
 
-    // Build target group, excluding current item
-    const group = [...(ratings[mediaType][selectedSentiment] || [])].filter(item => !matchesCurrent(item));
-    const [min, max] = SCORE_RANGES[selectedSentiment];
+    const leftKey = position > 0 ? group[position - 1]?.score ?? group[position - 1]?.scoreV2 ?? null : null;
+    const rightKey = position < group.length ? group[position]?.score ?? group[position]?.scoreV2 ?? null : null;
+    let nextScore = keyBetween(leftKey, rightKey);
+    let total = group.length + 1;
+    const scoreAtPosition = scoreForPosition(selectedSentiment, position, total);
 
-    group.splice(position, 0, {
+    const newEntry = {
+      id: ratingDocId,
       mediaId: id,
       mediaType,
+      sentiment: selectedSentiment,
+      mediaName: currentTitle || null,
       note: note || null,
-      score: 0,
+      score: '',
       timestamp: new Date().toISOString(),
       ...(selectedSeason != null && { season: selectedSeason }),
-    });
+    };
 
-    for (let i = 0; i < group.length; i++) {
-      const ratio = i / (group.length - 1 || 1);
-      group[i].score = Math.round((max - (max - min) * ratio) * 10) / 10;
+    let rebalancedEntries = null;
+    if (nextScore == null) {
+      // Rare path: no room between neighbor keys. Rebalance only this target group.
+      const expanded = [...group];
+      expanded.splice(position, 0, newEntry);
+      const keys = rebalanceRankKeys(expanded.length);
+      rebalancedEntries = expanded.map((entry, idx) => ({
+        ...entry,
+        score: keys[idx],
+      }));
+      nextScore = rebalancedEntries[position].score;
     }
 
-    ratings[mediaType][selectedSentiment] = group;
-    await saveRatings(user.uid, ratings);
-    if (!isReranking) await incrementRatingCount(user.uid);
+    for (const sentiment of Object.keys(ratings[mediaType])) {
+      ratings[mediaType][sentiment] = (ratings[mediaType][sentiment] || []).filter(item => !matchesCurrent(item));
+    }
+    const optimistic = { ...newEntry, score: nextScore };
+    const updatedGroup = rebalancedEntries || [...group];
+    if (!rebalancedEntries) updatedGroup.splice(position, 0, optimistic);
+    ratings[mediaType][selectedSentiment] = updatedGroup;
+    setUserRatings(ratings);
     refreshShowRatings(ratings);
 
     if (mediaType === 'tv') {
@@ -422,13 +474,54 @@ function DetailsContent() {
       setRatingPhase('initial');
       setShowRatingForm(false);
     } else {
-      setFinalScore(group[position].score);
+      setFinalScore(scoreAtPosition);
       setExistingSentiment(selectedSentiment);
       setIsReranking(false);
       setRatingPhase('done');
       setInsertionState(null);
     }
     setInsertionState(null);
+
+    const persistWrite = async () => {
+      if (rebalancedEntries) {
+        const batch = writeBatch(db);
+        rebalancedEntries.forEach((entry) => {
+          const entryId = entry.id || getRatingDocId(mediaType, entry.mediaId, entry.season);
+          const ref = doc(db, 'users', user.uid, 'ratings', entryId);
+          if (entryId === ratingDocId) {
+            batch.set(ref, { ...newEntry, score: entry.score }, { merge: true });
+          } else {
+            batch.update(ref, { score: entry.score });
+          }
+        });
+        await batch.commit();
+      } else {
+        await setDoc(ratingRef, { ...newEntry, score: nextScore }, { merge: true });
+      }
+
+      if (!existedInRatings && !isReranking) await incrementRatingCount(user.uid);
+    };
+
+    if (background) {
+      setPersistingComparison(true);
+      persistWrite().catch(async (e) => {
+        // eslint-disable-next-line no-console
+        console.error('Failed to persist rating update', e);
+        alert('Could not finish saving your rating. Please try again.');
+        try {
+          const fresh = await getRatings(user.uid);
+          setUserRatings(fresh);
+          refreshShowRatings(fresh);
+        } catch {
+          // ignore secondary read error
+        }
+      }).finally(() => {
+        setPersistingComparison(false);
+      });
+      return;
+    }
+
+    await persistWrite();
   };
 
   const handleRerankSeason = (season) => {
@@ -577,15 +670,13 @@ function DetailsContent() {
 
   const incrementRatingCount = async (uid) => {
     const userRef = doc(db, 'users', uid);
-    const snap = await getDoc(userRef);
-    const current = snap.exists() && snap.data().ratingCount ? snap.data().ratingCount : 0;
-    await updateDoc(userRef, { ratingCount: current + 1 });
+    await updateDoc(userRef, { ratingCount: increment(1) });
   };
 
   if (loading) {
     return (
       <div className={styles.loading}>
-        <Image src="/images/jumpingin.gif" alt="Loading" width={300} height={300} unoptimized />
+        <Image src={publicAssetPath('/images/jumpingin.gif')} alt="Loading" width={300} height={300} unoptimized />
         Hold tight, we&apos;re sniffing around for the right content...
       </div>
     );
@@ -828,14 +919,14 @@ function DetailsContent() {
             <>
               <h3>Which did you like more?</h3>
               <div className={styles.comparisonButtons}>
-                <button className={styles.compareBtn} onClick={() => handleComparison(true)}>
+                <button className={styles.compareBtn} onClick={() => handleComparison(true)} disabled={persistingComparison}>
                   {selectedSeason != null ? `${currentTitle} (Season ${selectedSeason})` : currentTitle}
                 </button>
-                <button className={styles.compareBtn} onClick={() => handleComparison(false)}>
+                <button className={styles.compareBtn} onClick={() => handleComparison(false)} disabled={persistingComparison}>
                   {compareTitle}
                 </button>
               </div>
-              <button className={styles.skipLink} onClick={handleSkip}>
+              <button className={styles.skipLink} onClick={handleSkip} disabled={persistingComparison}>
                 Too tough, skip
               </button>
             </>
@@ -884,12 +975,12 @@ function DetailsContent() {
                   </button>
                 ))}
               </div>
-              <input
-                type="text"
+              <textarea
                 placeholder="Leave an optional note for your review"
                 className={styles.noteInput}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
+                rows={3}
               />
               <div className={styles.buttonRow}>
                 {mediaType === 'tv' && existingShowRatings.length > 0 && (

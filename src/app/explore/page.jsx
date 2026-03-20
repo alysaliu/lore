@@ -6,6 +6,7 @@ import Image from 'next/image';
 import MediaCard from '../../components/MediaCard';
 import AddToListModal from '../../components/AddToListModal';
 import { searchMedia } from '../../lib/tmdb';
+import { publicAssetPath } from '../../lib/publicPath';
 import { auth, db } from '../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import styles from './page.module.css';
@@ -149,7 +150,7 @@ export default function ExplorePage() {
           {results === null ? (
             <div className={styles.emptyState}>
               <Image
-                src="/images/Rabbit.svg"
+                src={publicAssetPath('/images/Rabbit.svg')}
                 alt="Lore"
                 width={60}
                 height={60}

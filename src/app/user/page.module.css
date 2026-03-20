@@ -1,3 +1,15 @@
+.profileMissingUid {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: calc(100vh - var(--navbar-height));
+  padding-top: var(--space-6);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+}
+
 .profileSection {
   background: var(--color-surface-default);
   min-height: calc(100vh - var(--navbar-height));
@@ -60,6 +72,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+}
+
+.profileHeaderPending {
+  visibility: hidden;
 }
 
 .username {
@@ -125,10 +141,25 @@
   opacity: 0.85;
 }
 
+.statItemButton:disabled {
+  cursor: default;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.statItemButton:disabled:hover {
+  opacity: 1;
+}
+
 .statNumber {
   font-weight: 590;
   font-size: 20px;
   color: var(--color-text-default);
+  min-height: 1.25em;
+}
+
+.statNumberPending {
+  visibility: hidden;
 }
 
 .buttons {

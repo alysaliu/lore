@@ -1,3 +1,5 @@
+import { publicAssetPath } from './publicPath';
+
 const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const BASE_URL = 'https://api.themoviedb.org/3';
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
@@ -7,7 +9,9 @@ export async function searchMedia(query) {
     `${BASE_URL}/search/multi?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(query)}&page=1&include_adult=false`
   );
   const data = await res.json();
-  return data.results || [];
+  const results = data.results || [];
+  // Multi search includes people (actors); we only want movies and TV.
+  return results.filter((item) => item.media_type === 'movie' || item.media_type === 'tv');
 }
 
 /**
@@ -45,7 +49,7 @@ export async function fetchMediaName(id, mediaType) {
 }
 
 export function getPosterUrl(posterPath, size = 'w185') {
-  if (!posterPath) return '/images/placeholder.png';
+  if (!posterPath) return publicAssetPath('/images/placeholder.png');
   return `${TMDB_IMAGE_BASE}/${size}${posterPath}`;
 }
 

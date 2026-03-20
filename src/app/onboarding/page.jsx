@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { ArrowLeft, FolderOpen, ExternalLink, Smile, Upload } from 'lucide-react';
 import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { publicAssetPath } from '../../lib/publicPath';
 import { useAuth } from '../../contexts/AuthContext';
 import { useImportStatus } from '../../contexts/ImportStatusContext';
 import { parseRatingsCsv, importLetterboxdRatings } from '../../lib/letterboxdImport';

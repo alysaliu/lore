@@ -42,7 +42,7 @@ export async function getMediaAverageRating(mediaKey) {
 
 /**
  * Fetch all rating docs for a user and return the nested shape:
- * { movie: { [sentiment]: [{ mediaId, mediaType?, note, score, timestamp, season? }] }, tv: { ... } }
+ * { movie: { [sentiment]: [{ id, mediaId, mediaType?, mediaName?, note, score, scoreV2?, timestamp, season? }] }, tv: { ... } }
  */
 export async function getRatings(uid) {
   if (!db) return { movie: {}, tv: {} };
@@ -55,10 +55,13 @@ export async function getRatings(uid) {
     const sentiment = data.sentiment || 'good';
     if (!ratings[mediaType][sentiment]) ratings[mediaType][sentiment] = [];
     ratings[mediaType][sentiment].push({
+      id: d.id,
       mediaId: data.mediaId,
       mediaType: data.mediaType || mediaType,
+      mediaName: data.mediaName ?? null,
       note: data.note ?? null,
       score: data.score,
+      scoreV2: data.scoreV2 ?? null,
       timestamp: data.timestamp ?? null,
       ...(data.season != null && { season: data.season }),
     });
@@ -84,8 +87,10 @@ function flattenRatingsToEntries(ratings) {
             mediaType: entry.mediaType || mediaType,
             sentiment,
             mediaId: entry.mediaId,
+            mediaName: entry.mediaName ?? null,
             note: entry.note ?? null,
             score: entry.score,
+            scoreV2: entry.scoreV2 ?? null,
             timestamp: entry.timestamp ?? null,
             ...(entry.season != null && { season: entry.season }),
           },
@@ -147,12 +152,51 @@ export async function saveRatings(uid, ratings) {
 }
 
 /**
- * Delete all rating docs in the subcollection. Caller should also set ratingCount on the user doc.
+ * Delete all rating docs in the subcollection for a user.
+ * Also removes this user's denormalized entries under
+ * mediaRatings/{mediaKey}/userRatings/{uid_segment}
+ * and updates media aggregates via deleteMediaRatingEntry.
+ * Caller should also set ratingCount on the user doc.
  */
 export async function deleteAllRatings(uid) {
   if (!db) return;
+
   const colRef = collection(db, 'users', uid, 'ratings');
   const snap = await getDocs(colRef);
+  const denormRefsToDelete = [];
+  const removedCountByMediaKey = new Map();
+
+  // Assumes users/{uid}/ratings and denormalized mediaRatings are kept in sync.
+  for (const d of snap.docs) {
+    const parsed = parseUserRatingDocId(d.id);
+    if (!parsed) continue;
+    const ratingDocId = `${uid}_${parsed.segmentId}`;
+    denormRefsToDelete.push(doc(db, 'mediaRatings', parsed.mediaKey, 'userRatings', ratingDocId));
+    removedCountByMediaKey.set(parsed.mediaKey, (removedCountByMediaKey.get(parsed.mediaKey) || 0) + 1);
+  }
+
+  for (let i = 0; i < denormRefsToDelete.length; i += BATCH_SIZE) {
+    const batch = writeBatch(db);
+    const chunk = denormRefsToDelete.slice(i, i + BATCH_SIZE);
+    for (const ref of chunk) {
+      batch.delete(ref);
+    }
+    await batch.commit();
+  }
+
+  // 2) Lower mediaRatings/{mediaKey}.ratingCount by exactly how many denormalized docs were removed.
+  for (const [mediaKey, removedCount] of removedCountByMediaKey.entries()) {
+    const aggRef = doc(db, 'mediaRatings', mediaKey);
+    await runTransaction(db, async (transaction) => {
+      const aggSnap = await transaction.get(aggRef);
+      const agg = aggSnap.exists() ? aggSnap.data() : AGGREGATE_FIELDS;
+      const current = typeof agg.ratingCount === 'number' ? agg.ratingCount : 0;
+      const next = Math.max(0, current - removedCount);
+      transaction.set(aggRef, { ratingCount: next }, { merge: true });
+    });
+  }
+
+  // 3) Remove per-user ratings docs.
   for (let i = 0; i < snap.docs.length; i += BATCH_SIZE) {
     const batch = writeBatch(db);
     const chunk = snap.docs.slice(i, i + BATCH_SIZE);
@@ -172,9 +216,13 @@ function parseUserRatingDocId(userRatingDocId) {
   if (userRatingDocId.startsWith('movie_')) {
     return { mediaKey: userRatingDocId, segmentId: 'show' };
   }
-  const tvMatch = userRatingDocId.match(/^tv_(\d+)_(show|s\d+)$/);
+  const tvMatch = userRatingDocId.match(/^tv_(\d+)_(show|s\d+|\d+)$/);
   if (tvMatch) {
-    return { mediaKey: `tv_${tvMatch[1]}`, segmentId: tvMatch[2] };
+    const rawSegment = tvMatch[2];
+    const segmentId = rawSegment === 'show'
+      ? 'show'
+      : (rawSegment.startsWith('s') ? rawSegment : `s${rawSegment}`);
+    return { mediaKey: `tv_${tvMatch[1]}`, segmentId };
   }
   return null;
 }

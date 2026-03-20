@@ -17,6 +17,7 @@ function UserContent() {
   const { user } = useAuth();
 
   const [targetUserData, setTargetUserData] = useState(null);
+  const [profileReady, setProfileReady] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [listModalType, setListModalType] = useState(null); // 'followers' | 'following'
   const [listUsers, setListUsers] = useState([]);
@@ -39,9 +40,21 @@ function UserContent() {
   useEffect(() => {
     if (!selectedUserId) return;
     let cancelled = false;
-    getDoc(doc(db, 'users', selectedUserId)).then((snap) => {
-      if (!cancelled && snap.exists()) setTargetUserData(snap.data());
-    });
+    setProfileReady(false);
+    setTargetUserData(null);
+    getDoc(doc(db, 'users', selectedUserId))
+      .then((snap) => {
+        if (cancelled) return;
+        if (snap.exists()) setTargetUserData(snap.data());
+        else setTargetUserData(null);
+        setProfileReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTargetUserData(null);
+          setProfileReady(true);
+        }
+      });
     return () => { cancelled = true; };
   }, [selectedUserId]);
 
@@ -109,9 +122,21 @@ function UserContent() {
     setListUsers([]);
   };
 
+  if (!selectedUserId) {
+    return (
+      <div className={styles.profileMissingUid}>
+        <Link href="/">Back to home</Link>
+        <span>This link is missing a profile id.</span>
+      </div>
+    );
+  }
+
+  if (!profileReady) return null;
+
   const fullName = targetUserData
     ? `${targetUserData.firstname || ''} ${targetUserData.lastname || ''}`.trim()
     : '';
+  const displayName = fullName || 'Unnamed';
   const ratingCount = targetUserData?.ratingCount || 0;
   const followersCount = targetUserData?.followerlist?.length || 0;
   const followingCount = targetUserData?.followinglist?.length || 0;
@@ -126,11 +151,14 @@ function UserContent() {
                 <div className={styles.avatarCircle}>
                   {targetUserData?.photoURL
                     ? <Image src={targetUserData.photoURL} alt="Profile" className={styles.avatarImg} width={96} height={96} />
-                    : <span className={styles.avatarInitials}>{fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}</span>
-                  }
+                    : (
+                      <span className={styles.avatarInitials}>
+                        {fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}
+                      </span>
+                    )}
                 </div>
                 <div className={styles.nameBlock}>
-                  <h2>{fullName || 'Unnamed'}</h2>
+                  <h2>{displayName}</h2>
                   {targetUserData?.username && (
                     <p className={styles.username}>@{targetUserData.username}</p>
                   )}
