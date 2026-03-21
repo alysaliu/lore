@@ -7,12 +7,18 @@ import Image from 'next/image';
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, increment } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { deleteSingleRatingEntry, getMediaAverageRating, getRatingDocId } from '../../lib/ratingsFirestore';
+import {
+  deleteSingleRatingEntry,
+  getMediaSentimentCounts,
+  getRatingDocId,
+  upsertDenormalizedMediaRating,
+} from '../../lib/ratingsFirestore';
 import { useRatings } from '../../contexts/RatingsContext';
 import { fetchMediaDetails, getPosterUrl } from '../../lib/tmdb';
 import { createInitialRankKey, keyBetween, rebalanceRankKeys } from '../../lib/lexorank';
 import { deriveDisplayScoresForGroup, deriveDisplayScoresForTv, scoreForPosition, sortRatingsByRank } from '../../lib/ratingsRanking';
 import { publicAssetPath } from '../../lib/publicPath';
+import { computeCommunityRatingFromSentiment } from '../../lib/communitySentimentScore';
 import AddToListModal from '../../components/AddToListModal';
 import { Repeat, Trash2, ChevronDown } from 'lucide-react';
 import styles from './page.module.css';
@@ -63,34 +69,10 @@ function DetailsContent() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [pendingDeleteSeason, setPendingDeleteSeason] = useState(undefined);
   const [deleting, setDeleting] = useState(false);
-  const [overallAverage, setOverallAverage] = useState(null); // { average, count } | null
+  /** Non-season community sentiment from mediaRatings aggregate (movies + whole-show TV). */
+  const [communitySentiment, setCommunitySentiment] = useState(null);
   const [persistingComparison, setPersistingComparison] = useState(false);
   const { ratings: userRatings, setRatings: setUserRatings, refreshRatings, loading: ratingsLoading } = useRatings();
-
-  const upsertMediaRatingEntry = useCallback(async (uid, entry, { isNew = false } = {}) => {
-    const mediaKey = entry.mediaType === 'tv' ? `tv_${entry.mediaId}` : `movie_${entry.mediaId}`;
-    const aggRef = doc(db, 'mediaRatings', mediaKey);
-    const userRef = doc(db, 'mediaRatings', mediaKey, 'userRatings', uid);
-    const ratingRef = entry.mediaType === 'tv' && entry.season != null
-      ? doc(userRef, 'seasons', String(entry.season))
-      : userRef;
-
-    await setDoc(ratingRef, {
-      uid,
-      mediaType: entry.mediaType === 'tv' ? 'tv' : 'movie',
-      mediaId: entry.mediaId,
-      sentiment: entry.sentiment,
-      mediaName: entry.mediaName ?? null,
-      note: entry.note ?? null,
-      score: entry.score ?? null,
-      timestamp: entry.timestamp ?? null,
-      ...(entry.season != null && { season: entry.season }),
-    }, { merge: true });
-
-    if (isNew) {
-      await setDoc(aggRef, { ratingCount: increment(1) }, { merge: true });
-    }
-  }, []);
 
   const getUserRatingRef = useCallback((uid, mediaTypeValue, mediaIdValue, seasonValue) => {
     if (mediaTypeValue === 'movie') {
@@ -156,11 +138,11 @@ function DetailsContent() {
     return () => clearTimeout(timer);
   }, [id, mediaType]);
 
-  // Load overall average rating for this title (from mediaRatings aggregate)
+  // Load community sentiment (movies + whole-show TV only; season ratings excluded)
   useEffect(() => {
     if (!id || !mediaType) return;
     const mediaKey = mediaType === 'tv' ? `tv_${id}` : `movie_${id}`;
-    getMediaAverageRating(mediaKey).then(setOverallAverage).catch(() => setOverallAverage(null));
+    getMediaSentimentCounts(mediaKey).then(setCommunitySentiment).catch(() => setCommunitySentiment(null));
   }, [id, mediaType]);
 
   // Apply global ratings cache to local details state.
@@ -399,7 +381,7 @@ function DetailsContent() {
         ...(selectedSeason != null && { season: selectedSeason }),
       };
       await setDoc(ratingRef, newRating, { merge: true });
-      await upsertMediaRatingEntry(user.uid, newRating, { isNew: !existedInRatings && !isReranking });
+      await upsertDenormalizedMediaRating(user.uid, newRating);
       if (
         userRatingCountsTowardProfileTotal(mediaType, selectedSeason)
         && !existedInRatings
@@ -560,16 +542,12 @@ function DetailsContent() {
         });
         await batch.commit();
         await Promise.all(
-          rebalancedEntries.map((entry) => upsertMediaRatingEntry(user.uid, entry, { isNew: false }))
+          rebalancedEntries.map((entry) => upsertDenormalizedMediaRating(user.uid, entry))
         );
       } else {
         const persisted = { ...newEntry, score: nextScore };
         await setDoc(ratingRef, persisted, { merge: true });
-        await upsertMediaRatingEntry(
-          user.uid,
-          persisted,
-          { isNew: !existedInRatings && !isReranking }
-        );
+        await upsertDenormalizedMediaRating(user.uid, persisted);
       }
 
       if (!existedInRatings && !isReranking) await incrementRatingCount(user.uid);
@@ -657,6 +635,14 @@ function DetailsContent() {
     return Math.round((scores.reduce((sum, s) => sum + s, 0) / scores.length) * 10) / 10;
   };
 
+  const communityRatingScore = communitySentiment
+    ? computeCommunityRatingFromSentiment(communitySentiment)
+    : null;
+
+  const communityRatingCountLabel = communitySentiment
+    ? `${communitySentiment.total} ${communitySentiment.total === 1 ? 'rating' : 'ratings'}`
+    : '';
+
   const handleDeleteRatingClick = () => {
     setPendingDeleteSeason(undefined);
     setShowDeleteConfirm(true);
@@ -719,13 +705,15 @@ function DetailsContent() {
               await updateDoc(doc(db, 'users', user.uid), { ratingCount: increment(-1) });
             }
 
-            if (mediaType === 'movie') {
-              const mediaKey = `movie_${id}`;
+            const shouldRefreshCommunity =
+              mediaType === 'movie' || (mediaType === 'tv' && targetSeason == null);
+            if (shouldRefreshCommunity) {
+              const mediaKey = mediaType === 'tv' ? `tv_${id}` : `movie_${id}`;
               try {
-                const updated = await getMediaAverageRating(mediaKey);
-                setOverallAverage(updated);
+                const updated = await getMediaSentimentCounts(mediaKey);
+                setCommunitySentiment(updated);
               } catch {
-                setOverallAverage(null);
+                setCommunitySentiment(null);
               }
             }
           } catch (e) {
@@ -850,13 +838,13 @@ function DetailsContent() {
                     </div>
                   </>
                 )}
-                {overallAverage && (
+                {communitySentiment && communityRatingScore != null && (
                   <>
                     <div className={styles.ratingColumnDivider} />
                     <div className={`${styles.ratingColumn} ${styles.ratingColumnGrow}`}>
-                      <div className="eyebrow">Community avg</div>
-                      <div className={styles.ratingColumnScore}>{overallAverage.average}</div>
-                      <div className={styles.ratingColumnSentiment}>{overallAverage.count} {overallAverage.count === 1 ? 'rating' : 'ratings'}</div>
+                      <div className="eyebrow">Community</div>
+                      <div className={styles.ratingColumnScore}>{communityRatingScore}</div>
+                      <div className={styles.ratingColumnSentiment}>{communityRatingCountLabel}</div>
                     </div>
                   </>
                 )}
@@ -930,7 +918,15 @@ function DetailsContent() {
                             </>
                           ) : <span className={styles.breakdownEmpty}>–</span>}
                         </span>
-                        <span className={styles.breakdownCell}><span className={styles.breakdownEmpty}>–</span></span>
+                        <span className={styles.breakdownCell}>
+                          {season === null && communitySentiment && communityRatingScore != null
+                            ? (
+                              <span className={styles.breakdownScore} title={communityRatingCountLabel}>
+                                {communityRatingScore}
+                              </span>
+                              )
+                            : <span className={styles.breakdownEmpty}>–</span>}
+                        </span>
                       </div>
                     );
                   })}
@@ -994,13 +990,13 @@ function DetailsContent() {
                     </div>
                   </>
                 )}
-                {overallAverage && (
+                {communitySentiment && communityRatingScore != null && (
                   <>
                     <div className={styles.ratingColumnDivider} />
                     <div className={`${styles.ratingColumn} ${styles.ratingColumnGrow}`}>
-                      <div className="eyebrow">Community avg</div>
-                      <div className={styles.ratingColumnScore}>{overallAverage.average}</div>
-                      <div className={styles.ratingColumnSentiment}>{overallAverage.count} {overallAverage.count === 1 ? 'rating' : 'ratings'}</div>
+                      <div className="eyebrow">Community</div>
+                      <div className={styles.ratingColumnScore}>{communityRatingScore}</div>
+                      <div className={styles.ratingColumnSentiment}>{communityRatingCountLabel}</div>
                     </div>
                   </>
                 )}
