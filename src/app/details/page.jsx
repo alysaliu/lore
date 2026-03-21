@@ -17,6 +17,16 @@ import AddToListModal from '../../components/AddToListModal';
 import { Repeat, Trash2, ChevronDown } from 'lucide-react';
 import styles from './page.module.css';
 
+/**
+ * `users/{uid}.ratingCount` should only reflect movies + whole-show TV ratings.
+ * Per-season TV ratings must not change this counter.
+ */
+function userRatingCountsTowardProfileTotal(mediaType, season) {
+  if (mediaType === 'movie') return true;
+  if (mediaType === 'tv') return season == null;
+  return false;
+}
+
 function DetailsContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id');
@@ -390,7 +400,13 @@ function DetailsContent() {
       };
       await setDoc(ratingRef, newRating, { merge: true });
       await upsertMediaRatingEntry(user.uid, newRating, { isNew: !existedInRatings && !isReranking });
-      if (!existedInRatings && !isReranking) await incrementRatingCount(user.uid);
+      if (
+        userRatingCountsTowardProfileTotal(mediaType, selectedSeason)
+        && !existedInRatings
+        && !isReranking
+      ) {
+        await incrementRatingCount(user.uid);
+      }
 
       for (const sentiment of Object.keys(ratings[mediaType])) {
         ratings[mediaType][sentiment] = (ratings[mediaType][sentiment] || []).filter(item => !matchesCurrent(item));
@@ -699,7 +715,9 @@ function DetailsContent() {
               mediaId: id,
               season: targetSeason,
             });
-            await updateDoc(doc(db, 'users', user.uid), { ratingCount: increment(-1) });
+            if (userRatingCountsTowardProfileTotal(mediaType, targetSeason)) {
+              await updateDoc(doc(db, 'users', user.uid), { ratingCount: increment(-1) });
+            }
 
             if (mediaType === 'movie') {
               const mediaKey = `movie_${id}`;
