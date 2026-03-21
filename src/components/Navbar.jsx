@@ -1,16 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
+import AvatarImage from './AvatarImage';
 import { publicAssetPath } from '../lib/publicPath';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
   const router = useRouter();
-  const { user, initials, photoURL, signOut, loading } = useAuth();
+  const { user, initials, photoURL, photoURLThumb, signOut, loading } = useAuth();
+  const [avatarBroken, setAvatarBroken] = useState(false);
+  const hasAvatarUrl = Boolean(photoURLThumb || photoURL);
+
+  useEffect(() => {
+    setAvatarBroken(false);
+  }, [photoURLThumb, photoURL]);
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -68,10 +75,20 @@ export default function Navbar() {
                   aria-label="User menu"
                   onClick={() => router.push('/profile')}
                 >
-                  {photoURL
-                    ? <Image src={photoURL} alt="Profile" className={styles.profileCircleImg} width={36} height={36} priority />
-                    : initials
-                  }
+                  {hasAvatarUrl && !avatarBroken ? (
+                    <AvatarImage
+                      thumbUrl={photoURLThumb}
+                      photoUrl={photoURL}
+                      alt="Profile"
+                      className={styles.profileCircleImg}
+                      width={36}
+                      height={36}
+                      priority
+                      onExhausted={() => setAvatarBroken(true)}
+                    />
+                  ) : (
+                    initials
+                  )}
                 </button>
                 {userMenuOpen && (
                   <div className={styles.userDropdown} role="menu">

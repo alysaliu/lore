@@ -4,8 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft, FolderOpen, ExternalLink, Smile, Upload } from 'lucide-react';
-import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc, writeBatch } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { doc, getDoc, deleteDoc, deleteField, serverTimestamp, updateDoc, writeBatch } from 'firebase/firestore';
+import { ref, uploadBytes } from 'firebase/storage';
+import { db, storage } from '../../lib/firebase';
+import { buildPublicFirebaseDownloadUrl, stripFirebaseStorageUrlToken } from '../../lib/firebaseStorageUrl';
+import { resizeImageForAvatar } from '../../lib/imageUtils';
 import { publicAssetPath } from '../../lib/publicPath';
 import { useAuth } from '../../contexts/AuthContext';
 import { useImportStatus } from '../../contexts/ImportStatusContext';
@@ -99,6 +102,28 @@ export default function OnboardingPage() {
       const lastname = nameParts.slice(1).join(' ') || '';
       const fullNameLower = `${firstname} ${lastname}`.trim().toLowerCase();
 
+      /** Tokenless Storage URL for flat avatar, or stripped Auth/Google URL. */
+      let photoURLToSave = user.photoURL ? stripFirebaseStorageUrlToken(user.photoURL) : null;
+
+      if (avatarFile) {
+        if (!storage) {
+          setError('Storage is not configured. Check NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET.');
+          setSaving(false);
+          return;
+        }
+        const bucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+        if (!bucket) {
+          setError('Storage bucket is not configured.');
+          setSaving(false);
+          return;
+        }
+        const objectPath = `avatars/${user.uid}`;
+        const storageRef = ref(storage, objectPath);
+        const blob = await resizeImageForAvatar(avatarFile);
+        await uploadBytes(storageRef, blob);
+        photoURLToSave = buildPublicFirebaseDownloadUrl(bucket, objectPath);
+      }
+
       if (savedUsername && savedUsername !== trimmed) {
         await deleteDoc(doc(db, 'usernames', savedUsername));
       }
@@ -110,14 +135,20 @@ export default function OnboardingPage() {
       }
 
       if (userSnap.exists()) {
-        batch.set(userRef, { username: trimmed }, { merge: true });
+        const patch = { username: trimmed };
+        if (avatarFile) {
+          patch.photoURL = photoURLToSave;
+          patch.photoURLThumb = deleteField();
+          patch.photoURLSearch = deleteField();
+        }
+        batch.set(userRef, patch, { merge: true });
       } else {
         batch.set(userRef, {
           firstname,
           lastname,
           fullNameLower: fullNameLower || null,
           email: user.email || null,
-          photoURL: user.photoURL || null,
+          photoURL: photoURLToSave,
           username: trimmed,
           isDeveloper: false,
           createdAt: serverTimestamp(),
