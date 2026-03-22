@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import MediaCard from '../../components/MediaCard';
 import AddToListModal from '../../components/AddToListModal';
-import { searchMedia } from '../../lib/tmdb';
+import { searchMedia, getTrendingMovies, getTrendingShows } from '../../lib/tmdb';
 import { publicAssetPath } from '../../lib/publicPath';
 import { auth, db } from '../../lib/firebase';
 import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
@@ -90,6 +90,8 @@ export default function ExplorePage() {
   const [watchlist, setWatchlist] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [modalMedia, setModalMedia] = useState(null);
+  const [trendingMovies, setTrendingMovies] = useState([]);
+  const [trendingShows, setTrendingShows] = useState([]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -99,6 +101,13 @@ export default function ExplorePage() {
       setWatchlist(snap.exists() ? snap.data().lists?.watchlist || [] : []);
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    Promise.all([getTrendingMovies(), getTrendingShows()]).then(([movies, shows]) => {
+      setTrendingMovies(movies);
+      setTrendingShows(shows);
+    });
   }, []);
 
   const handleModalClose = async () => {
@@ -184,7 +193,7 @@ export default function ExplorePage() {
         <div className={styles.searchWrapper}>
           <input
             type="text"
-            placeholder="Search movies, shows, or usernames"
+            placeholder="Search movies, shows, or users"
             className={styles.searchInput}
             value={query}
             onChange={handleInput}
@@ -209,19 +218,38 @@ export default function ExplorePage() {
           </div>
         </div>
 
+        {results === null ? (
+          <div className={styles.trendingContainer}>
+            {[{ label: 'Trending Movies', items: trendingMovies }, { label: 'Trending Shows', items: trendingShows }].map(({ label, items }) => (
+              <div key={label} className={styles.trendingSection}>
+                <h2 className={styles.trendingTitle}>{label}</h2>
+                <div className={styles.trendingRow}>
+                  {items.map((item) => {
+                    const title = item.title || item.name || 'No Title';
+                    const year = (item.release_date || item.first_air_date || '').split('-')[0];
+                    return (
+                      <div key={`${item.media_type}-${item.id}`} className={styles.trendingCard}>
+                        <MediaCard
+                          mediaId={item.id}
+                          mediaType={item.media_type}
+                          title={title}
+                          year={year}
+                          overview={item.overview}
+                          posterPath={item.poster_path}
+                          variant="grid"
+                          inWatchlist={watchlist.some((w) => w.mediaId === String(item.id))}
+                          onAddToList={(id, type) => setModalMedia({ id, type })}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className={styles.resultsContainer}>
-          {results === null ? (
-            <div className={styles.emptyState}>
-              <Image
-                src={publicAssetPath('/images/Rabbit.svg')}
-                alt="Lore"
-                width={60}
-                height={60}
-                className={styles.emptyLogo}
-              />
-              Start typing to enter a rabbithole!
-            </div>
-          ) : results.length === 0 ? (
+          {results.length === 0 ? (
             <div className={styles.emptyState}>No results found.</div>
           ) : (
             results.map((item) => {
@@ -236,7 +264,7 @@ export default function ExplorePage() {
                     <div className={styles.profileCardAvatar}>
                       <div className={styles.profileCardAvatarCircle}>
                         {item.photoURL ? (
-                          <Image src={item.photoURL} alt="" width={160} height={160} className={styles.profileCardImg} />
+                          <Image src={item.photoURL} alt="" width={100} height={100} className={styles.profileCardImg} />
                         ) : (
                           <span className={styles.profileCardInitials}>
                             {fullName ? `${fullName.split(' ')[0][0]}${fullName.split(' ')[1]?.[0] || ''}`.toUpperCase() : '?'}
@@ -270,6 +298,7 @@ export default function ExplorePage() {
             })
           )}
         </div>
+        )}
       </div>
     </div>
     </>

@@ -183,8 +183,8 @@
 }
 
 .profileCardAvatarCircle {
-  width: 100%;
-  aspect-ratio: 1;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
@@ -201,7 +201,7 @@
 }
 
 .profileCardInitials {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 400;
   color: var(--color-text-secondary);
 }
@@ -216,9 +216,21 @@
 }
 
 .profileCardName {
-  font-weight: 500;
-  font-size: 14px;
+  font-size: 0.95rem;
+  font-weight: 400;
   color: var(--color-text-default);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-align: center;
+  width: 100%;
+}
+
+.profileCardUsername {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -226,14 +238,68 @@
   width: 100%;
 }
 
-.profileCardUsername {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: center;
-  width: 100%;
+/* Trending sections (shown before search input) */
+.trendingContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  overflow-y: auto;
+  padding: var(--space-4) 0 var(--space-6);
+  flex: 1;
+  min-height: 0;
+}
+
+.trendingContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.trendingContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.trendingContainer::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 3px;
+}
+
+.trendingSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.trendingTitle {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-text-default);
+  margin: 0;
+}
+
+.trendingRow {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-default) transparent;
+}
+
+.trendingRow::-webkit-scrollbar {
+  height: 4px;
+}
+
+.trendingRow::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.trendingRow::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 3px;
+}
+
+.trendingCard {
+  flex: 0 0 140px;
 }
 
 @media screen and (max-width: 960px) {
