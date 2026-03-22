@@ -3,36 +3,83 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue } from 'framer-motion';
+import { collection, getCountFromServer } from 'firebase/firestore';
 import styles from './page.module.css';
+import { db } from '../lib/firebase';
+import { useAuth } from '../contexts/AuthContext';
 import { getPopularMedia, getPosterUrl } from '../lib/tmdb';
 
+// Positions as fractions of viewport width/height
 const INITIAL_POSITIONS = [
-  { x: 60,   y: 300, rotation: -12 },
-  { x: 240,  y: 410, rotation:   8 },
-  { x: 140,  y: 530, rotation: -18 },
-  { x: 380,  y: 340, rotation:   6 },
-  { x: 480,  y: 490, rotation: -9  },
-  { x: 620,  y: 360, rotation:  14 },
-  { x: 700,  y: 520, rotation:  -5 },
-  { x: 840,  y: 310, rotation:  10 },
-  { x: 920,  y: 470, rotation: -15 },
-  { x: 1040, y: 380, rotation:   7 },
-  { x: 1100, y: 540, rotation: -11 },
-  { x: 1180, y: 290, rotation:  16 },
-  { x: 330,  y: 610, rotation:  -7 },
-  { x: 780,  y: 630, rotation:  12 },
+  { xPct: 0.19, yPct: 0.38, rotation: -12 },
+  { xPct: 0.28, yPct: 0.48, rotation:   8 },
+  { xPct: 0.23, yPct: 0.59, rotation: -18 },
+  { xPct: 0.35, yPct: 0.42, rotation:   6 },
+  { xPct: 0.40, yPct: 0.55, rotation:  -9 },
+  { xPct: 0.46, yPct: 0.43, rotation:  14 },
+  { xPct: 0.50, yPct: 0.58, rotation:  -5 },
+  { xPct: 0.57, yPct: 0.39, rotation:  10 },
+  { xPct: 0.61, yPct: 0.53, rotation: -15 },
+  { xPct: 0.66, yPct: 0.45, rotation:   7 },
+  { xPct: 0.69, yPct: 0.60, rotation: -11 },
+  { xPct: 0.73, yPct: 0.37, rotation:  16 },
+  { xPct: 0.32, yPct: 0.66, rotation:  -7 },
+  { xPct: 0.54, yPct: 0.68, rotation:  12 },
 ];
+
+function PosterCard({ item, initialX, initialY, rotation, zIndex, onDragStart }) {
+  const x = useMotionValue(initialX);
+  const y = useMotionValue(initialY);
+
+  return (
+    <motion.div
+      className={styles.posterCard}
+      style={{ x, y, rotate: rotation, zIndex, position: 'absolute', top: 0, left: 0 }}
+      drag
+      dragMomentum={false}
+      dragElastic={0}
+      whileHover={{ scale: 1.03, transition: { duration: 0.15 } }}
+      onDragStart={onDragStart}
+    >
+      <Image
+        src={getPosterUrl(item.poster_path, 'w342')}
+        alt={item.title || item.name}
+        width={160}
+        height={240}
+        draggable={false}
+      />
+    </motion.div>
+  );
+}
 
 export default function HomePage() {
   const [posters, setPosters] = useState([]);
   const [zIndices, setZIndices] = useState(() => INITIAL_POSITIONS.map(() => 2));
   const [topZ, setTopZ] = useState(2);
-  const containerRef = useRef(null);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const [userCount, setUserCount] = useState(null);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    function update() {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    }
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   useEffect(() => {
     getPopularMedia().then((media) => {
       setPosters(media.slice(0, 14));
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!db) return;
+    getCountFromServer(collection(db, 'users')).then((snap) => {
+      setUserCount(snap.data().count);
     });
   }, []);
 
@@ -46,48 +93,36 @@ export default function HomePage() {
     <main className={styles.page}>
       <div className={styles.heroContent}>
         <h1 className={styles.heading}>
-          <span>Rank movies and shows with friends.*</span>
-          <span>All in one place.</span>
-          <span>No ads.</span>
+          Rank movies and shows<br />with friends.<span className={styles.asterisk}>*</span>
         </h1>
-        <Link href="/signup" className={styles.signupButton}>
-          Sign up now
+        <p className={styles.subtext}>All in one place.&nbsp;&nbsp;No ads.</p>
+        <Link href={user ? '/profile' : '/signup'} className={styles.signupButton}>
+          {user ? 'Go to profile' : 'Start ranking free'} <span aria-hidden="true">→</span>
         </Link>
-        <p className={styles.footnote}>*and then drag them for their hot takes. Sorry, who said that?</p>
+        <p className={styles.socialProof}>
+          {userCount !== null && <><strong>{userCount.toLocaleString()}</strong> fans already ranking</>}
+        </p>
+        <p className={styles.footnote}>
+          <span className={styles.asterisk}>*</span> and then drag them for their hot takes. Sorry, who said that?
+        </p>
       </div>
 
       <div className={styles.backgroundCard} />
 
-      <div className={styles.posterScatter} ref={containerRef}>
-        {posters.map((item, i) => {
+      <div className={styles.posterScatter}>
+        {windowSize.width > 0 && posters.map((item, i) => {
           const pos = INITIAL_POSITIONS[i];
           if (!pos) return null;
           return (
-            <motion.div
+            <PosterCard
               key={item.id}
-              className={styles.posterCard}
-              style={{
-                left: pos.x,
-                top: pos.y,
-                zIndex: zIndices[i],
-              }}
-              initial={{ rotate: pos.rotation }}
-              drag
-              dragConstraints={containerRef}
-              dragElastic={0.05}
-              dragMomentum={false}
-              whileHover={{ scale: 1.05, y: -6 }}
-              whileDrag={{ scale: 1.08, boxShadow: '0 16px 48px rgba(0,0,0,0.7)' }}
+              item={item}
+              initialX={pos.xPct * windowSize.width}
+              initialY={pos.yPct * windowSize.height + 50}
+              rotation={pos.rotation}
+              zIndex={zIndices[i]}
               onDragStart={() => bringToFront(i)}
-            >
-              <Image
-                src={getPosterUrl(item.poster_path, 'w342')}
-                alt={item.title || item.name}
-                width={160}
-                height={240}
-                draggable={false}
-              />
-            </motion.div>
+            />
           );
         })}
       </div>
