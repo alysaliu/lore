@@ -3,13 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ArrowLeft, FolderOpen, ExternalLink, Smile, Upload } from 'lucide-react';
+import { FolderOpen, ExternalLink, Smile, User } from 'lucide-react';
 import { doc, getDoc, deleteDoc, deleteField, serverTimestamp, updateDoc, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytes } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
 import { buildPublicFirebaseDownloadUrl, stripFirebaseStorageUrlToken } from '../../lib/firebaseStorageUrl';
 import { resizeImageForAvatar } from '../../lib/imageUtils';
-import { publicAssetPath } from '../../lib/publicPath';
 import { useAuth } from '../../contexts/AuthContext';
 import { useImportStatus } from '../../contexts/ImportStatusContext';
 import { parseRatingsCsv, importLetterboxdRatings } from '../../lib/letterboxdImport';
@@ -18,9 +17,9 @@ import styles from '../login/page.module.css';
 import onboardStyles from './page.module.css';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
-const TOTAL_STEPS = 2;
+const TOTAL_STEPS = 3;
 
-const STEP_LABELS = ['Profile Creation', 'Import Ratings'];
+const STEP_LABELS = ['Profile Creation', 'Your name', 'Import Ratings'];
 
 function Stepper({ current, onStepClick }) {
   return (
@@ -47,19 +46,21 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState('');
   const [savedUsername, setSavedUsername] = useState('');
+  const [firstname, setFirstname] = useState('');
+  const [lastname, setLastname] = useState('');
+  const [nameSaved, setNameSaved] = useState(false);
+  const [profileHydrated, setProfileHydrated] = useState(false);
   const [importFolder, setImportFolder] = useState(null);
-  const [ratingsFile, setRatingsFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState('');
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const folderInputRef = useRef(null);
-  const avatarInputRef = useRef(null);
   const [saving, setSaving] = useState(false);
+  const [savingName, setSavingName] = useState(false);
   const [importing, setImporting] = useState(false);
   const [toast, setToast] = useState(null);
   const [importFiles, setImportFiles] = useState(null);
-  const firstName = user?.displayName?.split(' ')[0] || '';
   const {
     startLetterboxdImport,
     updateLetterboxdImport,
@@ -67,9 +68,69 @@ export default function OnboardingPage() {
     failLetterboxdImport,
   } = useImportStatus();
 
+  const avatarInputRef = useRef(null);
+
   useEffect(() => {
     if (!loading && !user) router.push('/login');
   }, [user, loading, router]);
+
+  useEffect(() => {
+    setError('');
+  }, [step]);
+
+  /** Restore step from Firestore; prefill name from Google displayName when DB has no name yet. */
+  useEffect(() => {
+    if (!user || loading) return;
+    if (!db) {
+      setProfileHydrated(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (cancelled) return;
+      if (!snap.exists()) {
+        if (user.displayName) {
+          const parts = user.displayName.trim().split(/\s+/);
+          setFirstname(parts[0] || '');
+          setLastname(parts.slice(1).join(' ') || '');
+        }
+        setProfileHydrated(true);
+        return;
+      }
+      const d = snap.data();
+      if (!d.username) {
+        if (user.displayName) {
+          const parts = user.displayName.trim().split(/\s+/);
+          setFirstname(parts[0] || '');
+          setLastname(parts.slice(1).join(' ') || '');
+        }
+        setProfileHydrated(true);
+        return;
+      }
+      setSavedUsername(d.username);
+      setUsername(d.username);
+      const fn = (d.firstname || '').trim();
+      const ln = (d.lastname || '').trim();
+      if (fn || ln) {
+        setFirstname(d.firstname || '');
+        setLastname(d.lastname || '');
+        setNameSaved(true);
+        setStep(3);
+      } else {
+        setStep(2);
+        if (user.displayName) {
+          const parts = user.displayName.trim().split(/\s+/);
+          setFirstname(parts[0] || '');
+          setLastname(parts.slice(1).join(' ') || '');
+        }
+      }
+      setProfileHydrated(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, loading, db]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,11 +157,6 @@ export default function OnboardingPage() {
       const userRef = doc(db, 'users', user.uid);
       const userSnap = await getDoc(userRef);
       const previousUsername = (userSnap.exists() ? (userSnap.data()?.username || '') : '').trim().toLowerCase();
-
-      const nameParts = (user.displayName || '').split(' ');
-      const firstname = nameParts[0] || '';
-      const lastname = nameParts.slice(1).join(' ') || '';
-      const fullNameLower = `${firstname} ${lastname}`.trim().toLowerCase();
 
       /** Tokenless Storage URL for flat avatar, or stripped Auth/Google URL. */
       let photoURLToSave = user.photoURL ? stripFirebaseStorageUrlToken(user.photoURL) : null;
@@ -144,9 +200,6 @@ export default function OnboardingPage() {
         batch.set(userRef, patch, { merge: true });
       } else {
         batch.set(userRef, {
-          firstname,
-          lastname,
-          fullNameLower: fullNameLower || null,
           email: user.email || null,
           photoURL: photoURLToSave,
           username: trimmed,
@@ -165,6 +218,33 @@ export default function OnboardingPage() {
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleNameSubmit = async (e) => {
+    e.preventDefault();
+    const fn = firstname.trim();
+    const ln = lastname.trim();
+    if (!fn) {
+      setError('Please enter your first name.');
+      return;
+    }
+    setSavingName(true);
+    setError('');
+    try {
+      const fullNameLower = `${fn} ${ln}`.trim().toLowerCase();
+      await updateDoc(doc(db, 'users', user.uid), {
+        firstname: fn,
+        lastname: ln,
+        fullNameLower: fullNameLower || null,
+      });
+      setNameSaved(true);
+      setStep(3);
+    } catch (err) {
+      console.error('Onboarding name error:', err);
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setSavingName(false);
     }
   };
 
@@ -223,16 +303,28 @@ export default function OnboardingPage() {
 
   if (loading || !user) return null;
 
-  if (step === 2) {
+  if (!profileHydrated) {
     return (
       <div className={onboardStyles.page}>
-        <Stepper current={2} onStepClick={async (s) => {
-          if (s === 1) {
-            if (savedUsername) await deleteDoc(doc(db, 'usernames', savedUsername));
-            setSavedUsername('');
-            setStep(1);
-          }
-        }} />
+        <p className={onboardStyles.subheading}>Loading…</p>
+      </div>
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <div className={onboardStyles.page}>
+        <Stepper
+          current={3}
+          onStepClick={async (s) => {
+            if (s === 1) {
+              if (savedUsername) await deleteDoc(doc(db, 'usernames', savedUsername));
+              setSavedUsername('');
+              setStep(1);
+            }
+            if (s === 2) setStep(2);
+          }}
+        />
         <div className={onboardStyles.appIcon}>
           <Image src="/images/Letterboxd.svg" alt="Letterboxd" width={30} height={30} />
         </div>
@@ -263,7 +355,10 @@ export default function OnboardingPage() {
           <div
             className={`${onboardStyles.dropzone} ${dragOver ? onboardStyles.dropzoneOver : ''} ${importFolder ? onboardStyles.dropzoneFilled : ''}`}
             onClick={() => folderInputRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
             onDragLeave={() => setDragOver(false)}
             onDrop={(e) => {
               e.preventDefault();
@@ -319,19 +414,86 @@ export default function OnboardingPage() {
     );
   }
 
+  if (step === 2) {
+    return (
+      <div className={onboardStyles.page}>
+        <Stepper
+          current={2}
+          onStepClick={async (s) => {
+            if (s === 1) {
+              if (savedUsername) await deleteDoc(doc(db, 'usernames', savedUsername));
+              setSavedUsername('');
+              setStep(1);
+            }
+            if (s === 3) {
+              if (nameSaved) setStep(3);
+              else document.getElementById('onboarding-name-form')?.requestSubmit();
+            }
+          }}
+        />
+        <div className={onboardStyles.appIcon}>
+          <User size={28} strokeWidth={2} />
+        </div>
+        <div className={onboardStyles.header}>
+          <h1 className={onboardStyles.heading}>Name</h1>
+          <p className={onboardStyles.subheading}>
+            This is how you&apos;ll show up to friends. You can change it later in settings.
+          </p>
+        </div>
+        <form id="onboarding-name-form" className={onboardStyles.form} onSubmit={handleNameSubmit}>
+          {error && <p className={styles.error}>{error}</p>}
+          <div className={onboardStyles.inputWrapper}>
+            <input
+              className={onboardStyles.inputName}
+              type="text"
+              name="firstname"
+              autoComplete="given-name"
+              placeholder="First name"
+              value={firstname}
+              onChange={(e) => setFirstname(e.target.value)}
+              disabled={savingName}
+            />
+          </div>
+          <div className={onboardStyles.inputWrapper}>
+            <input
+              className={onboardStyles.inputName}
+              type="text"
+              name="lastname"
+              autoComplete="family-name"
+              placeholder="Last name"
+              value={lastname}
+              onChange={(e) => setLastname(e.target.value)}
+              disabled={savingName}
+            />
+          </div>
+          <button className={onboardStyles.continueBtn} type="submit" disabled={savingName || !firstname.trim()}>
+            {savingName ? 'Saving…' : 'Continue'}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className={onboardStyles.page}>
-      <Stepper current={1} onStepClick={(s) => {
-        if (s === 2) {
-          if (savedUsername) setStep(2);
-          else if (username.trim()) document.getElementById('onboarding-form').requestSubmit();
-        }
-      }} />
+      <Stepper
+        current={1}
+        onStepClick={(s) => {
+          if (s === 2) {
+            if (savedUsername) setStep(2);
+            else if (username.trim()) document.getElementById('onboarding-form')?.requestSubmit();
+          }
+          if (s === 3) {
+            if (savedUsername && nameSaved) setStep(3);
+            else if (savedUsername) setStep(2);
+          }
+        }}
+      />
       <div className={onboardStyles.appIcon}>
         <Smile size={32} strokeWidth={2} />
       </div>
       <div className={onboardStyles.header}>
-        <h1 className={onboardStyles.heading}>Hey{firstName ? `, ${firstName}` : ''}!</h1>
+        <h1 className={onboardStyles.heading}>Hey{firstname.trim() ? `, ${firstname.trim()}` : ''}!</h1>
         <p className={onboardStyles.subheading}>Let&apos;s start by creating your profile. You can edit this at any time in your profile page.</p>
       </div>
       <form id="onboarding-form" className={onboardStyles.form} onSubmit={handleSubmit}>
@@ -360,15 +522,15 @@ export default function OnboardingPage() {
         <div className={onboardStyles.inputWrapper}>
           <span className={onboardStyles.inputAt}>@</span>
           <input
-          className={onboardStyles.input}
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          autoFocus
-          autoComplete="off"
-          spellCheck={false}
-        />
+            className={onboardStyles.input}
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            autoFocus
+            autoComplete="off"
+            spellCheck={false}
+          />
         </div>
         <button className={onboardStyles.continueBtn} type="submit" disabled={saving || !username.trim()}>
           {saving ? 'Saving...' : 'Continue'}
