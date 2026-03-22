@@ -188,6 +188,34 @@
   text-align: center;
 }
 
+.formFooter {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 300;
+  text-align: center;
+}
+
+.textLink {
+  color: var(--color-text-default);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.textLink:hover {
+  color: var(--color-action-hovered);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.submitBtn:disabled:hover {
+  background-color: var(--color-surface-inverse);
+}
+
 @media screen and (max-width: 960px) {
   .formSection {
     padding: var(--space-8) var(--page-padding-mobile) var(--space-6);

@@ -81,6 +81,30 @@
   color: var(--color-text-secondary);
 }
 
+/* First / last name (no @ prefix) */
+.inputName {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-weight: 300;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-sizing: border-box;
+  outline: none;
+  background: var(--color-surface-contrast);
+  color: var(--color-text-default);
+  font-family: var(--font-sans);
+  transition: var(--transition-fast);
+}
+
+.inputName:focus {
+  border-color: var(--color-border-selected);
+}
+
+.inputName::placeholder {
+  color: var(--color-text-secondary);
+}
+
 .continueBtn {
   width: 100%;
   padding: 0.75rem;
