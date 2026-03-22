@@ -200,6 +200,77 @@
   display: block;
 }
 
+/* ── Mobile profile submenu ──────────────────── */
+.mobileOnly {
+  display: none;
+}
+
+.desktopOnly {
+  display: flex;
+}
+
+.mobileProfileBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-4) var(--page-padding-mobile);
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--color-text-default);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  text-align: left;
+}
+
+.chevronIcon {
+  transition: transform 0.2s ease;
+  color: var(--color-icon-tertiary);
+  flex-shrink: 0;
+}
+
+.chevronRotated {
+  composes: chevronIcon;
+  transform: rotate(90deg);
+}
+
+.mobileSubMenu {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--color-border-secondary);
+}
+
+.mobileSubItem {
+  display: block;
+  padding: var(--space-3) var(--page-padding-mobile);
+  padding-left: calc(var(--page-padding-mobile) + var(--space-4));
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  background: none;
+  border: none;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: color 0.15s ease;
+}
+
+.mobileSubItem:hover {
+  color: var(--color-text-default);
+}
+
+.mobileSubItemLogout {
+  color: #e53935;
+}
+
+.mobileSubItemLogout:hover {
+  color: #ff6b60;
+}
+
 /* ── Mobile ─────────────────────────────────── */
 @media screen and (max-width: 960px) {
   .navbarContainer {
@@ -207,6 +278,8 @@
     justify-content: space-between;
     height: var(--navbar-height);
     padding: 0;
+    position: relative;
+    z-index: 1000;
   }
 
   .navbarLogo {
@@ -216,43 +289,60 @@
   .navbarToggle {
     display: block;
     position: absolute;
-    top: 20%;
-    right: 5%;
-    transform: translate(5%, 20%);
+    top: 50%;
+    right: var(--page-padding-mobile);
+    transform: translateY(-50%);
   }
 
   .navbarMenu {
-    display: grid;
-    grid-template-columns: auto;
-    margin: 0;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: var(--navbar-height);
+    left: 0;
     width: 100%;
-    position: absolute;
-    top: -1000px;
+    height: calc(100vh - var(--navbar-height));
+    background: var(--color-surface-default);
+    padding: 0;
+    overflow-y: auto;
     opacity: 0;
-    transition: var(--transition-slow);
-    height: 50vh;
-    z-index: -1;
+    pointer-events: none;
+    transform: translateY(-6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 999;
   }
 
   .navbarMenu.active {
-    background: #131313;
-    top: 100%;
     opacity: 1;
-    transition: var(--transition-slow);
-    z-index: 99;
-    height: 50vh;
-    font-size: 1.6rem;
+    pointer-events: all;
+    transform: translateY(0);
   }
 
   .navbarItem {
     width: 100%;
-    font-size: 1.2rem;
+    height: auto;
+    border-bottom: 1px solid var(--color-border-default);
   }
 
   .navbarLinks {
-    text-align: center;
-    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    padding: var(--space-4) var(--page-padding-mobile);
     width: 100%;
+    height: auto;
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--color-text-default);
+  }
+
+  .mobileOnly {
+    display: block;
+  }
+
+  .desktopOnly {
+    display: none;
   }
 
   /* Hamburger → X animation */

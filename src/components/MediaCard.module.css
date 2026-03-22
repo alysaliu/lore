@@ -262,3 +262,15 @@
   border-radius: 12px;
   color: var(--color-text-default);
 }
+
+@media screen and (max-width: 960px) {
+  .cardGrid {
+    height: 280px;
+  }
+
+  /* Show action buttons without requiring hover on touch devices */
+  .watchlistBtn,
+  .removeBtn {
+    opacity: 1;
+  }
+}

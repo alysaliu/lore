@@ -551,3 +551,65 @@
 .detailsItem[data-status="failed"] .detailsStatus {
   color: var(--color-danger, #c00);
 }
+
+@media screen and (max-width: 960px) {
+  .settingsContainer {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-default);
+    padding: var(--space-2) var(--space-2) 0;
+  }
+
+  .sidebarEyebrow {
+    display: none;
+  }
+
+  .sidebarList {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-1);
+    overflow-x: auto;
+    padding: 0 var(--space-1) var(--space-2);
+    scrollbar-width: none;
+  }
+
+  .sidebarList::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebarList li {
+    flex-shrink: 0;
+  }
+
+  .sidebarTab {
+    white-space: nowrap;
+    width: auto;
+  }
+
+  .content {
+    padding: var(--space-5) var(--page-padding-mobile);
+  }
+
+  .panel {
+    max-width: 100%;
+  }
+
+  .panelTitle {
+    font-size: clamp(16px, 5vw, 20px);
+  }
+
+  .modalContent {
+    width: 95vw;
+    height: 85vh;
+    max-height: 85vh;
+  }
+
+  .detailsListHeader,
+  .detailsItem {
+    grid-template-columns: 1fr 90px;
+  }
+}

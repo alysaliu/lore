@@ -464,3 +464,33 @@
   color: var(--color-text-default);
 }
 
+@media screen and (max-width: 960px) {
+  .tabs {
+    gap: var(--space-4);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .listsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .rowScore {
+    font-size: 20px;
+    min-width: 40px;
+    margin-left: var(--space-4);
+  }
+
+  .seasonBreakdown {
+    padding-left: calc(var(--space-4) + 48px + var(--space-4));
+  }
+
+  .filterRow {
+    flex-wrap: wrap;
+  }
+}
+

@@ -338,3 +338,36 @@
   font-size: 13px;
   color: var(--color-text-secondary);
 }
+
+@media screen and (max-width: 960px) {
+  .profileContainer {
+    padding: var(--space-5) var(--page-padding-mobile);
+  }
+
+  .profileHeader {
+    flex-direction: column;
+    gap: var(--space-4);
+    align-items: flex-start;
+  }
+
+  .buttons {
+    flex-wrap: wrap;
+  }
+
+  .identifierSection {
+    gap: var(--space-4);
+  }
+
+  .statsSection {
+    width: 100%;
+    gap: var(--space-6);
+  }
+
+  .userInfo h2 {
+    font-size: clamp(18px, 5vw, 24px);
+  }
+
+  .username {
+    font-size: clamp(15px, 4vw, 20px);
+  }
+}

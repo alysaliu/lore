@@ -358,3 +358,30 @@
   cursor: pointer;
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+@media screen and (max-width: 960px) {
+  .page {
+    padding: var(--space-8) var(--page-padding-mobile);
+  }
+
+  .header {
+    max-width: 100%;
+  }
+
+  .formWide {
+    max-width: 100%;
+  }
+
+  .heading {
+    font-size: clamp(18px, 5vw, 22px);
+  }
+
+  .avatarBtn {
+    width: 80px;
+    height: 80px;
+  }
+
+  .stepTooltip {
+    display: none;
+  }
+}
