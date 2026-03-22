@@ -1028,6 +1028,14 @@
   pointer-events: none;
 }
 
+/* ── Discussion section wrapper ── */
+.discussionWrapper {
+  margin: 0 auto;
+  max-width: 1000px;
+  padding-left: var(--page-padding-mobile);
+  padding-right: var(--page-padding-mobile);
+}
+
 @media screen and (max-width: 960px) {
   .posterHeader {
     height: 260px;

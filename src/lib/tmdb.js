@@ -58,6 +58,18 @@ export function getOriginalUrl(posterPath) {
   return `${TMDB_IMAGE_BASE}/original${posterPath}`;
 }
 
+export async function getTrendingMovies() {
+  const res = await fetch(`${BASE_URL}/trending/movie/week?api_key=${API_KEY}&language=en-US`);
+  const data = await res.json();
+  return (data.results || []).filter((m) => m.poster_path).map((m) => ({ ...m, media_type: 'movie' }));
+}
+
+export async function getTrendingShows() {
+  const res = await fetch(`${BASE_URL}/trending/tv/week?api_key=${API_KEY}&language=en-US`);
+  const data = await res.json();
+  return (data.results || []).filter((t) => t.poster_path).map((t) => ({ ...t, media_type: 'tv' }));
+}
+
 export async function getPopularMedia() {
   const [moviesRes, tvRes] = await Promise.all([
     fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=en-US&page=1`),

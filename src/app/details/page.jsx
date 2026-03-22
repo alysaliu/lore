@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch, increment, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { deleteSingleRatingEntry, getMediaAverageRating, getRatingDocId } from '../../lib/ratingsFirestore';
@@ -14,6 +14,7 @@ import { createInitialRankKey, keyBetween, rebalanceRankKeys } from '../../lib/l
 import { deriveDisplayScoresForGroup, deriveDisplayScoresForTv, scoreForPosition, sortRatingsByRank } from '../../lib/ratingsRanking';
 import { publicAssetPath } from '../../lib/publicPath';
 import AddToListModal from '../../components/AddToListModal';
+import DiscussionSection from '../../components/DiscussionSection';
 import { Repeat, Trash2, ChevronDown } from 'lucide-react';
 import styles from './page.module.css';
 
@@ -56,6 +57,7 @@ function DetailsContent() {
   const [overallAverage, setOverallAverage] = useState(null); // { average, count } | null
   const [persistingComparison, setPersistingComparison] = useState(false);
   const { ratings: userRatings, setRatings: setUserRatings, refreshRatings, loading: ratingsLoading } = useRatings();
+  const [discussionUsername, setDiscussionUsername] = useState(null);
 
   const upsertMediaRatingEntry = useCallback(async (uid, entry, { isNew = false } = {}) => {
     const mediaKey = entry.mediaType === 'tv' ? `tv_${entry.mediaId}` : `movie_${entry.mediaId}`;
@@ -350,6 +352,37 @@ function DetailsContent() {
     };
   }, [media?.poster_path]);
 
+  useEffect(() => {
+    if (!authUser) return;
+    getDoc(doc(db, 'users', authUser.uid)).then(snap => {
+      const name = snap.exists()
+        ? (snap.data().username || authUser.displayName || 'Anonymous')
+        : (authUser.displayName || 'Anonymous');
+      setDiscussionUsername(name);
+    }).catch(() => setDiscussionUsername(authUser.displayName || 'Anonymous'));
+  }, [authUser]);
+
+  const autoPostDiscussionNote = async (displayScore) => {
+    if (!note.trim() || isReranking) return;
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      await addDoc(collection(db, 'mediaDiscussions', `${mediaType}_${id}`, 'threads'), {
+        uid: user.uid,
+        username: discussionUsername || 'Anonymous',
+        photoURL: authUser?.photoURL || null,
+        text: note.trim(),
+        voteCount: 1,
+        upvoterUids: [user.uid],
+        createdAt: serverTimestamp(),
+        replyCount: 0,
+        userScore: displayScore ?? null,
+      });
+    } catch (e) {
+      console.error('Failed to auto-post discussion note', e);
+    }
+  };
+
   const handleNext = async () => {
     if (persistingComparison) return;
     if (!selectedSentiment) { alert('Please select a rating!'); return; }
@@ -390,7 +423,10 @@ function DetailsContent() {
       };
       await setDoc(ratingRef, newRating, { merge: true });
       await upsertMediaRatingEntry(user.uid, newRating, { isNew: !existedInRatings && !isReranking });
-      if (!existedInRatings && !isReranking) await incrementRatingCount(user.uid);
+      if (!existedInRatings && !isReranking) {
+        await incrementRatingCount(user.uid);
+        autoPostDiscussionNote(max);
+      }
 
       for (const sentiment of Object.keys(ratings[mediaType])) {
         ratings[mediaType][sentiment] = (ratings[mediaType][sentiment] || []).filter(item => !matchesCurrent(item));
@@ -512,6 +548,8 @@ function DetailsContent() {
     ratings[mediaType][selectedSentiment] = [...untouchedInSentiment, ...updatedGroup];
     setUserRatings(ratings);
     refreshShowRatings(ratings);
+
+    if (!existedInRatings && !isReranking) autoPostDiscussionNote(scoreAtPosition);
 
     if (mediaType === 'tv') {
       setSelectedSentiment(null);
@@ -1076,6 +1114,16 @@ function DetailsContent() {
           </div>
         </div>
       </div>
+
+      {(mediaType === 'tv' ? existingShowRatings.length > 0 : finalScore !== null) && (
+        <div className={styles.discussionWrapper}>
+          <DiscussionSection
+            mediaKey={`${mediaType}_${id}`}
+            mediaTitle={currentTitle}
+            userScore={mediaType === 'tv' ? tvUserOverall : finalScore}
+          />
+        </div>
+      )}
 
       {showDeleteConfirm && (
         <div className={styles.deleteModalBackdrop} onClick={handleCancelDelete}>
