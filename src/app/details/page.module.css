@@ -1027,3 +1027,61 @@
   color: var(--color-text-secondary);
   pointer-events: none;
 }
+
+@media screen and (max-width: 960px) {
+  .posterHeader {
+    height: 260px;
+  }
+
+  .overlayGradient {
+    height: 260px;
+  }
+
+  .content {
+    padding-top: var(--space-6);
+  }
+
+  .headerContainer {
+    flex-direction: column;
+    gap: var(--space-5);
+    align-items: flex-start;
+  }
+
+  .posterCard {
+    width: 140px;
+  }
+
+  .title {
+    font-size: clamp(24px, 7vw, 42px);
+  }
+
+  .ratingColumnScore {
+    font-size: 32px;
+  }
+
+  .ratingOptions {
+    flex-wrap: wrap;
+  }
+
+  .ratingButton {
+    min-width: calc(50% - var(--space-1));
+  }
+
+  .breakdownRow {
+    grid-template-columns: 1fr repeat(2, 64px) 90px;
+  }
+
+  .friendsBreakdownList {
+    width: calc(100vw - var(--space-8) * 2);
+    max-width: 300px;
+  }
+
+  .seasonDropdownRow {
+    font-size: 16px;
+  }
+
+  .seasonDropdownSizer > span,
+  .seasonDropdown {
+    font-size: 16px;
+  }
+}

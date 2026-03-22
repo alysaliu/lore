@@ -109,3 +109,17 @@
 .secondaryBtn:hover {
   background: var(--color-surface-hovered);
 }
+
+@media screen and (max-width: 960px) {
+  .backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 90vh;
+    overflow-y: auto;
+    width: 100%;
+  }
+}

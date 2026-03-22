@@ -235,3 +235,23 @@
   text-align: center;
   width: 100%;
 }
+
+@media screen and (max-width: 960px) {
+  .searchSection {
+    padding: var(--page-padding-mobile) var(--page-padding-mobile) 0;
+  }
+
+  .searchContainer {
+    padding-top: var(--space-6);
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .resultsContainer {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+
+  .filterContainer {
+    font-size: 0.875rem;
+  }
+}
