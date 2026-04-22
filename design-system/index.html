@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lore — iOS Design System</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-rabbit">🐇</div>
+      <div>
+        <div class="logo-title">Lore</div>
+        <div class="logo-sub">iOS Design System</div>
+      </div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="#colors">Colors</a></li>
+      <li><a href="#typography">Typography</a></li>
+      <li><a href="#spacing">Spacing</a></li>
+      <li><a href="#radius">Corner Radius</a></li>
+      <li><a href="#shadows">Shadows &amp; Blur</a></li>
+      <li><a href="#buttons">Buttons</a></li>
+      <li><a href="#inputs">Inputs</a></li>
+      <li><a href="#chips">Filter Chips</a></li>
+      <li><a href="#sentiment">Sentiment</a></li>
+      <li><a href="#avatar">Avatar</a></li>
+      <li><a href="#cards">Cards</a></li>
+      <li><a href="#score">Score Cards</a></li>
+      <li><a href="#nav">Navigation</a></li>
+      <li><a href="#sheets">Sheets</a></li>
+      <li><a href="#discussion">Discussion</a></li>
+      <li><a href="#empty">Empty States</a></li>
+      <li class="sidebar-divider"></li>
+      <li><a href="#pages">Page Previews</a></li>
+    </ul>
+  </nav>
+
+  <main class="content">
+    <header class="page-header">
+      <h1>iOS Design System</h1>
+      <p class="subtitle">Sourced directly from the Swift source — every value is what the app uses today.</p>
+    </header>
+
+    <!-- ── Colors ──────────────────────────────────────────── -->
+    <section id="colors" class="section">
+      <h2 class="section-title">Colors</h2>
+
+      <h3 class="group-title">Surfaces</h3>
+      <div class="swatch-row">
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#141218; border:1px solid #2a2930"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Background</span>
+            <code>#141218</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#1c1b21; border:1px solid #2a2930"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Surface / Card</span>
+            <code>#1c1b21</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#2b2a33"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Elevated / Chip</span>
+            <code>#2b2a33</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#2a2930"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Border / Divider</span>
+            <code>#2a2930</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#0C1214; border:1px solid #2a2930"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Launch BG</span>
+            <code>#0C1214</code>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="group-title">Text</h3>
+      <div class="swatch-row">
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#ffffff; border:1px solid #2a2930"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Primary</span>
+            <code>white</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:rgba(255,255,255,0.7)"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Secondary</span>
+            <code>white 70%</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:rgba(255,255,255,0.5)"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Tertiary</span>
+            <code>white 50%</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:rgba(255,255,255,0.35)"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Disabled</span>
+            <code>white 35%</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#141218; border:1px solid #2a2930"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">On White</span>
+            <code>#141218</code>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="group-title">Sentiment</h3>
+      <div class="swatch-row">
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#ff6b6b"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Not Good</span>
+            <code>#ff6b6b</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#ffd93d"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Okay</span>
+            <code>#ffd93d</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#6bcb77"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Good</span>
+            <code>#6bcb77</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#4d96ff"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Amazing</span>
+            <code>#4d96ff</code>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#FF6B6B"></div>
+          <div class="swatch-info">
+            <span class="swatch-name">Error / Danger</span>
+            <code>#FF6B6B</code>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="group-title">Avatar Gradients</h3>
+      <div class="swatch-row">
+        <div class="swatch">
+          <div class="swatch-chip" style="background:linear-gradient(135deg,#5B4FCF,#8B7FEF)"></div>
+          <div class="swatch-info"><span class="swatch-name">Purple</span><code>#5B4FCF</code></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:linear-gradient(135deg,#CF4F4F,#EF7F7F)"></div>
+          <div class="swatch-info"><span class="swatch-name">Red</span><code>#CF4F4F</code></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:linear-gradient(135deg,#4FCF7A,#7FEFAA)"></div>
+          <div class="swatch-info"><span class="swatch-name">Green</span><code>#4FCF7A</code></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:linear-gradient(135deg,#CF9E4F,#EFBE7F)"></div>
+          <div class="swatch-info"><span class="swatch-name">Orange</span><code>#CF9E4F</code></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:linear-gradient(135deg,#4F9FCF,#7FBFEF)"></div>
+          <div class="swatch-info"><span class="swatch-name">Blue</span><code>#4F9FCF</code></div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:linear-gradient(135deg,#CF4F9E,#EF7FCE)"></div>
+          <div class="swatch-info"><span class="swatch-name">Pink</span><code>#CF4F9E</code></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Typography ──────────────────────────────────────── -->
+    <section id="typography" class="section">
+      <h2 class="section-title">Typography</h2>
+      <p class="section-note">SF Pro (system font). Rounded design only for logo/splash. All sizes in points (1pt = 1px @1× / 2px @2× Retina).</p>
+
+      <div class="type-table">
+        <div class="type-header-row">
+          <span>Usage</span><span>Size</span><span>Weight</span><span>Sample</span>
+        </div>
+
+        <div class="type-row">
+          <span class="type-usage">Rating Score</span>
+          <span class="type-spec">56pt</span>
+          <span class="type-spec">Bold</span>
+          <p class="type-sample" style="font-size:56px;font-weight:700;line-height:1">8.4</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Login Title</span>
+          <span class="type-spec">40pt</span>
+          <span class="type-spec">Bold · Rounded</span>
+          <p class="type-sample" style="font-size:40px;font-weight:700;font-family:-apple-system-rounded,ui-rounded,system-ui">Lore</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Splash Logo</span>
+          <span class="type-spec">32pt</span>
+          <span class="type-spec">Bold · Rounded</span>
+          <p class="type-sample" style="font-size:32px;font-weight:700">Lore</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Rating Header / Comparison Q</span>
+          <span class="type-spec">28pt</span>
+          <span class="type-spec">Bold</span>
+          <p class="type-sample" style="font-size:28px;font-weight:700">Add a rating</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">List Name / Completion Header</span>
+          <span class="type-spec">22pt</span>
+          <span class="type-spec">Bold</span>
+          <p class="type-sample" style="font-size:22px;font-weight:700">My 2024 Films</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Body / Discussion</span>
+          <span class="type-spec">20pt</span>
+          <span class="type-spec">Regular</span>
+          <p class="type-sample" style="font-size:20px;font-weight:400">Discussion title text</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Profile Name / Score Label</span>
+          <span class="type-spec">18pt</span>
+          <span class="type-spec">Bold / Semibold</span>
+          <p class="type-sample" style="font-size:18px;font-weight:600">Alysa Liu</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Nav Title / Create List Header</span>
+          <span class="type-spec">17pt</span>
+          <span class="type-spec">Semibold</span>
+          <p class="type-sample" style="font-size:17px;font-weight:600">Explore</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Button Labels / CTA</span>
+          <span class="type-spec">16pt</span>
+          <span class="type-spec">Semibold / Regular</span>
+          <p class="type-sample" style="font-size:16px;font-weight:600">Continue</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Media Title / Filter</span>
+          <span class="type-spec">15pt</span>
+          <span class="type-spec">Medium / Regular</span>
+          <p class="type-sample" style="font-size:15px;font-weight:500">Anora</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Secondary Body</span>
+          <span class="type-spec">14pt</span>
+          <span class="type-spec">Regular / Semibold</span>
+          <p class="type-sample" style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.7)">Secondary information</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Metadata / Timestamps</span>
+          <span class="type-spec">13pt</span>
+          <span class="type-spec">Regular / Semibold</span>
+          <p class="type-sample" style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.5)">2h 19m · Drama · A24</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Time Ago / Rank Number</span>
+          <span class="type-spec">12pt</span>
+          <span class="type-spec">Medium</span>
+          <p class="type-sample" style="font-size:12px;font-weight:500;color:rgba(255,255,255,0.5)">3h ago</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Section Headers (allcaps)</span>
+          <span class="type-spec">11pt</span>
+          <span class="type-spec">Semibold · tracking 1.2</span>
+          <p class="type-sample" style="font-size:11px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,0.5)">HOW WAS IT?</p>
+        </div>
+        <div class="type-row">
+          <span class="type-usage">Sentiment Tile Labels</span>
+          <span class="type-spec">11pt</span>
+          <span class="type-spec">Medium</span>
+          <p class="type-sample" style="font-size:11px;font-weight:500">Not Good</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Spacing ──────────────────────────────────────────── -->
+    <section id="spacing" class="section">
+      <h2 class="section-title">Spacing</h2>
+      <p class="section-note">All values in points. Standard content padding is 16pt. Auth screens use 24pt.</p>
+
+      <div class="spacing-grid">
+        <div class="space-row"><div class="space-block" style="width:6px;height:6px"></div><code>6pt</code><span>Tight inline gap (score badge padding)</span></div>
+        <div class="space-row"><div class="space-block" style="width:8px;height:8px"></div><code>8pt</code><span>Minimal gap</span></div>
+        <div class="space-row"><div class="space-block" style="width:10px;height:10px"></div><code>10pt</code><span>Compact (activity cards)</span></div>
+        <div class="space-row"><div class="space-block" style="width:12px;height:12px"></div><code>12pt</code><span>Card inner, list item gap</span></div>
+        <div class="space-row"><div class="space-block" style="width:14px;height:14px"></div><code>14pt</code><span>Input field padding, chip horizontal</span></div>
+        <div class="space-row"><div class="space-block" style="width:16px;height:16px"></div><code>16pt</code><span>Standard content padding</span></div>
+        <div class="space-row"><div class="space-block" style="width:20px;height:20px"></div><code>20pt</code><span>Card padding, section gap</span></div>
+        <div class="space-row"><div class="space-block" style="width:24px;height:24px"></div><code>24pt</code><span>Auth screen padding, large form fields</span></div>
+        <div class="space-row"><div class="space-block" style="width:28px;height:28px"></div><code>28pt</code><span>Sentiment picker, large section gap</span></div>
+        <div class="space-row"><div class="space-block" style="width:32px;height:32px"></div><code>32pt</code><span>Max side padding (hero, error states)</span></div>
+        <div class="space-row"><div class="space-block" style="width:34px;height:34px"></div><code>34pt</code><span>Bottom safe-area padding (sheets)</span></div>
+        <div class="space-row"><div class="space-block" style="width:48px;height:48px"></div><code>48pt</code><span>Onboarding button bottom</span></div>
+      </div>
+    </section>
+
+    <!-- ── Corner Radius ────────────────────────────────────── -->
+    <section id="radius" class="section">
+      <h2 class="section-title">Corner Radius</h2>
+
+      <div class="radius-row">
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius:4px"></div>
+          <code>4pt</code>
+          <span>Score badges, tiny elements</span>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius:8px"></div>
+          <code>8pt</code>
+          <span>Poster thumbnails, metadata badges</span>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius:10px"></div>
+          <code>10pt</code>
+          <span>Cards, secondary buttons, menus</span>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius:12px"></div>
+          <code>12pt</code>
+          <span>Input fields, cards, sentiment tiles</span>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius:14px"></div>
+          <code>14pt</code>
+          <span>Comparison cards, bottom sheet elements</span>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius:32px"></div>
+          <code>32pt</code>
+          <span>Primary buttons (pill)</span>
+        </div>
+        <div class="radius-item">
+          <div class="radius-box" style="border-radius:999px;width:80px"></div>
+          <code>Capsule</code>
+          <span>Filter chips, follow button, vote</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Shadows & Blur ────────────────────────────────────── -->
+    <section id="shadows" class="section">
+      <h2 class="section-title">Shadows &amp; Blur</h2>
+
+      <div class="shadow-row">
+        <div class="shadow-item">
+          <div class="shadow-demo" style="box-shadow:0 14px 28px rgba(0,0,0,0.5)">
+            <span>Comparison Card</span>
+          </div>
+          <code>black 50% · r28 · y14</code>
+        </div>
+        <div class="shadow-item">
+          <div class="shadow-demo" style="box-shadow:0 16px 32px rgba(0,0,0,0.5)">
+            <span>Completion Poster</span>
+          </div>
+          <code>black 50% · r32 · y16</code>
+        </div>
+      </div>
+
+      <h3 class="group-title">Blur</h3>
+      <div class="blur-row">
+        <div class="blur-demo">
+          <div class="blur-chip">systemThinMaterialDark</div>
+          <span>Score cards (UIBlurEffect)</span>
+        </div>
+        <div class="blur-demo">
+          <div class="blur-chip" style="opacity:0.6">opacity 0.6 overlay</div>
+          <span>Backdrop image fade</span>
+        </div>
+      </div>
+
+      <h3 class="group-title">Opacity Scale</h3>
+      <div class="opacity-row">
+        <div class="opacity-item" style="opacity:0.9"><div class="opacity-block"></div><code>0.9</code><span>High emphasis</span></div>
+        <div class="opacity-item" style="opacity:0.8"><div class="opacity-block"></div><code>0.8</code><span>Note / review text</span></div>
+        <div class="opacity-item" style="opacity:0.7"><div class="opacity-block"></div><code>0.7</code><span>Secondary text</span></div>
+        <div class="opacity-item" style="opacity:0.6"><div class="opacity-block"></div><code>0.6</code><span>Tertiary</span></div>
+        <div class="opacity-item" style="opacity:0.5"><div class="opacity-block"></div><code>0.5</code><span>Section headers</span></div>
+        <div class="opacity-item" style="opacity:0.4"><div class="opacity-block"></div><code>0.4</code><span>Disabled info</span></div>
+        <div class="opacity-item" style="opacity:0.3"><div class="opacity-block"></div><code>0.3</code><span>Disabled button</span></div>
+        <div class="opacity-item" style="opacity:0.2"><div class="opacity-block"></div><code>0.2</code><span>Backdrop image</span></div>
+        <div class="opacity-item" style="opacity:0.12"><div class="opacity-block"></div><code>0.12</code><span>Placeholder icon</span></div>
+      </div>
+    </section>
+
+    <!-- ── Buttons ──────────────────────────────────────────── -->
+    <section id="buttons" class="section">
+      <h2 class="section-title">Buttons</h2>
+
+      <h3 class="group-title">Primary — White pill, 32pt radius</h3>
+      <div class="component-row">
+        <button class="btn-primary">Continue</button>
+        <button class="btn-primary" style="opacity:0.3" disabled>Disabled</button>
+        <button class="btn-primary btn-loading">
+          <span class="spinner"></span>
+        </button>
+      </div>
+      <p class="spec-note">bg: white · text: #141218 · 16pt semibold · padding: 16v 32h · radius: 32pt</p>
+
+      <h3 class="group-title">Ghost / Tertiary — Dark outlined</h3>
+      <div class="component-row">
+        <button class="btn-ghost">Too tough to call</button>
+        <button class="btn-ghost" style="opacity:0.4" disabled>Disabled</button>
+      </div>
+      <p class="spec-note">bg: #1c1b21 · border: #2a2930 1pt · text: white · 16pt regular · radius: 32pt</p>
+
+      <h3 class="group-title">Danger</h3>
+      <div class="component-row">
+        <button class="btn-danger">Sign Out</button>
+        <button class="btn-danger">Delete Account</button>
+      </div>
+      <p class="spec-note">text: #FF6B6B · bg: #FF6B6B 10% · border: #FF6B6B 30% · radius: 10pt</p>
+
+      <h3 class="group-title">Icon Button</h3>
+      <div class="component-row">
+        <button class="btn-icon">✕</button>
+        <button class="btn-icon">←</button>
+        <button class="btn-icon">···</button>
+      </div>
+      <p class="spec-note">No background · white icon · 44×44pt minimum tap target</p>
+
+      <h3 class="group-title">Follow</h3>
+      <div class="component-row" style="align-items:center">
+        <button class="btn-follow-active">Following</button>
+        <button class="btn-follow">Follow</button>
+      </div>
+      <p class="spec-note">Active: bg #2b2a33 · Inactive: bg white · Capsule · 14h 6v padding</p>
+    </section>
+
+    <!-- ── Inputs ───────────────────────────────────────────── -->
+    <section id="inputs" class="section">
+      <h2 class="section-title">Inputs</h2>
+
+      <div class="component-stack" style="max-width:320px">
+        <div class="field">
+          <label class="label">Username</label>
+          <input class="ios-input" type="text" placeholder="e.g. alysaliu" />
+        </div>
+        <div class="field">
+          <label class="label">With value</label>
+          <input class="ios-input" type="text" value="alysaliu" />
+        </div>
+        <div class="field">
+          <label class="label">Review / Note</label>
+          <textarea class="ios-input ios-textarea" placeholder="Add a note to your rating…" rows="3"></textarea>
+        </div>
+        <div class="field">
+          <label class="label">Search</label>
+          <div class="search-wrap">
+            <span class="search-icon">⌕</span>
+            <input class="ios-input ios-search" type="text" placeholder="Search movies, shows, people…" />
+          </div>
+        </div>
+      </div>
+      <p class="spec-note">bg: #1c1b21 · border: #2a2930 · radius: 12pt · padding: 14v 14h · 15pt regular</p>
+    </section>
+
+    <!-- ── Filter Chips ─────────────────────────────────────── -->
+    <section id="chips" class="section">
+      <h2 class="section-title">Filter Chips</h2>
+
+      <div class="component-row">
+        <button class="chip chip-active" onclick="activateChip(this)">All</button>
+        <button class="chip" onclick="activateChip(this)">Movies</button>
+        <button class="chip" onclick="activateChip(this)">TV Shows</button>
+        <button class="chip" onclick="activateChip(this)">Profiles</button>
+      </div>
+      <p class="spec-note">Active: bg white · text #141218 · Inactive: bg #2b2a33 · text white · Capsule · padding: 7v 14h · 15pt</p>
+
+      <h3 class="group-title">Media Type Filter (Profile)</h3>
+      <div class="component-row">
+        <button class="chip chip-active" onclick="activateChip(this)">Lists</button>
+        <button class="chip" onclick="activateChip(this)">Movies</button>
+        <button class="chip" onclick="activateChip(this)">Shows</button>
+        <button class="chip" onclick="activateChip(this)">Watchlist</button>
+      </div>
+    </section>
+
+    <!-- ── Sentiment ────────────────────────────────────────── -->
+    <section id="sentiment" class="section">
+      <h2 class="section-title">Sentiment</h2>
+
+      <h3 class="group-title">Sentiment Tiles (Rating Picker)</h3>
+      <div class="sentiment-grid">
+        <div class="sentiment-tile">
+          <span class="sentiment-emoji">😐</span>
+          <span class="sentiment-label" style="color:#ff6b6b">Not Good</span>
+        </div>
+        <div class="sentiment-tile">
+          <span class="sentiment-emoji">🙂</span>
+          <span class="sentiment-label" style="color:#ffd93d">Okay</span>
+        </div>
+        <div class="sentiment-tile sentiment-tile-selected" style="border-color:#6bcb77">
+          <span class="sentiment-emoji">😊</span>
+          <span class="sentiment-label" style="color:#6bcb77">Good</span>
+        </div>
+        <div class="sentiment-tile">
+          <span class="sentiment-emoji">🤩</span>
+          <span class="sentiment-label" style="color:#4d96ff">Amazing</span>
+        </div>
+      </div>
+      <p class="spec-note">bg: #1c1b21 · border: color 30% (selected) or #2a2930 (unselected) · radius: 12pt · 80×90pt</p>
+
+      <h3 class="group-title">Sentiment Badges (Inline)</h3>
+      <div class="component-row">
+        <span class="sentiment-badge" style="background:rgba(255,107,107,0.15);color:#ff6b6b">Not Good</span>
+        <span class="sentiment-badge" style="background:rgba(255,217,61,0.15);color:#ffd93d">Okay</span>
+        <span class="sentiment-badge" style="background:rgba(107,203,119,0.15);color:#6bcb77">Good</span>
+        <span class="sentiment-badge" style="background:rgba(77,150,255,0.15);color:#4d96ff">Amazing</span>
+      </div>
+      <p class="spec-note">13pt medium · bg: color 15% · text: sentiment color · radius: 4pt · padding: 3v 8h</p>
+    </section>
+
+    <!-- ── Avatar ───────────────────────────────────────────── -->
+    <section id="avatar" class="section">
+      <h2 class="section-title">Avatar</h2>
+      <p class="section-note">Circular. Falls back to gradient + initials when no photo URL. Gradient assigned by name hash.</p>
+
+      <div class="avatar-row">
+        <div class="avatar-item">
+          <div class="avatar avatar-28" style="background:linear-gradient(135deg,#5B4FCF,#8B7FEF)"><span style="font-size:10px;font-weight:600">AL</span></div>
+          <code>28pt</code>
+          <span>Thread avatars</span>
+        </div>
+        <div class="avatar-item">
+          <div class="avatar avatar-36" style="background:linear-gradient(135deg,#4F9FCF,#7FBFEF)"><span style="font-size:12px;font-weight:600">JL</span></div>
+          <code>36pt</code>
+          <span>Activity card</span>
+        </div>
+        <div class="avatar-item">
+          <div class="avatar avatar-40" style="background:linear-gradient(135deg,#4FCF7A,#7FEFAA)"><span style="font-size:13px;font-weight:600">MK</span></div>
+          <code>40pt</code>
+          <span>Followers list</span>
+        </div>
+        <div class="avatar-item">
+          <div class="avatar avatar-48" style="background:linear-gradient(135deg,#CF9E4F,#EFBE7F)"><span style="font-size:15px;font-weight:600">RB</span></div>
+          <code>48pt</code>
+          <span>Score card</span>
+        </div>
+        <div class="avatar-item">
+          <div class="avatar avatar-64" style="background:linear-gradient(135deg,#CF4F9E,#EF7FCE)"><span style="font-size:20px;font-weight:600">SA</span></div>
+          <code>64pt</code>
+          <span>User profile</span>
+        </div>
+        <div class="avatar-item">
+          <div class="avatar avatar-72" style="background:linear-gradient(135deg,#CF4F4F,#EF7F7F)"><span style="font-size:22px;font-weight:600">TW</span></div>
+          <code>72pt</code>
+          <span>Own profile</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Cards ───────────────────────────────────────────── -->
+    <section id="cards" class="section">
+      <h2 class="section-title">Cards</h2>
+
+      <h3 class="group-title">Media Card (Explore / Horizontal Grid)</h3>
+      <div class="component-row" style="align-items:flex-start">
+        <div class="media-card">
+          <div class="media-poster" style="width:120px;height:170px">
+            <div class="poster-placeholder"></div>
+          </div>
+          <p class="media-title">Anora</p>
+          <p class="media-meta">2024</p>
+        </div>
+        <div class="media-card">
+          <div class="media-poster" style="width:120px;height:170px">
+            <div class="poster-placeholder"></div>
+            <div class="poster-score">8.2</div>
+          </div>
+          <p class="media-title">Conclave</p>
+          <p class="media-meta">2024</p>
+        </div>
+        <div class="media-card">
+          <div class="media-poster" style="width:120px;height:170px">
+            <div class="poster-placeholder" style="opacity:0.4"></div>
+            <div class="poster-watchlist">+ Watchlist</div>
+          </div>
+          <p class="media-title">The Brutalist</p>
+          <p class="media-meta">2024</p>
+        </div>
+      </div>
+      <p class="spec-note">120×170pt · radius: 8pt · title: 15pt medium · meta: 13pt white 50%</p>
+
+      <h3 class="group-title">Media Row (Search Results)</h3>
+      <div class="media-row-list">
+        <div class="media-row-item">
+          <div class="media-thumb"></div>
+          <div class="media-row-info">
+            <p class="media-row-title">Anora</p>
+            <p class="media-row-meta">2024 · Movie</p>
+          </div>
+          <span class="media-row-chevron">›</span>
+        </div>
+        <div class="media-row-item">
+          <div class="media-thumb"></div>
+          <div class="media-row-info">
+            <p class="media-row-title">The Bear</p>
+            <p class="media-row-meta">2022 · TV Show</p>
+          </div>
+          <span class="media-row-chevron">›</span>
+        </div>
+      </div>
+      <p class="spec-note">Thumb: 44×60pt · radius 8pt · title: 15pt medium · meta: 13pt white 50%</p>
+
+      <h3 class="group-title">Activity Card (Home Feed)</h3>
+      <div class="activity-card">
+        <div class="activity-header">
+          <div class="avatar avatar-36" style="background:linear-gradient(135deg,#5B4FCF,#8B7FEF)"><span style="font-size:12px;font-weight:600">AL</span></div>
+          <div class="activity-meta">
+            <span class="activity-username">alysaliu</span>
+            <span class="activity-action">rated</span>
+            <span class="activity-time">· 3h ago</span>
+          </div>
+        </div>
+        <div class="activity-media">
+          <div class="activity-poster"></div>
+          <div class="activity-info">
+            <p class="activity-title">Anora</p>
+            <p class="activity-year">2024 · Movie</p>
+            <span class="sentiment-badge" style="background:rgba(77,150,255,0.15);color:#4d96ff;margin-top:6px;display:inline-block">Amazing</span>
+            <p class="activity-score">8.4</p>
+          </div>
+        </div>
+        <div class="activity-actions">
+          <button class="vote-btn">▲ 3</button>
+          <button class="reply-btn">💬 1 reply</button>
+        </div>
+      </div>
+      <p class="spec-note">bg: #1c1b21 · radius: 12pt · padding: 16pt · Activity poster: 54×80pt</p>
+
+      <h3 class="group-title">List Card (Profile)</h3>
+      <div class="list-card">
+        <div class="list-posters">
+          <div class="list-mini-poster"></div>
+          <div class="list-mini-poster"></div>
+          <div class="list-mini-poster"></div>
+          <div class="list-mini-poster"></div>
+        </div>
+        <div class="list-card-info">
+          <p class="list-card-name">My 2024 Films</p>
+          <p class="list-card-meta">12 items · Public</p>
+        </div>
+      </div>
+      <p class="spec-note">Mini poster: 46×68pt · radius 8pt · 4 shown max · bg: #1c1b21</p>
+    </section>
+
+    <!-- ── Score Cards ───────────────────────────────────────── -->
+    <section id="score" class="section">
+      <h2 class="section-title">Score Cards</h2>
+      <p class="section-note">Three cards shown on Details: Your rating, Friends avg, Community avg. Uses systemThinMaterialDark blur.</p>
+
+      <div class="score-cards">
+        <div class="score-card">
+          <span class="score-card-label">You</span>
+          <span class="score-card-value">8.4</span>
+          <span class="score-card-sentiment" style="color:#4d96ff">Amazing</span>
+        </div>
+        <div class="score-card">
+          <span class="score-card-label">Friends</span>
+          <span class="score-card-value">7.9</span>
+          <span class="score-card-sentiment" style="color:#6bcb77">Good</span>
+        </div>
+        <div class="score-card">
+          <span class="score-card-label">Community</span>
+          <span class="score-card-value">7.2</span>
+          <span class="score-card-sentiment" style="color:#6bcb77">Good</span>
+        </div>
+      </div>
+      <p class="spec-note">bg: blur (simulated) · radius: 12pt · label: 12pt white 50% · value: 28pt bold · sentiment: 13pt semibold</p>
+
+      <h3 class="group-title">Score Badge (Inline)</h3>
+      <div class="component-row">
+        <div class="score-badge">8.4</div>
+        <div class="score-badge" style="color:#ff6b6b;border-color:rgba(255,107,107,0.3)">2.1</div>
+        <div class="score-badge" style="color:#ffd93d;border-color:rgba(255,217,61,0.3)">5.3</div>
+        <div class="score-badge" style="color:#6bcb77;border-color:rgba(107,203,119,0.3)">7.8</div>
+      </div>
+      <p class="spec-note">11pt bold · bg: #141218 · border: 1pt · radius: 4pt · padding: 3v 6h</p>
+    </section>
+
+    <!-- ── Navigation ────────────────────────────────────────── -->
+    <section id="nav" class="section">
+      <h2 class="section-title">Navigation</h2>
+
+      <h3 class="group-title">Tab Bar (MainTabView)</h3>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-content">
+            <p style="color:rgba(255,255,255,0.3);font-size:13px;text-align:center;padding-top:40px">Screen content</p>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item tab-item-active">
+              <span class="tab-icon">⌂</span>
+              <span class="tab-label">Home</span>
+            </div>
+            <div class="tab-item">
+              <span class="tab-icon">⌕</span>
+              <span class="tab-label">Explore</span>
+            </div>
+            <div class="tab-item">
+              <span class="tab-icon">◯</span>
+              <span class="tab-label">Profile</span>
+            </div>
+            <div class="tab-item">
+              <span class="tab-icon">⚙</span>
+              <span class="tab-label">Settings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="spec-note">4 tabs: Home / Explore / Profile / Settings · SF Symbols · UITabBarAppearance customized · active: white · inactive: white 40%</p>
+
+      <h3 class="group-title">Navigation Bar</h3>
+      <div class="phone-frame">
+        <div class="phone-screen" style="height:80px">
+          <div class="nav-bar">
+            <button class="btn-icon" style="font-size:18px">‹</button>
+            <span class="nav-title">Anora</span>
+            <button class="btn-icon" style="font-size:18px">···</button>
+          </div>
+        </div>
+      </div>
+      <p class="spec-note">toolbarBackground: #141218 · toolbarColorScheme: .dark · title: 17pt semibold · NavigationStack throughout</p>
+    </section>
+
+    <!-- ── Sheets ────────────────────────────────────────────── -->
+    <section id="sheets" class="section">
+      <h2 class="section-title">Sheets &amp; Modals</h2>
+
+      <h3 class="group-title">.sheet — Followers / Add to List / Edit</h3>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-content" style="background:rgba(255,255,255,0.03)"></div>
+          <div class="sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+              <span class="sheet-title">Following</span>
+              <button class="btn-ghost-sm">Done</button>
+            </div>
+            <div class="sheet-body">
+              <div class="sheet-row">
+                <div class="avatar avatar-40" style="background:linear-gradient(135deg,#CF4F9E,#EF7FCE)"><span style="font-size:13px;font-weight:600">AL</span></div>
+                <div>
+                  <p style="font-size:15px;font-weight:500">Alysa Liu</p>
+                  <p style="font-size:13px;color:rgba(255,255,255,0.5)">@alysaliu</p>
+                </div>
+              </div>
+              <div class="sheet-row">
+                <div class="avatar avatar-40" style="background:linear-gradient(135deg,#4F9FCF,#7FBFEF)"><span style="font-size:13px;font-weight:600">JL</span></div>
+                <div>
+                  <p style="font-size:15px;font-weight:500">Jamie Lee</p>
+                  <p style="font-size:13px;color:rgba(255,255,255,0.5)">@jamielee</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="spec-note">bg: #141218 · padding: 20pt horizontal · bottom safe area: 34pt · handle: 4×36pt rounded</p>
+
+      <h3 class="group-title">.fullScreenCover — Rating Flow</h3>
+      <p class="section-note">Used only for the 3-step rating modal (SentimentPicker → SwipeComparison → RatingComplete). Full screen, no tab bar visible.</p>
+    </section>
+
+    <!-- ── Discussion ────────────────────────────────────────── -->
+    <section id="discussion" class="section">
+      <h2 class="section-title">Discussion</h2>
+
+      <div class="thread-list">
+        <div class="thread-item">
+          <div class="avatar avatar-28" style="background:linear-gradient(135deg,#5B4FCF,#8B7FEF)"><span style="font-size:10px;font-weight:600">AL</span></div>
+          <div class="thread-body">
+            <div class="thread-header">
+              <span class="thread-username">alysaliu</span>
+              <span class="thread-score score-amazing">8.4</span>
+              <span class="thread-time">3h ago</span>
+            </div>
+            <p class="thread-text">Absolutely stunning film. The direction was impeccable and the performances were career-best.</p>
+            <div class="thread-actions">
+              <button class="vote-btn vote-active">▲ 12</button>
+              <button class="reply-btn">💬 3 replies</button>
+            </div>
+          </div>
+        </div>
+        <div class="thread-item">
+          <div class="avatar avatar-28" style="background:linear-gradient(135deg,#4FCF7A,#7FEFAA)"><span style="font-size:10px;font-weight:600">JL</span></div>
+          <div class="thread-body">
+            <div class="thread-header">
+              <span class="thread-username">jamielee</span>
+              <span class="thread-score score-good">7.8</span>
+              <span class="thread-time">1d ago</span>
+            </div>
+            <p class="thread-text">Really enjoyed it but the pacing in the second act felt slow.</p>
+            <div class="thread-actions">
+              <button class="vote-btn">▲ 4</button>
+              <button class="reply-btn">💬 1 reply</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="spec-note">username: 12pt semibold · score badge: 11pt bold · text: 14pt regular 75% · time: 12pt medium 50%</p>
+    </section>
+
+    <!-- ── Empty States ──────────────────────────────────────── -->
+    <section id="empty" class="section">
+      <h2 class="section-title">Empty States</h2>
+
+      <div class="empty-row">
+        <div class="empty-state">
+          <span class="empty-icon">🎬</span>
+          <p class="empty-title">No ratings yet</p>
+          <p class="empty-sub">Start ranking films you've watched.</p>
+          <button class="btn-primary btn-sm-primary">Explore</button>
+        </div>
+        <div class="empty-state">
+          <span class="empty-icon">🔍</span>
+          <p class="empty-title">No results</p>
+          <p class="empty-sub">Try a different search term.</p>
+        </div>
+        <div class="empty-state">
+          <span class="empty-icon">📋</span>
+          <p class="empty-title">List is empty</p>
+          <p class="empty-sub">Add movies or shows to this list.</p>
+        </div>
+      </div>
+      <p class="spec-note">top offset: 60pt · icon: 40–48pt · title: 18pt semibold · sub: 14pt white 50%</p>
+    </section>
+
+    <!-- ── Page Previews ─────────────────────────────────────── -->
+    <section id="pages" class="section">
+      <h2 class="section-title">Page Previews</h2>
+      <p class="section-note">Built from the same component classes above — updating a component updates it here too.</p>
+
+      <div class="page-row">
+
+        <!-- HOME ─────────────────────────────────────────────── -->
+        <div class="page-frame">
+          <div class="page-label">Home</div>
+          <div class="page-screen">
+            <div class="page-nav">
+              <span class="page-nav-title">Home</span>
+            </div>
+            <div class="page-scroll">
+
+              <!-- Activity Card 1 -->
+              <div class="activity-card page-card">
+                <div class="activity-header">
+                  <div class="avatar avatar-36" style="background:linear-gradient(135deg,#5B4FCF,#8B7FEF)"><span style="font-size:12px;font-weight:600">AL</span></div>
+                  <div class="activity-meta">
+                    <span class="activity-username">alysaliu</span>
+                    <span class="activity-action">rated Anora</span>
+                    <span class="activity-time">· 3h ago</span>
+                  </div>
+                </div>
+                <div class="activity-media">
+                  <div class="activity-poster"></div>
+                  <div class="activity-info">
+                    <p class="activity-title">Anora</p>
+                    <p class="activity-year">2024 · Movie</p>
+                    <span class="sentiment-badge" style="background:rgba(77,150,255,0.15);color:#4d96ff;margin-top:4px;display:inline-block">Amazing</span>
+                    <p class="activity-score">8.4</p>
+                  </div>
+                </div>
+                <div class="activity-actions">
+                  <button class="vote-btn">🥕 3</button>
+                  <button class="reply-btn">💬 1 reply</button>
+                </div>
+              </div>
+
+              <div class="page-divider"></div>
+
+              <!-- Activity Card 2 -->
+              <div class="activity-card page-card">
+                <div class="activity-header">
+                  <div class="avatar avatar-36" style="background:linear-gradient(135deg,#4FCF7A,#7FEFAA)"><span style="font-size:12px;font-weight:600">JL</span></div>
+                  <div class="activity-meta">
+                    <span class="activity-username">jamielee</span>
+                    <span class="activity-action">rated Conclave</span>
+                    <span class="activity-time">· 1d ago</span>
+                  </div>
+                </div>
+                <div class="activity-media">
+                  <div class="activity-poster"></div>
+                  <div class="activity-info">
+                    <p class="activity-title">Conclave</p>
+                    <p class="activity-year">2024 · Movie</p>
+                    <span class="sentiment-badge" style="background:rgba(107,203,119,0.15);color:#6bcb77;margin-top:4px;display:inline-block">Good</span>
+                    <p class="activity-score">7.8</p>
+                  </div>
+                </div>
+                <div class="activity-actions">
+                  <button class="vote-btn">🥕 7</button>
+                  <button class="reply-btn">💬 2 replies</button>
+                </div>
+              </div>
+
+            </div>
+            <div class="page-tab-bar">
+              <div class="page-tab page-tab-active"><span>⌂</span><span>Home</span></div>
+              <div class="page-tab"><span>⌕</span><span>Explore</span></div>
+              <div class="page-tab"><span>◯</span><span>Profile</span></div>
+              <div class="page-tab"><span>⚙</span><span>Settings</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPLORE ──────────────────────────────────────────── -->
+        <div class="page-frame">
+          <div class="page-label">Explore</div>
+          <div class="page-screen">
+            <div class="page-nav">
+              <span class="page-nav-title">Explore</span>
+            </div>
+            <div class="page-scroll">
+
+              <!-- Search -->
+              <div style="padding:12px 16px 8px">
+                <div class="search-wrap">
+                  <span class="search-icon">⌕</span>
+                  <input class="ios-input ios-search" type="text" placeholder="Search movies, shows, people…" />
+                </div>
+              </div>
+
+              <!-- Filter chips -->
+              <div style="display:flex;gap:8px;padding:0 16px 16px;overflow:hidden">
+                <button class="chip chip-active">All</button>
+                <button class="chip">Movies</button>
+                <button class="chip">Shows</button>
+                <button class="chip">Profiles</button>
+              </div>
+
+              <!-- Trending label -->
+              <div style="padding:0 16px 10px;font-size:13px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:rgba(255,255,255,0.5)">Trending Movies</div>
+
+              <!-- Horizontal media scroll (clipped) -->
+              <div style="display:flex;gap:12px;padding:0 16px 16px;overflow:hidden">
+                <div class="media-card">
+                  <div class="media-poster" style="width:100px;height:148px"><div class="poster-placeholder"></div></div>
+                  <p class="media-title" style="max-width:100px">Anora</p>
+                  <p class="media-meta">2024</p>
+                </div>
+                <div class="media-card">
+                  <div class="media-poster" style="width:100px;height:148px"><div class="poster-placeholder" style="opacity:0.7"></div></div>
+                  <p class="media-title" style="max-width:100px">Conclave</p>
+                  <p class="media-meta">2024</p>
+                </div>
+                <div class="media-card">
+                  <div class="media-poster" style="width:100px;height:148px"><div class="poster-placeholder" style="opacity:0.5"></div></div>
+                  <p class="media-title" style="max-width:100px">The Brutalist</p>
+                  <p class="media-meta">2024</p>
+                </div>
+              </div>
+
+              <!-- Trending TV label -->
+              <div style="padding:0 16px 10px;font-size:13px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:rgba(255,255,255,0.5)">Trending Shows</div>
+              <div style="display:flex;gap:12px;padding:0 16px;overflow:hidden">
+                <div class="media-card">
+                  <div class="media-poster" style="width:100px;height:148px"><div class="poster-placeholder" style="opacity:0.6"></div></div>
+                  <p class="media-title" style="max-width:100px">The Bear</p>
+                  <p class="media-meta">2022</p>
+                </div>
+                <div class="media-card">
+                  <div class="media-poster" style="width:100px;height:148px"><div class="poster-placeholder" style="opacity:0.4"></div></div>
+                  <p class="media-title" style="max-width:100px">Severance</p>
+                  <p class="media-meta">2022</p>
+                </div>
+              </div>
+
+            </div>
+            <div class="page-tab-bar">
+              <div class="page-tab"><span>⌂</span><span>Home</span></div>
+              <div class="page-tab page-tab-active"><span>⌕</span><span>Explore</span></div>
+              <div class="page-tab"><span>◯</span><span>Profile</span></div>
+              <div class="page-tab"><span>⚙</span><span>Settings</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROFILE ──────────────────────────────────────────── -->
+        <div class="page-frame">
+          <div class="page-label">Profile</div>
+          <div class="page-screen">
+            <div class="page-nav">
+              <span class="page-nav-title">alysaliu</span>
+              <span style="font-size:18px;color:rgba(255,255,255,0.6)">↑□</span>
+            </div>
+            <div class="page-scroll">
+
+              <!-- Profile header -->
+              <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 16px 16px">
+                <div class="avatar avatar-72" style="background:linear-gradient(135deg,#CF4F9E,#EF7FCE)"><span style="font-size:22px;font-weight:600">AL</span></div>
+                <div style="text-align:center">
+                  <p style="font-size:18px;font-weight:700">Alysa Liu</p>
+                  <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-top:2px">@alysaliu ✏</p>
+                </div>
+              </div>
+
+              <!-- Stats -->
+              <div style="display:flex;border-top:1px solid #2a2930;border-bottom:1px solid #2a2930">
+                <div style="flex:1;text-align:center;padding:12px 8px">
+                  <p style="font-size:18px;font-weight:700">142</p>
+                  <p style="font-size:12px;color:rgba(255,255,255,0.5)">Ratings</p>
+                </div>
+                <div style="width:1px;background:#2a2930;margin:8px 0"></div>
+                <div style="flex:1;text-align:center;padding:12px 8px">
+                  <p style="font-size:18px;font-weight:700">38</p>
+                  <p style="font-size:12px;color:rgba(255,255,255,0.5)">Followers</p>
+                </div>
+                <div style="width:1px;background:#2a2930;margin:8px 0"></div>
+                <div style="flex:1;text-align:center;padding:12px 8px">
+                  <p style="font-size:18px;font-weight:700">21</p>
+                  <p style="font-size:12px;color:rgba(255,255,255,0.5)">Following</p>
+                </div>
+              </div>
+
+              <!-- Tabs -->
+              <div style="display:flex;border-bottom:1px solid #2a2930">
+                <div class="page-profile-tab page-profile-tab-active">Lists</div>
+                <div class="page-profile-tab">Movies</div>
+                <div class="page-profile-tab">Shows</div>
+                <div class="page-profile-tab">Watchlist</div>
+              </div>
+
+              <!-- List rows -->
+              <div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">
+                <div class="list-card" style="max-width:none">
+                  <div class="list-posters">
+                    <div class="list-mini-poster"></div>
+                    <div class="list-mini-poster" style="opacity:0.7"></div>
+                    <div class="list-mini-poster" style="opacity:0.5"></div>
+                    <div class="list-mini-poster" style="opacity:0.3"></div>
+                  </div>
+                  <div class="list-card-info">
+                    <p class="list-card-name">My 2024 Films</p>
+                    <p class="list-card-meta">12 items · Public</p>
+                  </div>
+                </div>
+                <div class="list-card" style="max-width:none">
+                  <div class="list-posters">
+                    <div class="list-mini-poster" style="opacity:0.8"></div>
+                    <div class="list-mini-poster" style="opacity:0.6"></div>
+                  </div>
+                  <div class="list-card-info">
+                    <p class="list-card-name">Favorites</p>
+                    <p class="list-card-meta">5 items · Private</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div class="page-tab-bar">
+              <div class="page-tab"><span>⌂</span><span>Home</span></div>
+              <div class="page-tab"><span>⌕</span><span>Explore</span></div>
+              <div class="page-tab page-tab-active"><span>◯</span><span>Profile</span></div>
+              <div class="page-tab"><span>⚙</span><span>Settings</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DETAILS ──────────────────────────────────────────── -->
+        <div class="page-frame">
+          <div class="page-label">Details</div>
+          <div class="page-screen">
+            <!-- Custom back button (no standard nav bar) -->
+            <div style="padding:12px 16px 0;display:flex;align-items:center;gap:6px;position:absolute;top:0;left:0;z-index:2">
+              <span style="font-size:22px;font-weight:600;color:white">‹</span>
+            </div>
+
+            <!-- Backdrop -->
+            <div class="page-backdrop"></div>
+
+            <div class="page-scroll" style="padding-top:0;margin-top:0">
+              <!-- Hero: spacer + poster -->
+              <div style="height:52px"></div>
+              <div style="display:flex;justify-content:center;padding:0 16px 16px">
+                <div style="position:relative;width:130px;height:190px;border-radius:10px;background:#2b2a33;overflow:hidden">
+                  <div style="width:100%;height:100%;background:linear-gradient(135deg,#1c1b21,#2b2a33)"></div>
+                  <div style="position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;font-size:16px;color:white">+</div>
+                </div>
+              </div>
+
+              <!-- Title + meta -->
+              <div style="padding:0 16px 16px">
+                <p style="font-size:22px;font-weight:700;text-align:center">Anora</p>
+                <p style="font-size:13px;color:rgba(255,255,255,0.6);text-align:center;margin-top:4px">R · 2024 · Drama · Comedy · 2h 19m</p>
+                <p style="font-size:14px;color:rgba(255,255,255,0.7);margin-top:10px;line-height:1.5;-webkit-line-clamp:3;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">A young sex worker from Brooklyn impulsively marries the son of a Russian oligarch and her life is upended when his parents arrive to have the marriage annulled.</p>
+              </div>
+
+              <!-- Score cards -->
+              <div style="display:flex;gap:8px;padding:0 16px 16px">
+                <div class="score-card" style="flex:1;min-width:0">
+                  <span class="score-card-label">You</span>
+                  <span class="score-card-value">8.4</span>
+                  <span class="score-card-sentiment" style="color:#4d96ff">Amazing</span>
+                </div>
+                <div class="score-card" style="flex:1;min-width:0">
+                  <span class="score-card-label">Friends</span>
+                  <span class="score-card-value">7.9</span>
+                  <span class="score-card-sentiment" style="color:#6bcb77">Good</span>
+                </div>
+                <div class="score-card" style="flex:1;min-width:0">
+                  <span class="score-card-label">Community</span>
+                  <span class="score-card-value">7.2</span>
+                  <span class="score-card-sentiment" style="color:#6bcb77">Good</span>
+                </div>
+              </div>
+
+              <!-- Discussion -->
+              <div style="border-top:1px solid #2a2930;padding:16px">
+                <p style="font-size:17px;font-weight:700;margin-bottom:14px">Discussion</p>
+                <div class="thread-item">
+                  <div class="avatar avatar-36" style="background:linear-gradient(135deg,#5B4FCF,#8B7FEF)"><span style="font-size:12px;font-weight:600">AL</span></div>
+                  <div class="thread-body">
+                    <div class="thread-header">
+                      <span class="thread-username">alysaliu</span>
+                      <span class="thread-score score-amazing">8.4</span>
+                      <span class="thread-time">3h ago</span>
+                    </div>
+                    <p class="thread-text" style="-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">Absolutely stunning film. The direction was impeccable.</p>
+                    <div class="thread-actions">
+                      <button class="vote-btn vote-active">🥕 12</button>
+                      <button class="reply-btn">💬 3</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- RATING FLOW — SENTIMENT ──────────────────────────── -->
+        <div class="page-frame">
+          <div class="page-label">Rating · Step 1</div>
+          <div class="page-screen">
+            <div class="page-scroll">
+
+              <!-- Top bar -->
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 16px 0">
+                <span style="font-size:16px;color:rgba(255,255,255,0.5)">Cancel</span>
+              </div>
+
+              <!-- Header -->
+              <div style="padding:20px 24px 28px">
+                <p style="font-size:28px;font-weight:700">Add a rating</p>
+                <p style="font-size:15px;color:rgba(255,255,255,0.45);margin-top:6px">Anora</p>
+              </div>
+
+              <!-- HOW WAS IT -->
+              <div style="padding:0 24px">
+                <p style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:12px">How was it?</p>
+                <div class="sentiment-grid" style="gap:10px">
+                  <div class="sentiment-tile">
+                    <span class="sentiment-emoji">😐</span>
+                    <span class="sentiment-label" style="color:#ff6b6b">Not Good</span>
+                  </div>
+                  <div class="sentiment-tile">
+                    <span class="sentiment-emoji">🙂</span>
+                    <span class="sentiment-label" style="color:#ffd93d">Okay</span>
+                  </div>
+                  <div class="sentiment-tile sentiment-tile-selected" style="border-color:#6bcb77">
+                    <span class="sentiment-emoji">😊</span>
+                    <span class="sentiment-label" style="color:#6bcb77">Good</span>
+                  </div>
+                  <div class="sentiment-tile">
+                    <span class="sentiment-emoji">🤩</span>
+                    <span class="sentiment-label" style="color:#4d96ff">Amazing</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- REVIEW -->
+              <div style="padding:24px 24px 0">
+                <p style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:12px">Review (optional)</p>
+                <textarea class="ios-input ios-textarea" placeholder="What did you think?" rows="3" style="border-radius:10px"></textarea>
+              </div>
+
+            </div>
+
+            <!-- Pinned Next button -->
+            <div style="border-top:1px solid #2a2930;padding:14px 24px 28px;background:#141218">
+              <button class="btn-primary" style="width:100%">Next</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RATING FLOW — COMPARE ────────────────────────────── -->
+        <div class="page-frame">
+          <div class="page-label">Rating · Step 2</div>
+          <div class="page-screen" style="justify-content:space-between">
+            <div>
+              <!-- Header -->
+              <div style="padding:60px 32px 28px;text-align:center">
+                <p style="font-size:22px;font-weight:700;line-height:1.3">How does <em>Anora</em> compare to <em>The Brutalist</em>?</p>
+              </div>
+
+              <!-- Affordance labels -->
+              <div style="display:flex;justify-content:space-between;padding:0 24px 16px">
+                <span style="font-size:13px;color:rgb(255,97,97)">← Worse</span>
+                <span style="font-size:13px;color:rgb(89,230,140)">Better →</span>
+              </div>
+
+              <!-- Swipe card -->
+              <div style="display:flex;justify-content:center;padding:0 32px">
+                <div style="width:188px;border-radius:14px;background:#1c1b21;border:3px solid rgba(89,230,140,0.5);box-shadow:0 14px 28px rgba(0,0,0,0.5);overflow:hidden">
+                  <div style="height:280px;background:linear-gradient(135deg,#1c1b21,#2b2a33)"></div>
+                  <div style="padding:12px 16px 16px">
+                    <p style="font-size:18px;font-weight:600;text-align:center">Anora</p>
+                    <p style="font-size:14px;color:rgba(255,255,255,0.4);text-align:center;margin-top:2px">2024</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom -->
+            <div style="padding:0 24px 52px;display:flex;flex-direction:column;align-items:center;gap:14px">
+              <button class="btn-ghost" style="width:100%;border-radius:32px;font-size:14px;padding:12px 24px;color:rgba(255,255,255,0.5)">Too tough to call</button>
+              <button style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:14px;font-family:inherit;cursor:pointer">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RATING FLOW — COMPLETE ───────────────────────────── -->
+        <div class="page-frame">
+          <div class="page-label">Rating · Step 3</div>
+          <div class="page-screen" style="justify-content:space-between">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:0 24px">
+              <!-- Poster -->
+              <div style="width:200px;height:298px;border-radius:10px;background:linear-gradient(135deg,#2b2a33,#1c1b21);box-shadow:0 16px 32px rgba(0,0,0,0.5);margin-bottom:28px"></div>
+              <!-- Score text -->
+              <p style="font-size:20px;color:rgba(255,255,255,0.45);text-align:center;line-height:1.4">Your rating of<br/><em>Anora</em></p>
+              <p style="font-size:56px;font-weight:700;line-height:1;margin-top:8px">8.4</p>
+            </div>
+
+            <!-- Done button -->
+            <div style="padding:0 24px 50px;background:#141218">
+              <button class="btn-primary" style="width:100%">Done</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SETTINGS ─────────────────────────────────────────── -->
+        <div class="page-frame">
+          <div class="page-label">Settings</div>
+          <div class="page-screen">
+            <div class="page-nav">
+              <span class="page-nav-title">Settings</span>
+            </div>
+            <div class="page-scroll">
+
+              <!-- Segmented tab -->
+              <div style="padding:14px 16px">
+                <div style="display:flex;background:#1c1b21;border-radius:10px;padding:3px">
+                  <div style="flex:1;text-align:center;padding:7px;background:#2b2a33;border-radius:8px;font-size:14px;font-weight:600">Account</div>
+                  <div style="flex:1;text-align:center;padding:7px;font-size:14px;color:rgba(255,255,255,0.5)">Data</div>
+                </div>
+              </div>
+
+              <!-- Profile card -->
+              <div style="margin:0 16px;background:#1c1b21;border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px">
+                <div class="avatar avatar-64" style="background:linear-gradient(135deg,#CF4F9E,#EF7FCE)"><span style="font-size:20px;font-weight:600">AL</span></div>
+                <div>
+                  <p style="font-size:18px;font-weight:600">Alysa Liu</p>
+                  <p style="font-size:14px;color:rgba(255,255,255,0.5)">@alysaliu</p>
+                  <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:2px">alysa@example.com</p>
+                </div>
+              </div>
+
+              <p style="font-size:14px;color:rgba(255,255,255,0.4);padding:16px;text-align:center">More account options coming soon.</p>
+
+              <!-- Sign out button -->
+              <div style="padding:0 16px">
+                <button class="btn-danger" style="width:100%;justify-content:center;gap:8px">
+                  <span>↩</span> Sign Out
+                </button>
+              </div>
+
+            </div>
+            <div class="page-tab-bar">
+              <div class="page-tab"><span>⌂</span><span>Home</span></div>
+              <div class="page-tab"><span>⌕</span><span>Explore</span></div>
+              <div class="page-tab"><span>◯</span><span>Profile</span></div>
+              <div class="page-tab page-tab-active"><span>⚙</span><span>Settings</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /page-row -->
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
